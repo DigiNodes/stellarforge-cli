@@ -1,0 +1,41 @@
+name: Research / architecture investigation
+description: Propose a bounded investigation before an implementation decision
+title: "[Research]: "
+labels:
+  - "type: research"
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Research question
+      description: What specific technical or product question needs evidence?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why does this decision matter to StellarForge CLI?
+    validations:
+      required: true
+  - type: textarea
+    id: outputs
+    attributes:
+      label: Expected outputs
+      description: Define concrete deliverables such as comparison, benchmark, recommendation, prototype, or ADR input.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints / evaluation criteria
+      description: Include security, maintenance, compatibility, performance, or ecosystem constraints that must be considered.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: This investigation is bounded and has a reviewable deliverable.
+          required: true
+        - label: I will prioritize current official Stellar/tooling documentation where relevant.
+          required: true
