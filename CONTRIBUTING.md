@@ -1,0 +1,76 @@
+# Contributing to StellarForge CLI
+
+Thank you for contributing to StellarForge CLI. The project is being built as production-grade open-source infrastructure, so contribution quality, security, reviewability, and clear scope matter more than raw PR volume.
+
+## Before You Start
+
+1. Read the relevant issue completely.
+2. Confirm the issue is available and assigned when assignment is required.
+3. Check linked ADRs, architecture docs, and dependencies.
+4. Ask for clarification in the issue before making architecture-expanding assumptions.
+5. Do not disclose suspected vulnerabilities in public issues; follow `SECURITY.md`.
+
+## Development Workflow
+
+1. Fork or clone the repository.
+2. Create a focused branch from the current default branch.
+3. Make the smallest coherent change that satisfies the issue.
+4. Add or update tests for behavior changes.
+5. Update documentation where behavior, commands, configuration, or contributor workflows change.
+6. Add a Changeset when the PR affects the published CLI or user-visible behavior.
+7. Run the available local checks before opening a PR.
+8. Open a pull request and complete the PR template accurately.
+
+## Changesets
+
+A Changeset is normally required for user-visible or published-package changes, including:
+
+- bug fixes affecting CLI users;
+- new commands or options;
+- command behavior changes;
+- shipped template changes;
+- breaking changes;
+- meaningful user-facing performance improvements.
+
+A Changeset is normally not required for documentation-only changes, tests with no shipped behavior change, issue/PR templates, or internal CI maintenance. Maintainers may request one when release communication is still warranted.
+
+## Security Expectations
+
+Contributions must follow secure engineering practices. In particular:
+
+- never build shell commands by concatenating untrusted input;
+- validate paths and prevent traversal or unintended overwrites;
+- do not log secrets, private keys, seed phrases, tokens, or sensitive environment values;
+- validate configuration through explicit schemas;
+- keep dependencies minimal and justified;
+- avoid privileged workflow execution of untrusted pull-request code;
+- include tests for security-sensitive behavior.
+
+Changes involving filesystem mutation, subprocess execution, dependency installation, deployment, credentials, release automation, or workflow permissions receive heightened review.
+
+## Pull Requests
+
+Pull requests should:
+
+- reference the issue they address;
+- explain what changed and why;
+- stay within agreed scope;
+- include tests where applicable;
+- identify security impact;
+- identify release/Changeset impact;
+- update docs where applicable;
+- pass required CI/security checks.
+
+Maintainers may request changes even when CI passes if the implementation conflicts with architecture, security, maintainability, or project scope.
+
+## Good First Issues
+
+Issues marked `good first issue` are intentionally scoped to be approachable without undocumented architecture knowledge. Please do not treat unassigned work as reserved unless the issue says otherwise.
+
+## Commit and Branch Guidance
+
+Keep commits understandable and focused. Avoid unrelated formatting or refactoring in feature PRs. Branch naming may use concise prefixes such as `feat/`, `fix/`, `docs/`, `test/`, `refactor/`, or `chore/`.
+
+## Code of Conduct
+
+Participation in StellarForge repositories is subject to `CODE_OF_CONDUCT.md`.
