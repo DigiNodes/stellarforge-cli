@@ -1,0 +1,58 @@
+name: Feature request
+description: Propose a new CLI capability or improvement
+title: "[Feature]: "
+labels:
+  - "type: feature"
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What developer problem or limitation should be solved?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: Describe the desired user-facing behavior without assuming an implementation architecture.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing workflows, workarounds, or alternative designs.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI core
+        - Project generator
+        - Templates
+        - Configuration
+        - Diagnostics
+        - Development orchestration
+        - Testing
+        - Deployment
+        - Documentation / DX
+        - Release engineering
+        - Security
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security considerations
+      description: Note any filesystem, process, dependency, credential, network, deployment, or supply-chain impact you can foresee.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues/discussions for this proposal.
+          required: true
+        - label: I understand major architecture changes may require an ADR before implementation.
+          required: true
