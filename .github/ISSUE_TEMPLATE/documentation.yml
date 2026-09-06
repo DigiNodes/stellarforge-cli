@@ -1,0 +1,34 @@
+name: Documentation improvement
+description: Report missing, incorrect, or unclear StellarForge CLI documentation
+title: "[Docs]: "
+labels:
+  - "type: docs"
+body:
+  - type: textarea
+    id: location
+    attributes:
+      label: Documentation area
+      description: Which file, section, command, or workflow is affected?
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is missing, incorrect, confusing, or outdated?
+    validations:
+      required: true
+  - type: textarea
+    id: improvement
+    attributes:
+      label: Suggested improvement
+      description: What should a reader be able to understand or accomplish after the change?
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I checked that this is not already addressed in current documentation or an open issue.
+          required: true
