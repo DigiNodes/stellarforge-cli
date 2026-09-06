@@ -1,290 +1,241 @@
 # StellarForge CLI
 
-> The official command-line interface for building production-ready Stellar and Soroban applications.
+> The command-line interface for the StellarForge ecosystem, designed to help developers create, validate, test, and deploy structured Stellar applications.
 
-![StellarForge CLI Banner](./assets/banner.png)
-
-> **Status:** 🚧 Active Development (MVP)
-> **License:** MIT
-> **Language:** TypeScript
-> **Runtime:** Node.js
+> **Status:** 🚧 Foundation / MVP Development  
+> **License:** MIT  
+> **Planned implementation:** TypeScript on Node.js
 
 ---
 
 ## Overview
 
-StellarForge CLI is the primary entry point into the **StellarForge** ecosystem.
+StellarForge CLI is planned as the primary command-line entry point into the **StellarForge** developer-tooling ecosystem.
 
-Its mission is to provide developers with a fast, consistent, and production-ready development experience for building applications on the Stellar network.
+The project addresses repetitive setup around Stellar application development: project structure, supported tooling, configuration, local workflows, testing, and deployment orchestration. Rather than claiming to replace the underlying Stellar tools, StellarForge CLI will provide a consistent layer that coordinates them through documented conventions and reusable project templates.
 
-Instead of spending hours configuring project structures, dependencies, Soroban tooling, Docker environments, deployment scripts, and development workflows, developers should be able to bootstrap a complete project with a single command.
-
-StellarForge CLI brings the developer experience that tools like **create-next-app**, **npm create vite**, **cargo**, and **Angular CLI** provide to the Stellar ecosystem.
+The repository is currently in its foundation phase. Architecture, security, release engineering, contributor workflows, and the first implementation milestones are being established before the CLI is presented as production-ready software.
 
 ---
 
-## Why StellarForge CLI?
+## MVP Goal
 
-Building on Stellar often involves repetitive setup before any application logic can be written.
-
-Developers typically need to:
-
-* Configure project structures
-* Install and configure Stellar SDKs
-* Set up Soroban development tools
-* Configure local development environments
-* Create deployment scripts
-* Manage environment variables
-* Connect to Stellar RPC services
-* Configure testing frameworks
-* Establish CI/CD workflows
-
-Every team ends up recreating this infrastructure.
-
-StellarForge CLI eliminates that repetition by providing opinionated tooling, standardised project templates, and reusable workflows so developers can focus on building products instead of infrastructure.
-
----
-
-## Vision
-
-Our vision is to make building on Stellar as simple as:
+The v1.0 MVP aims to make the core workflow approachable through commands such as:
 
 ```bash
 stellarforge new my-app
-```
-
-and have a production-ready foundation generated in seconds.
-
-Over time, StellarForge CLI aims to become the standard developer experience for the Stellar ecosystem.
-
----
-
-## Core Features
-
-### 🚀 Project Scaffolding
-
-Generate complete application structures with sensible defaults.
-
-```bash
-stellarforge new my-app
-```
-
----
-
-### 📦 Starter Templates
-
-Bootstrap projects from reusable templates.
-
-Planned templates include:
-
-* Basic Application
-* Full-Stack Application
-* Soroban Smart Contract
-* Backend API
-* Payment Service
-* Identity Service
-* Enterprise Starter
-
----
-
-### ⚙️ Local Development
-
-Start the development environment using a single command.
-
-```bash
+stellarforge doctor
 stellarforge dev
-```
-
-The CLI will orchestrate the local development workflow, making it easier to build and test applications.
-
----
-
-### 🧪 Unified Testing
-
-Run project tests from one place.
-
-```bash
 stellarforge test
-```
-
----
-
-### 🚀 Deployment
-
-Deploy applications and contracts to Stellar networks.
-
-```bash
 stellarforge deploy
 ```
 
-Initial support targets Soroban Testnet, with additional deployment workflows planned for future releases.
+These commands are planned and will become available incrementally through the roadmap. Do not assume a command documented here is implemented until the corresponding release notes state that it is available.
 
 ---
 
-### 🩺 Environment Diagnostics
+## Current MVP Scope
 
-Validate your development environment before you begin.
+### Project Scaffolding
+
+Planned command:
+
+```bash
+stellarforge new my-app
+```
+
+The generator will create supported project foundations with validated paths, controlled templates, explicit overwrite behavior, and testable output.
+
+### Initial Templates
+
+The MVP targets four initial template categories:
+
+- Basic App
+- Full Stack App
+- Stellar smart contract
+- API Service
+
+Additional domain templates may be considered after the MVP based on validated developer needs.
+
+### Environment Diagnostics
+
+Planned command:
 
 ```bash
 stellarforge doctor
 ```
 
-The diagnostics command will verify required tools and configuration, helping developers resolve setup issues quickly.
+Diagnostics will check the developer tooling required by supported workflows and provide actionable remediation without exposing sensitive environment values.
+
+### Local Development
+
+Planned command:
+
+```bash
+stellarforge dev
+```
+
+This command will orchestrate supported local-development processes; it will not reimplement the underlying Stellar development tools.
+
+### Unified Testing
+
+Planned command:
+
+```bash
+stellarforge test
+```
+
+The CLI will provide a consistent entry point for supported project tests while preserving meaningful failures and exit codes.
+
+### Stellar Testnet Deployment
+
+Planned command:
+
+```bash
+stellarforge deploy
+```
+
+The MVP deployment scope is **Stellar Testnet**. Mainnet deployment requires additional architecture and security review and is not part of the initial MVP.
 
 ---
 
-## Example Workflow
+## What This Repository Owns
 
-```text
-Developer
-    │
-    ▼
-StellarForge CLI
-    │
-    ▼
-Generates a Complete Stellar Application
-    │
-    ├── Frontend
-    ├── Backend
-    ├── Smart Contracts
-    ├── Docker Configuration
-    ├── GitHub Workflows
-    ├── Tests
-    └── Documentation
-    │
-    ▼
-Production-Ready Foundation
-```
+`stellarforge-cli` owns:
+
+- command parsing and CLI UX;
+- project scaffolding orchestration;
+- controlled template integration;
+- environment diagnostics;
+- local development/test orchestration;
+- deployment orchestration;
+- CLI-specific configuration, errors, logs, tests, and documentation.
+
+It does **not** own the implementation of future shared SDKs, workflow engines, indexers, contract-security engines, or unrelated application business logic. Those capabilities belong in their appropriate StellarForge modules when/if created.
+
+---
+
+## Security Model
+
+A developer CLI runs in trusted developer and CI environments, so security constrains the architecture from the start.
+
+The project treats command input, filesystem paths, configuration, environment variables, process output, network responses, dependencies, and pull-request code as untrusted until validated for their intended use.
+
+Key principles include:
+
+- safe child-process execution without unsafe shell interpolation;
+- path validation and traversal protection;
+- secret-safe logs and errors;
+- minimal/reviewed dependencies;
+- least-privilege GitHub Actions;
+- dependency and static-analysis checks;
+- protected release automation.
+
+See [SECURITY.md](SECURITY.md), the [threat model](docs/architecture/threat-model.md), and [ADR-0004](docs/adr/ADR-0004-security-baseline.md).
 
 ---
 
 ## Planned Commands
 
-| Command               | Description                                      |
-| --------------------- | ------------------------------------------------ |
-| `stellarforge new`    | Create a new Stellar application                 |
-| `stellarforge add`    | Add features and modules to an existing project  |
-| `stellarforge dev`    | Start the local development environment          |
-| `stellarforge test`   | Run the project's test suite                     |
-| `stellarforge deploy` | Deploy contracts and application components      |
-| `stellarforge doctor` | Validate the development environment             |
-| `stellarforge help`   | Display available commands and usage information |
+| Command | MVP purpose | Status |
+| --- | --- | --- |
+| `stellarforge new` | Create a supported Stellar project | Planned |
+| `stellarforge doctor` | Validate the development environment | Planned |
+| `stellarforge dev` | Orchestrate supported local development | Planned |
+| `stellarforge test` | Run supported project tests | Planned |
+| `stellarforge deploy` | Deploy through the MVP Testnet workflow | Planned |
+| `stellarforge --help` | Display CLI usage/help | Planned |
+| `stellarforge --version` | Display CLI version | Planned |
 
----
-
-## Repository Structure
-
-```text
-stellarforge-cli/
-
-.github/
-docs/
-src/
-tests/
-
-README.md
-ROADMAP.md
-CHANGELOG.md
-CONTRIBUTING.md
-CODE_OF_CONDUCT.md
-SECURITY.md
-LICENSE
-
-package.json
-tsconfig.json
-```
-
----
-
-## Documentation
-
-Additional documentation is available throughout the repository:
-
-* **Product Requirements Document (PRD)** – Defines the product vision, goals, and scope.
-* **Architecture Decision Records (ADRs)** – Documents significant architectural decisions.
-* **Architecture Guides** – Explains the internal design of the CLI.
-* **Developer Guides** – Installation, quick start, and development workflows.
-* **Reference Documentation** – Commands, configuration, and API references.
-* **Contribution Guides** – Coding standards, branching strategy, and contributor workflows.
+`stellarforge add`, plugin architecture, and remote template registries are **post-v1 candidates**, not MVP commitments.
 
 ---
 
 ## Roadmap
 
-The MVP focuses on building the foundation of the CLI.
+The planned release path is:
 
-### Phase 1
+1. **v0.1 — CLI Foundation**
+2. **v0.2 — Project Generator & Templates**
+3. **v0.3 — Configuration & Diagnostics**
+4. **v0.4 — Development & Testing Commands**
+5. **v0.5 — Stellar Testnet Deployment**
+6. **v0.6 — Security, Documentation & DX Hardening**
+7. **v0.7–v0.9 — MVP Stabilization**
+8. **v1.0 — Stable CLI MVP**
 
-* CLI foundation
-* Project scaffolding
-* Starter templates
-* Local development commands
-* Testing framework
+See [ROADMAP.md](ROADMAP.md) for scope and post-v1 candidates.
 
-### Phase 2
+---
 
-* Deployment workflows
-* Feature installation system
-* Configuration management
-* Improved developer experience
+## Repository Foundation
 
-### Phase 3
+As implementation begins, the repository is being organized around:
 
-* Plugin architecture
-* Remote template registry
-* Release automation
-* Advanced project management
+```text
+stellarforge-cli/
+├── .changeset/
+├── .github/
+├── docs/
+│   ├── adr/
+│   ├── architecture/
+│   ├── contributing/
+│   ├── guides/
+│   ├── prd/
+│   └── reference/
+├── src/
+├── tests/
+├── README.md
+├── ROADMAP.md
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
+├── SECURITY.md
+└── LICENSE
+```
 
-See the full roadmap in [ROADMAP.md](ROADMAP.md).
+Some implementation directories/files will appear as their corresponding foundation issues are completed.
+
+---
+
+## Release & Versioning
+
+The proposed release strategy uses Semantic Versioning and Changesets. Release-impacting PRs will record their intended version/changelog effect close to the code change.
+
+See [ADR-0003](docs/adr/ADR-0003-release-and-versioning-strategy.md).
 
 ---
 
 ## Contributing
 
-We welcome developers, designers, technical writers, testers, and researchers from across the Stellar ecosystem.
+We welcome development, documentation, testing, research, security, and developer-experience contributions.
 
-Whether you're fixing bugs, improving documentation, implementing features, or sharing ideas, your contributions help strengthen the developer experience for everyone.
+Before starting implementation:
 
-Please read:
+- read [CONTRIBUTING.md](CONTRIBUTING.md);
+- select a clearly scoped issue;
+- review linked architecture/security requirements;
+- confirm assignment when the issue/program requires it;
+- keep the PR focused on its acceptance criteria.
 
-* [CONTRIBUTING.md](CONTRIBUTING.md)
-* [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-* [SECURITY.md](SECURITY.md)
+The project prioritizes meaningful, independently reviewable contributions over PR volume.
 
 ---
 
-## Security
+## Reporting Security Issues
 
-Security is a core priority for StellarForge.
+Do not disclose suspected vulnerabilities in public issues. Follow [SECURITY.md](SECURITY.md) and use GitHub Private Vulnerability Reporting when available.
 
-If you discover a potential vulnerability, please use GitHub's **Private Vulnerability Reporting** feature instead of opening a public issue.
+---
+
+## Part of StellarForge
+
+StellarForge CLI is one component of the broader **StellarForge** open-source developer-tooling initiative.
+
+The root `DigiNodes/StellarForge` repository coordinates ecosystem-level architecture, governance, documentation, and roadmap decisions. Additional module repositories will be linked here only when they actually exist and have an established role.
 
 ---
 
 ## License
 
-This project is released under the MIT License.
-
----
-
-## Part of the StellarForge Ecosystem
-
-StellarForge CLI is one component of the broader StellarForge ecosystem.
-
-| Repository                 | Purpose                                               |
-| -------------------------- | ----------------------------------------------------- |
-| **StellarForge**           | Ecosystem documentation, governance, and architecture |
-| **stellarforge-cli**       | Developer command-line interface                      |
-| **stellarforge-sdk**       | Shared TypeScript SDK and developer utilities         |
-| **stellarforge-workflows** | Workflow and event orchestration engine               |
-| **stellarforge-examples**  | Starter templates and reference applications          |
-
-Together, these repositories provide a modular, open-source foundation for building scalable, production-ready applications on Stellar and Soroban.
-
----
-
-## Project Status
-
-StellarForge CLI is currently under active development. The architecture, documentation, and contributor workflows are being established as the foundation for future community contributions.
-
-Feedback, ideas, and contributions are welcome as we build the next generation of developer tooling for the Stellar ecosystem.
+StellarForge CLI is intended to be released under the MIT License. The repository license file is established as part of the public foundation before code distribution.
