@@ -6,7 +6,13 @@ import { beforeAll, describe, expect, it } from 'vitest';
 const repositoryRoot = resolve(import.meta.dirname, '..');
 const builtCliPath = resolve(repositoryRoot, 'dist', 'cli.js');
 const packageJsonPath = resolve(repositoryRoot, 'package.json');
-const typescriptCliPath = resolve(repositoryRoot, 'node_modules', 'typescript', 'bin', 'tsc');
+const typescriptCliPath = resolve(
+  repositoryRoot,
+  'node_modules',
+  'typescript',
+  'bin',
+  'tsc',
+);
 
 beforeAll(() => {
   execFileSync(process.execPath, [typescriptCliPath, '-p', 'tsconfig.build.json'], {
