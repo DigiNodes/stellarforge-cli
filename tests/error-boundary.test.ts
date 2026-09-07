@@ -7,30 +7,11 @@ import {
   SubprocessCliError,
   ValidationCliError,
 } from '../src/errors/index.js';
-import { TerminalOutput, type TextOutputStream } from '../src/output/index.js';
-
-function captureOutput() {
-  const stdout: string[] = [];
-  const stderr: string[] = [];
-  const createStream = (target: string[]): TextOutputStream => ({
-    write(chunk: string) {
-      target.push(chunk);
-    },
-  });
-
-  return {
-    output: new TerminalOutput({
-      stdout: createStream(stdout),
-      stderr: createStream(stderr),
-    }),
-    stdout,
-    stderr,
-  };
-}
+import { createCapturedTerminalOutput } from './helpers/captured-output.js';
 
 describe('CLI error boundary', () => {
   it('returns success when the action completes', async () => {
-    const { output, stdout, stderr } = captureOutput();
+    const { output, stdout, stderr } = createCapturedTerminalOutput();
 
     const exitCode = await runWithCliErrorBoundary(() => undefined, output);
 
@@ -40,7 +21,7 @@ describe('CLI error boundary', () => {
   });
 
   it('renders validation errors safely and returns the validation code', async () => {
-    const { output, stderr } = captureOutput();
+    const { output, stderr } = createCapturedTerminalOutput();
 
     const exitCode = await runWithCliErrorBoundary(() => {
       throw new ValidationCliError('Project name is required.');
@@ -51,7 +32,7 @@ describe('CLI error boundary', () => {
   });
 
   it('renders subprocess errors safely and returns the subprocess code', async () => {
-    const { output, stderr } = captureOutput();
+    const { output, stderr } = createCapturedTerminalOutput();
 
     const exitCode = await runWithCliErrorBoundary(() => {
       throw new SubprocessCliError('The requested tool exited unsuccessfully.');
@@ -62,7 +43,7 @@ describe('CLI error boundary', () => {
   });
 
   it('preserves an internal cause without exposing it to the user', async () => {
-    const { output, stderr } = captureOutput();
+    const { output, stderr } = createCapturedTerminalOutput();
     const cause = new Error('private-key=SECRET_INTERNAL_VALUE');
     const error = new InternalCliError({ cause });
 
@@ -77,7 +58,7 @@ describe('CLI error boundary', () => {
   });
 
   it('hides unexpected exception details behind a generic message', async () => {
-    const { output, stderr } = captureOutput();
+    const { output, stderr } = createCapturedTerminalOutput();
 
     const exitCode = await runWithCliErrorBoundary(() => {
       throw new Error('token=SECRET_UNEXPECTED_VALUE');
@@ -89,7 +70,7 @@ describe('CLI error boundary', () => {
   });
 
   it('maps Commander usage failures without double-rendering them', async () => {
-    const { output, stderr } = captureOutput();
+    const { output, stderr } = createCapturedTerminalOutput();
 
     const exitCode = await runWithCliErrorBoundary(() => {
       throw new CommanderError(1, 'commander.unknownOption', 'unknown option');
@@ -100,7 +81,7 @@ describe('CLI error boundary', () => {
   });
 
   it('preserves successful Commander help/version exits', async () => {
-    const { output, stderr } = captureOutput();
+    const { output, stderr } = createCapturedTerminalOutput();
 
     const exitCode = await runWithCliErrorBoundary(() => {
       throw new CommanderError(0, 'commander.helpDisplayed', 'help displayed');

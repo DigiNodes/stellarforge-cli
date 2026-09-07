@@ -1,37 +1,18 @@
-import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-
-const repositoryRoot = resolve(import.meta.dirname, '..');
-const builtCliPath = resolve(repositoryRoot, 'dist', 'cli.js');
-const packageJsonPath = resolve(repositoryRoot, 'package.json');
-const typescriptCliPath = resolve(
+import {
+  buildCli,
+  builtCliPath,
   repositoryRoot,
-  'node_modules',
-  'typescript',
-  'bin',
-  'tsc',
-);
+  runBuiltCli,
+} from './helpers/cli-process.js';
+
+const packageJsonPath = resolve(repositoryRoot, 'package.json');
 
 beforeAll(() => {
-  execFileSync(
-    process.execPath,
-    [typescriptCliPath, '-p', 'tsconfig.build.json'],
-    {
-      cwd: repositoryRoot,
-      stdio: 'pipe',
-    },
-  );
+  buildCli();
 });
-
-function runBuiltCli(args: string[] = []) {
-  return spawnSync(process.execPath, [builtCliPath, ...args], {
-    cwd: repositoryRoot,
-    encoding: 'utf8',
-    shell: false,
-  });
-}
 
 describe('StellarForge CLI executable', () => {
   it('maps the stellarforge package bin to the compiled CLI entry point', () => {
