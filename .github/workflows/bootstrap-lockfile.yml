@@ -56,6 +56,10 @@ jobs:
 
       - name: Commit generated lockfile
         run: |
+          cp package-lock.json "$RUNNER_TEMP/package-lock.json"
+          git fetch origin feat/cli-001-typescript-foundation
+          git reset --hard origin/feat/cli-001-typescript-foundation
+          cp "$RUNNER_TEMP/package-lock.json" package-lock.json
           git add package-lock.json
           if git diff --cached --quiet; then
             echo "package-lock.json is already up to date"
