@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { runWithCliErrorBoundary } from './errors/index.js';
 import { runCli } from './main.js';
 
-runCli();
+process.exitCode = await runWithCliErrorBoundary(() => runCli());
