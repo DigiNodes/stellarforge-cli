@@ -1,4 +1,8 @@
-import { execFileSync, spawnSync, type SpawnSyncReturns } from 'node:child_process';
+import {
+  execFileSync,
+  spawnSync,
+  type SpawnSyncReturns,
+} from 'node:child_process';
 import { resolve } from 'node:path';
 
 export const repositoryRoot = resolve(import.meta.dirname, '..', '..');
