@@ -77,19 +77,25 @@ describe('StellarForge CLI executable', () => {
     expect(result.stdout.trim()).toBe(packageJson.version);
   });
 
-  it('rejects an unknown option with actionable output', () => {
+  it('maps an unknown option to the validation exit code', () => {
     const result = runBuiltCli(['--definitely-unknown']);
 
-    expect(result.status).not.toBe(0);
+    expect(result.status).toBe(2);
     expect(result.stderr).toContain('error: unknown option');
     expect(result.stderr).toContain('Usage: stellarforge [options]');
+    expect(result.stderr).not.toContain(
+      'StellarForge encountered an unexpected error.',
+    );
   });
 
-  it('rejects an unknown positional command with actionable output', () => {
+  it('maps an unknown positional command to the validation exit code', () => {
     const result = runBuiltCli(['not-a-command']);
 
-    expect(result.status).not.toBe(0);
+    expect(result.status).toBe(2);
     expect(result.stderr).toContain('error:');
     expect(result.stderr).toContain('Usage: stellarforge [options]');
+    expect(result.stderr).not.toContain(
+      'StellarForge encountered an unexpected error.',
+    );
   });
 });
