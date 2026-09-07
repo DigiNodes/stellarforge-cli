@@ -1,0 +1,68 @@
+name: Bootstrap CLI-002 lockfile
+
+on:
+  push:
+    branches:
+      - feat/cli-002-executable-entry
+    paths:
+      - package.json
+      - package-lock.json
+      - src/**
+      - tests/**
+      - docs/guides/installation.md
+      - .github/workflows/bootstrap-cli-002.yml
+
+permissions:
+  contents: write
+
+jobs:
+  generate-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.13.0'
+          package-manager-cache: false
+
+      - name: Refresh deterministic npm lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Install from generated lockfile
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Test executable behavior
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit refreshed lockfile
+        run: |
+          cp package-lock.json "$RUNNER_TEMP/package-lock.json"
+          git fetch origin feat/cli-002-executable-entry
+          git reset --hard origin/feat/cli-002-executable-entry
+          cp "$RUNNER_TEMP/package-lock.json" package-lock.json
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "package-lock.json is already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: refresh deterministic npm lockfile"
+          git push origin HEAD:feat/cli-002-executable-entry
