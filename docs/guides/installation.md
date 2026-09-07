@@ -6,10 +6,11 @@ StellarForge CLI is under active MVP development and is not yet treated as a sta
 
 The CLI foundation supports maintained Node.js LTS lines covered by the package engine range:
 
-- Node.js `>=22.12.0 <25`
+- Node.js `>=22.13.0 <25`
 - npm `>=10.9.0`
+- repository toolchain metadata records npm `10.9.2`
 
-Node.js 22 and Node.js 24 are the intended supported LTS majors for the current foundation. Do not use an end-of-life Node release for development or CI.
+Node.js 22 and Node.js 24 are the intended supported LTS majors for the current foundation. The minimum Node.js 22 patch level is aligned with the CLI's current linting/tooling dependency requirements. Do not use an end-of-life Node release for development or CI.
 
 ## Contributor Setup
 
