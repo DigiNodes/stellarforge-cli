@@ -7,10 +7,7 @@ import {
   SubprocessCliError,
   ValidationCliError,
 } from '../src/errors/index.js';
-import {
-  TerminalOutput,
-  type TextOutputStream,
-} from '../src/output/index.js';
+import { TerminalOutput, type TextOutputStream } from '../src/output/index.js';
 
 function captureOutput() {
   const stdout: string[] = [];
@@ -87,7 +84,9 @@ describe('CLI error boundary', () => {
     }, output);
 
     expect(exitCode).toBe(EXIT_CODES.unexpected);
-    expect(stderr).toEqual(['StellarForge encountered an unexpected error.\n']);
+    expect(stderr).toEqual([
+      'StellarForge encountered an unexpected error.\n',
+    ]);
     expect(stderr.join('')).not.toContain('SECRET_UNEXPECTED_VALUE');
   });
 
