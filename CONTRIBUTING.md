@@ -15,7 +15,7 @@ Thank you for contributing to StellarForge CLI. The project is being built as pr
 1. Fork or clone the repository.
 2. Create a focused branch from the current default branch.
 3. Make the smallest coherent change that satisfies the issue.
-4. Add or update tests for behavior changes.
+4. Add or update tests for behavior changes. Follow `docs/contributing/testing.md` for fixture and integration-test conventions.
 5. Update documentation where behavior, commands, configuration, or contributor workflows change.
 6. Add a Changeset when the PR affects the published CLI or user-visible behavior.
 7. Run the available local checks before opening a PR.
