@@ -39,67 +39,88 @@ describe('CLI error boundary', () => {
     expect(stderr).toEqual([]);
   });
 
-  it('renders validation errors safely and returns the validation code', async () => {
-    const { output, stderr } = captureOutput();
+  it(
+    'renders validation errors safely and returns the validation code',
+    async () => {
+      const { output, stderr } = captureOutput();
 
-    const exitCode = await runWithCliErrorBoundary(() => {
-      throw new ValidationCliError('Project name is required.');
-    }, output);
+      const exitCode = await runWithCliErrorBoundary(() => {
+        throw new ValidationCliError('Project name is required.');
+      }, output);
 
-    expect(exitCode).toBe(EXIT_CODES.validation);
-    expect(stderr).toEqual(['Project name is required.\n']);
-  });
+      expect(exitCode).toBe(EXIT_CODES.validation);
+      expect(stderr).toEqual(['Project name is required.\n']);
+    },
+  );
 
-  it('renders subprocess errors safely and returns the subprocess code', async () => {
-    const { output, stderr } = captureOutput();
+  it(
+    'renders subprocess errors safely and returns the subprocess code',
+    async () => {
+      const { output, stderr } = captureOutput();
 
-    const exitCode = await runWithCliErrorBoundary(() => {
-      throw new SubprocessCliError('The requested tool exited unsuccessfully.');
-    }, output);
+      const exitCode = await runWithCliErrorBoundary(() => {
+        throw new SubprocessCliError(
+          'The requested tool exited unsuccessfully.',
+        );
+      }, output);
 
-    expect(exitCode).toBe(EXIT_CODES.subprocess);
-    expect(stderr).toEqual(['The requested tool exited unsuccessfully.\n']);
-  });
+      expect(exitCode).toBe(EXIT_CODES.subprocess);
+      expect(stderr).toEqual(['The requested tool exited unsuccessfully.\n']);
+    },
+  );
 
-  it('preserves an internal cause without exposing it to the user', async () => {
-    const { output, stderr } = captureOutput();
-    const cause = new Error('private-key=SECRET_INTERNAL_VALUE');
-    const error = new InternalCliError({ cause });
+  it(
+    'preserves an internal cause without exposing it to the user',
+    async () => {
+      const { output, stderr } = captureOutput();
+      const cause = new Error('private-key=SECRET_INTERNAL_VALUE');
+      const error = new InternalCliError({ cause });
 
-    const exitCode = await runWithCliErrorBoundary(() => {
-      throw error;
-    }, output);
+      const exitCode = await runWithCliErrorBoundary(() => {
+        throw error;
+      }, output);
 
-    expect(exitCode).toBe(EXIT_CODES.internal);
-    expect(error.cause).toBe(cause);
-    expect(stderr).toEqual(['StellarForge encountered an internal error.\n']);
-    expect(stderr.join('')).not.toContain('SECRET_INTERNAL_VALUE');
-  });
+      expect(exitCode).toBe(EXIT_CODES.internal);
+      expect(error.cause).toBe(cause);
+      expect(stderr).toEqual(['StellarForge encountered an internal error.\n']);
+      expect(stderr.join('')).not.toContain('SECRET_INTERNAL_VALUE');
+    },
+  );
 
-  it('hides unexpected exception details behind a generic message', async () => {
-    const { output, stderr } = captureOutput();
+  it(
+    'hides unexpected exception details behind a generic message',
+    async () => {
+      const { output, stderr } = captureOutput();
 
-    const exitCode = await runWithCliErrorBoundary(() => {
-      throw new Error('token=SECRET_UNEXPECTED_VALUE');
-    }, output);
+      const exitCode = await runWithCliErrorBoundary(() => {
+        throw new Error('token=SECRET_UNEXPECTED_VALUE');
+      }, output);
 
-    expect(exitCode).toBe(EXIT_CODES.unexpected);
-    expect(stderr).toEqual([
-      'StellarForge encountered an unexpected error.\n',
-    ]);
-    expect(stderr.join('')).not.toContain('SECRET_UNEXPECTED_VALUE');
-  });
+      expect(exitCode).toBe(EXIT_CODES.unexpected);
+      expect(stderr).toEqual([
+        'StellarForge encountered an unexpected error.\n',
+      ]);
+      expect(stderr.join('')).not.toContain('SECRET_UNEXPECTED_VALUE');
+    },
+  );
 
-  it('maps Commander usage failures without double-rendering them', async () => {
-    const { output, stderr } = captureOutput();
+  it(
+    'maps Commander usage failures without double-rendering them',
+    async () => {
+      const { output, stderr } = captureOutput();
 
-    const exitCode = await runWithCliErrorBoundary(() => {
-      throw new CommanderError(1, 'commander.unknownOption', 'unknown option');
-    }, output);
+      const exitCode = await runWithCliErrorBoundary(() => {
+        throw new CommanderError(
+          1,
+          'commander.unknownOption',
+          'unknown option',
+        );
+      }, output);
 
-    expect(exitCode).toBe(EXIT_CODES.validation);
-    expect(stderr).toEqual([]);
-  });
+      expect(exitCode).toBe(EXIT_CODES.validation);
+      expect(stderr).toEqual([]);
+    },
+  );
 
   it('preserves successful Commander help/version exits', async () => {
     const { output, stderr } = captureOutput();
