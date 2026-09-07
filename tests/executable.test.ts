@@ -25,6 +25,14 @@ beforeAll(() => {
   );
 });
 
+function runBuiltCli(args: string[] = []) {
+  return spawnSync(process.execPath, [builtCliPath, ...args], {
+    cwd: repositoryRoot,
+    encoding: 'utf8',
+    shell: false,
+  });
+}
+
 describe('StellarForge CLI executable', () => {
   it('maps the stellarforge package bin to the compiled CLI entry point', () => {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
@@ -40,15 +48,36 @@ describe('StellarForge CLI executable', () => {
     expect(builtCli.startsWith('#!/usr/bin/env node\n')).toBe(true);
   });
 
-  it('starts successfully without producing command output yet', () => {
-    const result = spawnSync(process.execPath, [builtCliPath], {
-      cwd: repositoryRoot,
-      encoding: 'utf8',
-      shell: false,
-    });
+  it('starts successfully without arguments', () => {
+    const result = runBuiltCli();
 
     expect(result.status).toBe(0);
     expect(result.stdout).toBe('');
     expect(result.stderr).toBe('');
+  });
+
+  it('prints global help successfully', () => {
+    const result = runBuiltCli(['--help']);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toContain('Usage: stellarforge [options]');
+    expect(result.stdout).toContain('-h, --help');
+  });
+
+  it('rejects an unknown option with actionable output', () => {
+    const result = runBuiltCli(['--definitely-unknown']);
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('error: unknown option');
+    expect(result.stderr).toContain('Usage: stellarforge [options]');
+  });
+
+  it('rejects an unknown positional command with actionable output', () => {
+    const result = runBuiltCli(['not-a-command']);
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('error:');
+    expect(result.stderr).toContain('Usage: stellarforge [options]');
   });
 });
