@@ -1,0 +1,29 @@
+{
+  "name": "@stellarforge/cli",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Command-line interface for building production-ready Stellar applications.",
+  "type": "module",
+  "packageManager": "npm@10.9.2",
+  "engines": {
+    "node": ">=22.13.0 <25",
+    "npm": ">=10.9.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"eslint.config.js\" \"vitest.config.ts\" \"package.json\" \"tsconfig*.json\" \".prettierrc\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"eslint.config.js\" \"vitest.config.ts\" \"package.json\" \"tsconfig*.json\" \".prettierrc\"",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.1",
+    "eslint": "10.0.1",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.69.0",
+    "vitest": "5.0.0"
+  }
+}
