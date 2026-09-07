@@ -1,3 +1,6 @@
-export function runCli(): void {
-  // CLI-003 will introduce the root command and global help behavior.
+import { createRootCommand } from './commands/root.js';
+
+export function runCli(argv: string[] = process.argv): void {
+  const program = createRootCommand();
+  program.parse(argv);
 }

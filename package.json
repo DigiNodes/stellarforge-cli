@@ -20,6 +20,9 @@
     "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"eslint.config.js\" \"vitest.config.ts\" \"package.json\" \"tsconfig*.json\" \".prettierrc\"",
     "test": "vitest run"
   },
+  "dependencies": {
+    "commander": "15.0.0"
+  },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/node": "22.20.1",
