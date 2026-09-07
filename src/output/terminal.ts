@@ -7,10 +7,14 @@ export interface TerminalOutputStreams {
   stderr: TextOutputStream;
 }
 
-const TERMINAL_CONTROL_CHARACTERS = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g;
+const ANSI_CSI_SEQUENCE = /(?:\u001b\[|\u009b)[0-?]*[ -/]*[@-~]/g;
+const TERMINAL_CONTROL_CHARACTERS =
+  /[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g;
 
 export function sanitizeTerminalText(message: string): string {
-  return message.replace(TERMINAL_CONTROL_CHARACTERS, '');
+  return message
+    .replace(ANSI_CSI_SEQUENCE, '')
+    .replace(TERMINAL_CONTROL_CHARACTERS, '');
 }
 
 export class TerminalOutput {
