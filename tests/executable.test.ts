@@ -63,6 +63,18 @@ describe('StellarForge CLI executable', () => {
     expect(result.stderr).toBe('');
     expect(result.stdout).toContain('Usage: stellarforge [options]');
     expect(result.stdout).toContain('-h, --help');
+    expect(result.stdout).toContain('-V, --version');
+  });
+
+  it('prints the package version from the built executable', () => {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
+      version: string;
+    };
+    const result = runBuiltCli(['--version']);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(result.stdout.trim()).toBe(packageJson.version);
   });
 
   it('rejects an unknown option with actionable output', () => {
