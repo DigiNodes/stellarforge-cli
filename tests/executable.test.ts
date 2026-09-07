@@ -15,10 +15,14 @@ const typescriptCliPath = resolve(
 );
 
 beforeAll(() => {
-  execFileSync(process.execPath, [typescriptCliPath, '-p', 'tsconfig.build.json'], {
-    cwd: repositoryRoot,
-    stdio: 'pipe',
-  });
+  execFileSync(
+    process.execPath,
+    [typescriptCliPath, '-p', 'tsconfig.build.json'],
+    {
+      cwd: repositoryRoot,
+      stdio: 'pipe',
+    },
+  );
 });
 
 describe('StellarForge CLI executable', () => {
