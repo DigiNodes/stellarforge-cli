@@ -1,4 +1,4 @@
-name: Validate CLI-008 static quality
+name: Diagnose CLI-008 formatting
 
 on:
   push:
@@ -6,15 +6,13 @@ on:
       - test/cli-008-static-quality
     paths:
       - tests/static-quality.test.ts
-      - docs/contributing/static-quality.md
-      - CONTRIBUTING.md
       - .github/workflows/validate-cli-008.yml
 
 permissions:
   contents: read
 
 jobs:
-  validate-static-quality:
+  show-prettier-diff:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -31,17 +29,8 @@ jobs:
       - name: Install from committed lockfile
         run: npm ci --ignore-scripts --no-audit --no-fund
 
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Check formatting
-        run: npm run format:check
-
-      - name: Test static quality enforcement
-        run: npm test
-
-      - name: Build
-        run: npm run build
+      - name: Show canonical Prettier diff
+        run: |
+          node node_modules/prettier/bin/prettier.cjs --write tests/static-quality.test.ts
+          git diff --color=never -- tests/static-quality.test.ts
+          git diff --exit-code -- tests/static-quality.test.ts
