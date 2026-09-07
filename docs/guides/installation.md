@@ -1,10 +1,17 @@
 # Installation
 
-StellarForge CLI is under active MVP development and may not yet be published to npm. Until a stable package is released, contributors should use the repository locally.
+StellarForge CLI is under active MVP development and is not yet treated as a stable published npm package. Contributors should use the repository locally until the protected release workflow is established.
+
+## Contributor Prerequisites
+
+The CLI foundation supports maintained Node.js LTS lines covered by the package engine range:
+
+- Node.js `>=22.12.0 <25`
+- npm `>=10.9.0`
+
+Node.js 22 and Node.js 24 are the intended supported LTS majors for the current foundation. Do not use an end-of-life Node release for development or CI.
 
 ## Contributor Setup
-
-Prerequisites will be finalized with CLI-001. The intended baseline is a supported Node.js release and npm.
 
 ```bash
 git clone https://github.com/DigiNodes/stellarforge-cli.git
@@ -12,7 +19,7 @@ cd stellarforge-cli
 npm ci
 ```
 
-After the package foundation lands, the standard local checks will be:
+Run the complete local validation set before opening a pull request:
 
 ```bash
 npm run typecheck
@@ -22,8 +29,10 @@ npm test
 npm run build
 ```
 
+The repository uses npm and commits `package-lock.json` for deterministic installation. Do not substitute another package manager without an explicit project decision.
+
 Do not install undocumented global dependencies. Stellar-specific tools required by individual commands will be documented with those commands and validated by `stellarforge doctor` where applicable.
 
-## Package Installation
+## Package Publication
 
-The npm package name and stable installation command will be documented when publishing begins. Do not assume an unpublished package name.
+The package is intentionally marked private during the foundation phase to prevent accidental publication. The final public npm package identity and installation command must be verified as part of release-readiness work before the private guard is removed.
