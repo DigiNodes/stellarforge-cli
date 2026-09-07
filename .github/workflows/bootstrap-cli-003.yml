@@ -1,4 +1,4 @@
-name: Bootstrap CLI-003 command system
+name: Validate CLI-003 command system
 
 on:
   push:
@@ -12,10 +12,10 @@ on:
       - .github/workflows/bootstrap-cli-003.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  generate-and-validate:
+  validate-committed-command-system:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -29,10 +29,7 @@ jobs:
           node-version: '22.13.0'
           package-manager-cache: false
 
-      - name: Refresh deterministic npm lockfile
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-
-      - name: Install from generated lockfile
+      - name: Install from committed lockfile
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Typecheck
@@ -49,19 +46,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-      - name: Commit refreshed lockfile
-        run: |
-          cp package-lock.json "$RUNNER_TEMP/package-lock.json"
-          git fetch origin feat/cli-003-root-command
-          git reset --hard origin/feat/cli-003-root-command
-          cp "$RUNNER_TEMP/package-lock.json" package-lock.json
-          git add package-lock.json
-          if git diff --cached --quiet; then
-            echo "package-lock.json is already up to date"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: refresh deterministic npm lockfile"
-          git push origin HEAD:feat/cli-003-root-command
