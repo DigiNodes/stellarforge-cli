@@ -5,6 +5,9 @@
   "description": "Command-line interface for building production-ready Stellar applications.",
   "type": "module",
   "packageManager": "npm@10.9.2",
+  "bin": {
+    "stellarforge": "./dist/cli.js"
+  },
   "engines": {
     "node": ">=22.13.0 <25",
     "npm": ">=10.9.0"
