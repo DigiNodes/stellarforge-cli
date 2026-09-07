@@ -1,7 +1,4 @@
-export {
-  handleCliError,
-  runWithCliErrorBoundary,
-} from './boundary.js';
+export { handleCliError, runWithCliErrorBoundary } from './boundary.js';
 export {
   CliError,
   EXIT_CODES,
