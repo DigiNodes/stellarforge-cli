@@ -2,7 +2,8 @@ import { CommanderError } from 'commander';
 import { TerminalOutput } from '../output/index.js';
 import { CliError, EXIT_CODES, type CliExitCode } from './errors.js';
 
-const UNEXPECTED_ERROR_MESSAGE = 'StellarForge encountered an unexpected error.';
+const UNEXPECTED_ERROR_MESSAGE =
+  'StellarForge encountered an unexpected error.';
 
 export function handleCliError(
   error: unknown,
