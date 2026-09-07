@@ -1,4 +1,4 @@
-name: Bootstrap lockfile
+name: Validate CLI-001 foundation
 
 on:
   push:
@@ -16,10 +16,10 @@ on:
       - .github/workflows/bootstrap-lockfile.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  generate-and-validate:
+  validate-committed-foundation:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -33,10 +33,7 @@ jobs:
           node-version: '22.13.0'
           package-manager-cache: false
 
-      - name: Generate deterministic npm lockfile
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-
-      - name: Install from generated lockfile
+      - name: Install from committed lockfile
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Typecheck
@@ -53,19 +50,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-      - name: Commit generated lockfile
-        run: |
-          cp package-lock.json "$RUNNER_TEMP/package-lock.json"
-          git fetch origin feat/cli-001-typescript-foundation
-          git reset --hard origin/feat/cli-001-typescript-foundation
-          cp "$RUNNER_TEMP/package-lock.json" package-lock.json
-          git add package-lock.json
-          if git diff --cached --quiet; then
-            echo "package-lock.json is already up to date"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: refresh deterministic npm lockfile"
-          git push origin HEAD:feat/cli-001-typescript-foundation
