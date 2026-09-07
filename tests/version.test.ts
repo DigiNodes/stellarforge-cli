@@ -9,17 +9,14 @@ describe('CLI version resolution', () => {
     expect(resolveCliVersion(() => ({ version: '1.2.3' }))).toBe('1.2.3');
   });
 
-  it.each([
-    {},
-    { version: '' },
-    { version: '   ' },
-    { version: 123 },
-    null,
-  ])('rejects invalid package metadata: %j', (metadata) => {
-    expect(() => resolveCliVersion(() => metadata)).toThrow(
-      CliVersionResolutionError,
-    );
-  });
+  it.each([{}, { version: '' }, { version: '   ' }, { version: 123 }, null])(
+    'rejects invalid package metadata: %j',
+    (metadata) => {
+      expect(() => resolveCliVersion(() => metadata)).toThrow(
+        CliVersionResolutionError,
+      );
+    },
+  );
 
   it('wraps package metadata loading failures predictably', () => {
     const cause = new Error('package metadata unavailable');
