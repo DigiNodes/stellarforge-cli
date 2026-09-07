@@ -4,7 +4,10 @@ const require = createRequire(import.meta.url);
 
 export class CliVersionResolutionError extends Error {
   constructor(options?: ErrorOptions) {
-    super('Unable to resolve StellarForge CLI version from package metadata.', options);
+    super(
+      'Unable to resolve StellarForge CLI version from package metadata.',
+      options,
+    );
     this.name = 'CliVersionResolutionError';
   }
 }
