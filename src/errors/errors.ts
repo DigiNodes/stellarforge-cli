@@ -27,23 +27,13 @@ export abstract class CliError extends Error {
 
 export class ValidationCliError extends CliError {
   constructor(userMessage: string, options?: ErrorOptions) {
-    super(
-      'ValidationCliError',
-      userMessage,
-      EXIT_CODES.validation,
-      options,
-    );
+    super('ValidationCliError', userMessage, EXIT_CODES.validation, options);
   }
 }
 
 export class SubprocessCliError extends CliError {
   constructor(userMessage: string, options?: ErrorOptions) {
-    super(
-      'SubprocessCliError',
-      userMessage,
-      EXIT_CODES.subprocess,
-      options,
-    );
+    super('SubprocessCliError', userMessage, EXIT_CODES.subprocess, options);
   }
 }
 
