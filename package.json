@@ -12,8 +12,8 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"eslint.config.js\" \"vitest.config.ts\" \"package.json\" \"tsconfig*.json\" \".prettierrc\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"eslint.config.js\" \"vitest.config.ts\" \"package.json\" \"tsconfig*.json\" \".prettierrc\"",
     "test": "vitest run"
   },
   "devDependencies": {
