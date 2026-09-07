@@ -1,18 +1,23 @@
-name: Diagnose CLI-006 formatting
+name: Validate CLI-006 error boundary
 
 on:
   push:
     branches:
       - feat/cli-006-error-boundary
     paths:
+      - src/cli.ts
+      - src/commands/root.ts
+      - src/errors/**
       - tests/error-boundary.test.ts
+      - tests/executable.test.ts
+      - docs/reference/exit-codes.md
       - .github/workflows/validate-cli-006.yml
 
 permissions:
   contents: read
 
 jobs:
-  show-prettier-diff:
+  validate-error-boundary:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -29,8 +34,17 @@ jobs:
       - name: Install from committed lockfile
         run: npm ci --ignore-scripts --no-audit --no-fund
 
-      - name: Show canonical Prettier diff
-        run: |
-          npx prettier --write tests/error-boundary.test.ts
-          git diff --color=never -- tests/error-boundary.test.ts
-          git diff --exit-code -- tests/error-boundary.test.ts
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Test error and executable behavior
+        run: npm test
+
+      - name: Build
+        run: npm run build
