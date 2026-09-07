@@ -9,6 +9,7 @@ export function createRootCommand(version = resolveCliVersion()): Command {
     )
     .usage('[options]')
     .version(version)
+    .exitOverride()
     .showHelpAfterError()
     .showSuggestionAfterError(true);
 }
