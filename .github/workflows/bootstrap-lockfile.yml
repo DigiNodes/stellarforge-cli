@@ -6,6 +6,12 @@ on:
       - feat/cli-001-typescript-foundation
     paths:
       - package.json
+      - tsconfig.json
+      - tsconfig.build.json
+      - eslint.config.js
+      - vitest.config.ts
+      - tests/**
+      - src/**
       - .github/workflows/bootstrap-lockfile.yml
 
 permissions:
