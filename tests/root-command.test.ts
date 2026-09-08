@@ -6,7 +6,9 @@ describe('StellarForge root command', () => {
     const program = createRootCommand('1.2.3');
 
     expect(program.name()).toBe('stellarforge');
-    expect(program.commands.map((command) => command.name())).toEqual(['doctor']);
+    expect(program.commands.map((command) => command.name())).toEqual([
+      'doctor',
+    ]);
   });
 
   it('provides useful global help information', () => {
