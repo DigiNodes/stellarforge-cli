@@ -13,5 +13,6 @@ export function createRootCommand(version = resolveCliVersion()): Command {
     .exitOverride()
     .showHelpAfterError()
     .showSuggestionAfterError(true)
+    .action(() => undefined)
     .addCommand(createDoctorCommand());
 }
