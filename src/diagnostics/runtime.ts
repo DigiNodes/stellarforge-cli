@@ -38,7 +38,10 @@ export function createNodeDiagnostic(
         );
       }
 
-      if (!isAtLeast(parsed, MINIMUM_NODE) || parsed.major >= MAXIMUM_NODE_MAJOR) {
+      if (
+        !isAtLeast(parsed, MINIMUM_NODE) ||
+        parsed.major >= MAXIMUM_NODE_MAJOR
+      ) {
         return failure(
           'node',
           'Node.js',
