@@ -51,61 +51,56 @@ describe('doctor command', () => {
     expect(captured.stderrText()).toBe('');
   });
 
-  it(
-    'aggregates pass, warning, and failure results with actionable health output',
-    () => {
-      const captured = createCapturedTerminalOutput();
-      let exitCode = -1;
-      const command = createDoctorCommand({
-        checks: [
-          check('node', 'Node.js', 'pass', 'Supported version detected.'),
-          check(
-            'docker',
-            'Docker',
-            'warn',
-            'Docker is not available.',
-            'Install Docker only if the selected workflow requires it.',
-          ),
-          check(
-            'stellar',
-            'Stellar CLI',
-            'fail',
-            'Required CLI is missing.',
-            'Install the official Stellar CLI.',
-          ),
-        ],
-        output: captured.output,
-        setExitCode: (code) => {
-          exitCode = code;
-        },
-      });
+  it('aggregates pass, warning, and failure results with actionable health output', () => {
+    const captured = createCapturedTerminalOutput();
+    let exitCode = -1;
+    const command = createDoctorCommand({
+      checks: [
+        check('node', 'Node.js', 'pass', 'Supported version detected.'),
+        check(
+          'docker',
+          'Docker',
+          'warn',
+          'Docker is not available.',
+          'Install Docker only if the selected workflow requires it.',
+        ),
+        check(
+          'stellar',
+          'Stellar CLI',
+          'fail',
+          'Required CLI is missing.',
+          'Install the official Stellar CLI.',
+        ),
+      ],
+      output: captured.output,
+      setExitCode: (code) => {
+        exitCode = code;
+      },
+    });
 
-      command.parse(['node', 'doctor']);
+    command.parse(['node', 'doctor']);
 
-      expect(exitCode).toBe(EXIT_CODES.diagnostic);
-      expect(captured.stdoutText()).toContain(
-        '[PASS] Node.js: Supported version detected.',
-      );
-      expect(captured.stdoutText()).toContain(
-        '[WARN] Docker: Docker is not available.',
-      );
-      expect(captured.stdoutText()).toContain(
-        'Remediation: Install Docker only if the selected workflow requires it.',
-      );
-      expect(captured.stdoutText()).toContain(
-        '[FAIL] Stellar CLI: Required CLI is missing.',
-      );
-      expect(captured.stdoutText()).toContain(
-        'Remediation: Install the official Stellar CLI.',
-      );
-      expect(captured.stdoutText()).toContain(
-        'Summary: 1 passed, 1 warnings, 1 failed.',
-      );
-      expect(captured.stdoutText()).toContain(
-        'Overall health: action required.',
-      );
-    },
-  );
+    expect(exitCode).toBe(EXIT_CODES.diagnostic);
+    expect(captured.stdoutText()).toContain(
+      '[PASS] Node.js: Supported version detected.',
+    );
+    expect(captured.stdoutText()).toContain(
+      '[WARN] Docker: Docker is not available.',
+    );
+    expect(captured.stdoutText()).toContain(
+      'Remediation: Install Docker only if the selected workflow requires it.',
+    );
+    expect(captured.stdoutText()).toContain(
+      '[FAIL] Stellar CLI: Required CLI is missing.',
+    );
+    expect(captured.stdoutText()).toContain(
+      'Remediation: Install the official Stellar CLI.',
+    );
+    expect(captured.stdoutText()).toContain(
+      'Summary: 1 passed, 1 warnings, 1 failed.',
+    );
+    expect(captured.stdoutText()).toContain('Overall health: action required.');
+  });
 
   it('keeps warning-only diagnostics non-fatal', () => {
     const captured = createCapturedTerminalOutput();
@@ -142,9 +137,7 @@ describe('doctor command', () => {
     const captured = createCapturedTerminalOutput();
     let exitCode = -1;
     const command = createDoctorCommand({
-      checks: [
-        check('node', 'Node.js', 'pass', 'Supported version detected.'),
-      ],
+      checks: [check('node', 'Node.js', 'pass', 'Supported version detected.')],
       output: captured.output,
       setExitCode: (code) => {
         exitCode = code;
