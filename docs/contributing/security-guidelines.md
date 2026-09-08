@@ -29,6 +29,14 @@ Do not dismiss a CodeQL alert merely because CI passes or exploitation has not b
 
 CodeQL complements tests and human review; it does not replace either.
 
+## OpenSSF Scorecard
+
+`.github/workflows/scorecard.yml` evaluates the public repository's supply-chain and repository-security posture on pushes to `main` and on a weekly schedule. It does not execute on pull requests because publishing Scorecard results requires an OIDC token; privileged result publication is therefore kept away from untrusted PR execution.
+
+Scorecard results are published to the OpenSSF Scorecard service, uploaded to GitHub code scanning, and retained as a short-lived SARIF workflow artifact for review/debugging. The workflow uses the official Scorecard Action and only approved result-handling actions pinned to reviewed commit SHAs.
+
+A Scorecard score is a diagnostic signal, not a release gate by itself. Maintainers should review individual checks and remediation guidance, prioritizing findings that align with the project's threat model, dependency policy, workflow permissions, branch/ruleset protections, and release controls. Do not make cosmetic changes solely to raise the aggregate score when they conflict with the project's actual architecture or security model.
+
 ## Vulnerabilities
 
 Do not open a public issue for a suspected vulnerability. Follow `SECURITY.md` and GitHub Private Vulnerability Reporting.
