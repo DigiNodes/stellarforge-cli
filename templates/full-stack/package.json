@@ -1,0 +1,14 @@
+{
+  "name": "{{projectName}}",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check frontend/src/app.js && node --check backend/src/server.js",
+    "test": "node --test frontend/test backend/test",
+    "start:backend": "node backend/src/server.js"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}
