@@ -32,7 +32,8 @@ describe('Git diagnostic', () => {
   });
 
   it('accepts platform-suffixed Git version output', () => {
-    const execute: RunCommand = () => result(0, 'git version 2.47.1.windows.1\n');
+    const execute: RunCommand = () =>
+      result(0, 'git version 2.47.1.windows.1\n');
 
     const diagnostic = createGitDiagnostic(execute).run();
 
@@ -52,7 +53,9 @@ describe('Git diagnostic', () => {
     const diagnostic = createGitDiagnostic(execute).run();
 
     expect(diagnostic.status).toBe('fail');
-    expect(diagnostic.message).toBe('Git is unavailable or could not be executed.');
+    expect(diagnostic.message).toBe(
+      'Git is unavailable or could not be executed.',
+    );
     expect(JSON.stringify(diagnostic)).not.toContain('SECRET_TOKEN');
   });
 

@@ -33,7 +33,8 @@ export function createGitDiagnostic(
           label: 'Git',
           status: 'fail',
           message: 'Git returned an unrecognized version.',
-          remediation: 'Verify `git --version` works and reinstall Git if necessary.',
+          remediation:
+            'Verify `git --version` works and reinstall Git if necessary.',
         };
       }
 
