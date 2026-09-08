@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { createDockerDiagnostic } from '../diagnostics/docker.js';
 import { createGitDiagnostic } from '../diagnostics/git.js';
 import { runDiagnostics } from '../diagnostics/run.js';
 import {
@@ -32,6 +33,7 @@ function createDefaultDiagnostics(): readonly DiagnosticCheck[] {
     createRustDiagnostic(),
     createCargoDiagnostic(),
     createStellarDiagnostic(),
+    createDockerDiagnostic(),
   ];
 }
 
