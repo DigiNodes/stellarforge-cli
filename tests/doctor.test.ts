@@ -25,10 +25,11 @@ function check(
 }
 
 describe('doctor command', () => {
-  it('renders an empty scaffold without failing', () => {
+  it('renders an empty scaffold without failing when checks are explicitly empty', () => {
     const captured = createCapturedTerminalOutput();
     let exitCode = -1;
     const command = createDoctorCommand({
+      checks: [],
       output: captured.output,
       setExitCode: (code) => {
         exitCode = code;
