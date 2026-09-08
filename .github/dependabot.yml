@@ -24,6 +24,9 @@ updates:
       timezone: Africa/Lagos
     open-pull-requests-limit: 5
     groups:
-      github-actions:
+      github-actions-minor-and-patch:
         patterns:
           - '*'
+        update-types:
+          - minor
+          - patch
