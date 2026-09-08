@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { EXIT_CODES } from '../errors/errors.js';
 import { runDiagnostics } from '../diagnostics/run.js';
+import { createRuntimeDiagnostics } from '../diagnostics/runtime.js';
 import type {
   DiagnosticCheck,
   DiagnosticReport,
@@ -42,7 +43,7 @@ export function renderDiagnosticReport(
 export function createDoctorCommand(
   options: DoctorCommandOptions = {},
 ): Command {
-  const checks = options.checks ?? [];
+  const checks = options.checks ?? createRuntimeDiagnostics();
   const output = options.output ?? new TerminalOutput();
   const setExitCode =
     options.setExitCode ?? ((code) => (process.exitCode = code));

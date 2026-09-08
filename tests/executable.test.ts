@@ -42,9 +42,20 @@ describe('StellarForge CLI executable', () => {
 
     expect(result.status).toBe(0);
     expect(result.stderr).toBe('');
-    expect(result.stdout).toContain('Usage: stellarforge [options]');
+    expect(result.stdout).toContain('Usage: stellarforge [options] [command]');
+    expect(result.stdout).toContain('doctor');
     expect(result.stdout).toContain('-h, --help');
     expect(result.stdout).toContain('-V, --version');
+  });
+
+  it('runs the default runtime doctor checks successfully in the supported toolchain', () => {
+    const result = runBuiltCli(['doctor']);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toContain('[PASS] Node.js:');
+    expect(result.stdout).toContain('[PASS] npm:');
+    expect(result.stdout).toContain('Summary: 2 passed, 0 warnings, 0 failed.');
   });
 
   it('prints the package version from the built executable', () => {
