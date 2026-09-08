@@ -29,29 +29,31 @@ const typescriptCliPath = resolve(
 const eslintConfigPath = resolve(repositoryRoot, 'eslint.config.js');
 const tsconfigPath = resolve(repositoryRoot, 'tsconfig.json');
 
-function runLocalTool(binaryPath: string, args: string[]) {
+function runLocalTool(binaryPath: string, args: string[], input?: string) {
   return spawnSync(process.execPath, [binaryPath, ...args], {
     cwd: repositoryRoot,
     encoding: 'utf8',
+    input,
     shell: false,
   });
 }
 
 describe('static quality enforcement', () => {
-  it('rejects a lint violation with the repository ESLint configuration', async () => {
-    await withTempDirectory((directory) => {
-      const fixturePath = join(directory, 'bad-lint.js');
-      writeFileSync(fixturePath, 'const unused = 1;\n');
-
-      const result = runLocalTool(eslintCliPath, [
+  it('rejects a lint violation with the repository ESLint configuration', () => {
+    const result = runLocalTool(
+      eslintCliPath,
+      [
         '--config',
         eslintConfigPath,
-        fixturePath,
-      ]);
+        '--stdin',
+        '--stdin-filename',
+        'src/bad-lint.ts',
+      ],
+      'const unused = 1;\n',
+    );
 
-      expect(result.status).not.toBe(0);
-      expect(`${result.stdout}${result.stderr}`).toContain('no-unused-vars');
-    });
+    expect(result.status).not.toBe(0);
+    expect(`${result.stdout}${result.stderr}`).toContain('no-unused-vars');
   });
 
   it('rejects a formatting violation with the repository Prettier configuration', async () => {
