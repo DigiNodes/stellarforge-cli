@@ -54,27 +54,24 @@ describe('static quality enforcement', () => {
     });
   });
 
-  it(
-    'rejects a formatting violation with the repository Prettier configuration',
-    async () => {
-      await withTempDirectory((directory) => {
-        const fixturePath = join(directory, 'bad-format.ts');
-        writeFileSync(fixturePath, 'const value={answer:42}\n');
+  it('rejects a formatting violation with the repository Prettier configuration', async () => {
+    await withTempDirectory((directory) => {
+      const fixturePath = join(directory, 'bad-format.ts');
+      writeFileSync(fixturePath, 'const value={answer:42}\n');
 
-        const result = runLocalTool(prettierCliPath, [
-          '--check',
-          '--config',
-          resolve(repositoryRoot, '.prettierrc'),
-          fixturePath,
-        ]);
+      const result = runLocalTool(prettierCliPath, [
+        '--check',
+        '--config',
+        resolve(repositoryRoot, '.prettierrc'),
+        fixturePath,
+      ]);
 
-        expect(result.status).not.toBe(0);
-        expect(`${result.stdout}${result.stderr}`).toContain(
-          'Code style issues found',
-        );
-      });
-    },
-  );
+      expect(result.status).not.toBe(0);
+      expect(`${result.stdout}${result.stderr}`).toContain(
+        'Code style issues found',
+      );
+    });
+  });
 
   it('rejects a type violation with strict repository compiler options', async () => {
     await withTempDirectory((directory) => {
