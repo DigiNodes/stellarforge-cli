@@ -33,7 +33,7 @@ describe('Testnet deployment plan', () => {
       ]);
     }));
 
-  it.each(['mainnet', 'futurenet', 'local', 'TESTNET', '']) (
+  it.each(['mainnet', 'futurenet', 'local', 'TESTNET', ''])(
     'rejects unsupported network %j before side effects',
     (network) =>
       withTempDirectory((root) => {
@@ -61,7 +61,8 @@ describe('Testnet deployment plan', () => {
           source,
         }),
       ).toThrow(ValidationCliError);
-    }));
+    }),
+  );
 
   it('rejects unsupported project layouts', () =>
     withTempDirectory((root) => {
