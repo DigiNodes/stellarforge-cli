@@ -11,6 +11,7 @@ describe('StellarForge root command', () => {
       'new',
       'dev',
       'test',
+      'deploy',
     ]);
   });
 
@@ -25,6 +26,7 @@ describe('StellarForge root command', () => {
     expect(help).toContain('new');
     expect(help).toContain('dev');
     expect(help).toContain('test');
+    expect(help).toContain('deploy');
     expect(help).toContain('-V, --version');
     expect(help).toContain('-h, --help');
   });
