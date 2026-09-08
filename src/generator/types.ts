@@ -3,7 +3,7 @@ export interface ProjectGeneratorInput {
   readonly cwd: string;
 }
 
-export interface ValidatedProjectInput extends ProjectGeneratorInput {}
+export type ValidatedProjectInput = ProjectGeneratorInput;
 
 export interface DestinationPlan {
   readonly projectName: string;
