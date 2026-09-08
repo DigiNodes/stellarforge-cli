@@ -19,6 +19,16 @@ Command arguments, paths, config, environment values, template data, process out
 - test expected failure paths and security-sensitive boundaries;
 - fail closed for network/deployment target ambiguity.
 
+## Automated Code Scanning
+
+`.github/workflows/codeql.yml` runs CodeQL analysis for the JavaScript/TypeScript codebase on pull requests, pushes to `main`, and a weekly schedule.
+
+CodeQL findings are owned by the StellarForge CLI maintainers as security work, not by the automation itself. A maintainer should triage each new finding for validity, reachability, severity, and affected trust boundary before dismissal or remediation.
+
+Do not dismiss a CodeQL alert merely because CI passes or exploitation has not been demonstrated. False-positive or accepted-risk dismissals should include enough rationale to support later audit/review. Findings involving command execution, filesystem writes, secrets, deployment, dependency handling, or other documented trust boundaries require heightened review.
+
+CodeQL complements tests and human review; it does not replace either.
+
 ## Vulnerabilities
 
 Do not open a public issue for a suspected vulnerability. Follow `SECURITY.md` and GitHub Private Vulnerability Reporting.
