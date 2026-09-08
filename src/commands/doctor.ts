@@ -6,6 +6,7 @@ import {
   createRustDiagnostic,
 } from '../diagnostics/rust.js';
 import { createRuntimeDiagnostics } from '../diagnostics/runtime.js';
+import { createStellarDiagnostic } from '../diagnostics/stellar.js';
 import type {
   DiagnosticCheck,
   DiagnosticReport,
@@ -30,6 +31,7 @@ function createDefaultDiagnostics(): readonly DiagnosticCheck[] {
     createGitDiagnostic(),
     createRustDiagnostic(),
     createCargoDiagnostic(),
+    createStellarDiagnostic(),
   ];
 }
 
