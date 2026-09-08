@@ -34,21 +34,21 @@ The CLI builds contract crates for the `wasm32v1-none` target using the release 
 
 ## Testnet deployment
 
-Build first, then deploy the generated Wasm with an identity you created outside this repository:
+Build first, then deploy the generated Wasm with an identity you created outside this repository. Choose an alias that is valid for your local Stellar configuration; `my-contract` is used below only as an example.
 
 ```bash
 stellar contract deploy \
   --wasm <path-to-generated-wasm> \
   --source <local-identity> \
   --network testnet \
-  --alias {{projectName}}
+  --alias my-contract
 ```
 
 Invoke the starter after deployment:
 
 ```bash
 stellar contract invoke \
-  --id {{projectName}} \
+  --id my-contract \
   --source <local-identity> \
   --network testnet \
   -- hello --name StellarForge
