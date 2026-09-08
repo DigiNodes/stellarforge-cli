@@ -26,7 +26,10 @@ describe('Smart Contract template', () => {
       ]);
 
       const projectRoot = join(root, 'demo.contract');
-      const rootManifest = readFileSync(join(projectRoot, 'Cargo.toml'), 'utf8');
+      const rootManifest = readFileSync(
+        join(projectRoot, 'Cargo.toml'),
+        'utf8',
+      );
       const contractManifest = readFileSync(
         join(projectRoot, 'contracts', 'hello', 'Cargo.toml'),
         'utf8',
