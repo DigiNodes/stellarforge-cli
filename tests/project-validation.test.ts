@@ -26,7 +26,7 @@ describe('project input validation', () => {
     ).toThrow(ValidationCliError);
   });
 
-  it.each(['CON', 'prn', 'AUX.txt', 'COM1', 'lpt9.log']) (
+  it.each(['CON', 'prn', 'AUX.txt', 'COM1', 'lpt9.log'])(
     'rejects Windows reserved device name %j',
     (projectName) => {
       expect(() =>
@@ -51,51 +51,51 @@ describe('project input validation', () => {
 
 describe('project destination planning', () => {
   it('plans a direct child without creating it', () =>
-    withTempDirectory('stellarforge-validation-', (fixture) => {
+    withTempDirectory((path) => {
       const validated = validateProjectInput({
         projectName: 'demo',
-        cwd: fixture.path,
+        cwd: path,
       });
       const plan = planProjectDestination(validated);
 
       expect(plan).toEqual({
         projectName: 'demo',
-        destination: join(fixture.path, 'demo'),
+        destination: join(path, 'demo'),
       });
     }));
 
   it('allows an existing empty destination directory', () =>
-    withTempDirectory('stellarforge-validation-', (fixture) => {
-      const destination = join(fixture.path, 'demo');
+    withTempDirectory((path) => {
+      const destination = join(path, 'demo');
       mkdirSync(destination);
 
       const plan = planProjectDestination(
-        validateProjectInput({ projectName: 'demo', cwd: fixture.path }),
+        validateProjectInput({ projectName: 'demo', cwd: path }),
       );
 
       expect(plan.destination).toBe(destination);
     }));
 
   it('refuses an existing non-empty destination directory', () =>
-    withTempDirectory('stellarforge-validation-', (fixture) => {
-      const destination = join(fixture.path, 'demo');
+    withTempDirectory((path) => {
+      const destination = join(path, 'demo');
       mkdirSync(destination);
       writeFileSync(join(destination, 'existing.txt'), 'do not overwrite');
 
       expect(() =>
         planProjectDestination(
-          validateProjectInput({ projectName: 'demo', cwd: fixture.path }),
+          validateProjectInput({ projectName: 'demo', cwd: path }),
         ),
       ).toThrow('will not overwrite existing files');
     }));
 
   it('refuses a destination occupied by a file', () =>
-    withTempDirectory('stellarforge-validation-', (fixture) => {
-      writeFileSync(join(fixture.path, 'demo'), 'existing file');
+    withTempDirectory((path) => {
+      writeFileSync(join(path, 'demo'), 'existing file');
 
       expect(() =>
         planProjectDestination(
-          validateProjectInput({ projectName: 'demo', cwd: fixture.path }),
+          validateProjectInput({ projectName: 'demo', cwd: path }),
         ),
       ).toThrow('is not a directory');
     }));
