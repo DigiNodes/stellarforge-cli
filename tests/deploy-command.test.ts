@@ -9,8 +9,7 @@ class DeployChild implements ManagedChildProcess {
   readonly stdout = new PassThrough();
   readonly stderr = new PassThrough();
   #exitListener:
-    | ((code: number | null, signal: NodeJS.Signals | null) => void)
-    | undefined;
+    ((code: number | null, signal: NodeJS.Signals | null) => void) | undefined;
 
   once(event: 'error', listener: (error: Error) => void): this;
   once(
@@ -46,7 +45,11 @@ describe('deploy command', () => {
     const child = new DeployChild();
     const captured = createCapturedTerminalOutput();
     let received:
-      | { readonly cwd: string; readonly network: string; readonly source: string }
+      | {
+          readonly cwd: string;
+          readonly network: string;
+          readonly source: string;
+        }
       | undefined;
     const command = createDeployCommand({
       cwd: () => '/workspace',
@@ -89,7 +92,9 @@ describe('deploy command', () => {
       network: 'testnet',
       source: 'deployer',
     });
-    expect(captured.stdoutText()).toContain('Deploying smart contract to Stellar Testnet.');
+    expect(captured.stdoutText()).toContain(
+      'Deploying smart contract to Stellar Testnet.',
+    );
     expect(captured.stdoutText()).toContain('[stellar:deploy] CABC123');
   });
 
@@ -101,7 +106,14 @@ describe('deploy command', () => {
         {
           label: 'stellar:deploy',
           command: 'stellar',
-          args: ['contract', 'deploy', '--source-account', 'alice', '--network', 'testnet'],
+          args: [
+            'contract',
+            'deploy',
+            '--source-account',
+            'alice',
+            '--network',
+            'testnet',
+          ],
           cwd: '/workspace',
         },
       ],
