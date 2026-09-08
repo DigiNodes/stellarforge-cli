@@ -35,9 +35,9 @@ describe('Full Stack template', () => {
       expect(existsSync(join(projectRoot, 'frontend', 'src', 'app.js'))).toBe(
         true,
       );
-      expect(
-        existsSync(join(projectRoot, 'backend', 'src', 'server.js')),
-      ).toBe(true);
+      expect(existsSync(join(projectRoot, 'backend', 'src', 'server.js'))).toBe(
+        true,
+      );
       expect(existsSync(join(projectRoot, 'contracts', 'README.md'))).toBe(
         true,
       );
