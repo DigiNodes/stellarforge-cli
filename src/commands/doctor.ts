@@ -12,6 +12,7 @@ import type {
   DiagnosticCheck,
   DiagnosticReport,
   DiagnosticResult,
+  DiagnosticSummary,
 } from '../diagnostics/types.js';
 import { EXIT_CODES } from '../errors/errors.js';
 import { TerminalOutput } from '../output/terminal.js';
@@ -24,6 +25,22 @@ export interface DoctorCommandOptions {
 
 function formatResult(result: DiagnosticResult): string {
   return `[${result.status.toUpperCase()}] ${result.label}: ${result.message}`;
+}
+
+function formatOverallHealth(summary: DiagnosticSummary): string {
+  if (summary.total === 0) {
+    return 'Overall health: no diagnostics registered.';
+  }
+
+  if (summary.fail > 0) {
+    return 'Overall health: action required.';
+  }
+
+  if (summary.warn > 0) {
+    return 'Overall health: usable with warnings.';
+  }
+
+  return 'Overall health: ready.';
 }
 
 function createDefaultDiagnostics(): readonly DiagnosticCheck[] {
@@ -56,6 +73,7 @@ export function renderDiagnosticReport(
   output.info(
     `Summary: ${report.summary.pass} passed, ${report.summary.warn} warnings, ${report.summary.fail} failed.`,
   );
+  output.info(formatOverallHealth(report.summary));
 }
 
 export function createDoctorCommand(
