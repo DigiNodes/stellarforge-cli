@@ -3,6 +3,7 @@ import { resolveCliVersion } from '../version.js';
 import { createDevCommand } from './dev.js';
 import { createDoctorCommand } from './doctor.js';
 import { createNewCommand } from './new.js';
+import { createTestCommand } from './test.js';
 
 export function createRootCommand(version = resolveCliVersion()): Command {
   return new Command()
@@ -18,5 +19,6 @@ export function createRootCommand(version = resolveCliVersion()): Command {
     .action(() => undefined)
     .addCommand(createDoctorCommand())
     .addCommand(createNewCommand())
-    .addCommand(createDevCommand());
+    .addCommand(createDevCommand())
+    .addCommand(createTestCommand());
 }
