@@ -17,5 +17,7 @@ export function resolveBundledTemplateRoot(templateId: string): string {
     );
   }
 
-  return fileURLToPath(new URL(`../../templates/${directory}/`, import.meta.url));
+  return fileURLToPath(
+    new URL(`../../templates/${directory}/`, import.meta.url),
+  );
 }
