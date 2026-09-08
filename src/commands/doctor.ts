@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { EXIT_CODES } from '../errors/errors.js';
+import { createGitDiagnostic } from '../diagnostics/git.js';
 import { runDiagnostics } from '../diagnostics/run.js';
 import { createRuntimeDiagnostics } from '../diagnostics/runtime.js';
 import type {
@@ -7,6 +7,7 @@ import type {
   DiagnosticReport,
   DiagnosticResult,
 } from '../diagnostics/types.js';
+import { EXIT_CODES } from '../errors/errors.js';
 import { TerminalOutput } from '../output/terminal.js';
 
 export interface DoctorCommandOptions {
@@ -17,6 +18,10 @@ export interface DoctorCommandOptions {
 
 function formatResult(result: DiagnosticResult): string {
   return `[${result.status.toUpperCase()}] ${result.label}: ${result.message}`;
+}
+
+function createDefaultDiagnostics(): readonly DiagnosticCheck[] {
+  return [...createRuntimeDiagnostics(), createGitDiagnostic()];
 }
 
 export function renderDiagnosticReport(
@@ -43,7 +48,7 @@ export function renderDiagnosticReport(
 export function createDoctorCommand(
   options: DoctorCommandOptions = {},
 ): Command {
-  const checks = options.checks ?? createRuntimeDiagnostics();
+  const checks = options.checks ?? createDefaultDiagnostics();
   const output = options.output ?? new TerminalOutput();
   const setExitCode =
     options.setExitCode ?? ((code) => (process.exitCode = code));
