@@ -47,7 +47,7 @@ describe('static quality enforcement', () => {
         eslintConfigPath,
         '--stdin',
         '--stdin-filename',
-        'src/bad-lint.ts',
+        'src/main.ts',
       ],
       'const unused = 1;\n',
     );
