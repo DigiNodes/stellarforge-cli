@@ -6,7 +6,9 @@ import { createCapturedTerminalOutput } from './helpers/index.js';
 function services(calls: string[]): ProjectGeneratorServices {
   return {
     validate(input) {
-      calls.push(`validate:${input.projectName}:${input.cwd}`);
+      calls.push(
+        `validate:${input.projectName}:${input.cwd}:${input.templateId ?? 'default'}`,
+      );
       return input;
     },
     planDestination(input) {
@@ -44,7 +46,7 @@ describe('new command', () => {
     command.parse(['node', 'new', 'demo']);
 
     expect(calls).toEqual([
-      'validate:demo:/workspace',
+      'validate:demo:/workspace:default',
       'plan',
       'template',
       'generate',
@@ -53,6 +55,19 @@ describe('new command', () => {
       'Created demo from fixture-template at /workspace/demo.',
     );
     expect(captured.stderrText()).toBe('');
+  });
+
+  it('forwards an explicit bundled template identifier', () => {
+    const calls: string[] = [];
+    const command = createNewCommand({
+      services: services(calls),
+      output: createCapturedTerminalOutput().output,
+      cwd: () => '/workspace',
+    });
+
+    command.parse(['node', 'new', 'demo', '--template', 'smart-contract']);
+
+    expect(calls[0]).toBe('validate:demo:/workspace:smart-contract');
   });
 
   it('requires a project name argument', () => {

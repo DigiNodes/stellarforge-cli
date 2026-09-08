@@ -1,6 +1,7 @@
 export interface ProjectGeneratorInput {
   readonly projectName: string;
   readonly cwd: string;
+  readonly templateId?: string;
 }
 
 export type ValidatedProjectInput = ProjectGeneratorInput;

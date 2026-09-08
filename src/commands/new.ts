@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { InternalCliError } from '../errors/errors.js';
 import { orchestrateProjectGeneration } from '../generator/orchestrator.js';
+import { selectTemplate } from '../generator/template-registry.js';
 import type { ProjectGeneratorServices } from '../generator/types.js';
 import {
   planProjectDestination,
@@ -14,15 +15,15 @@ export interface NewCommandOptions {
   readonly cwd?: () => string;
 }
 
+interface NewCommandFlags {
+  readonly template?: string;
+}
+
 function createScaffoldServices(): ProjectGeneratorServices {
   return {
     validate: validateProjectInput,
     planDestination: planProjectDestination,
-    selectTemplate() {
-      throw new InternalCliError({
-        cause: new Error('Template selection is not implemented yet.'),
-      });
-    },
+    selectTemplate,
     generate() {
       throw new InternalCliError({
         cause: new Error('Project generation is not implemented yet.'),
@@ -39,11 +40,18 @@ export function createNewCommand(options: NewCommandOptions = {}): Command {
   return new Command('new')
     .description('Create a new StellarForge project.')
     .argument('<project-name>', 'Name of the project to create.')
-    .action((projectName: string) => {
+    .option(
+      '-t, --template <id>',
+      'Bundled template: basic-app, full-stack, smart-contract, or api-service.',
+    )
+    .action((projectName: string, flags: NewCommandFlags) => {
       const result = orchestrateProjectGeneration(
         {
           projectName,
           cwd: cwd(),
+          ...(flags.template === undefined
+            ? {}
+            : { templateId: flags.template }),
         },
         services,
       );

@@ -77,6 +77,7 @@ export function validateProjectInput(
   return {
     projectName,
     cwd,
+    ...(input.templateId === undefined ? {} : { templateId: input.templateId }),
   };
 }
 
