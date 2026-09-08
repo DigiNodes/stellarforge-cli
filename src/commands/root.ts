@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { resolveCliVersion } from '../version.js';
 import { createDoctorCommand } from './doctor.js';
+import { createNewCommand } from './new.js';
 
 export function createRootCommand(version = resolveCliVersion()): Command {
   return new Command()
@@ -14,5 +15,6 @@ export function createRootCommand(version = resolveCliVersion()): Command {
     .showHelpAfterError()
     .showSuggestionAfterError(true)
     .action(() => undefined)
-    .addCommand(createDoctorCommand());
+    .addCommand(createDoctorCommand())
+    .addCommand(createNewCommand());
 }
