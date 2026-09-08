@@ -74,8 +74,8 @@ function copyTemplateTree(
   variables: Readonly<Record<string, string>>,
 ): void {
   const sourceDirectory = resolve(templateRoot, relativeDirectory);
-  const entries = readdirSync(sourceDirectory, { withFileTypes: true }).sort((a, b) =>
-    a.name.localeCompare(b.name),
+  const entries = readdirSync(sourceDirectory, { withFileTypes: true }).sort(
+    (a, b) => a.name.localeCompare(b.name),
   );
 
   for (const entry of entries) {
@@ -85,8 +85,13 @@ function copyTemplateTree(
     const sourcePath = resolve(templateRoot, relativePath);
     const destinationPath = resolve(stagingRoot, relativePath);
 
-    if (!isWithin(templateRoot, sourcePath) || !isWithin(stagingRoot, destinationPath)) {
-      throw new ValidationCliError('Template file path escapes the trusted project root.');
+    if (
+      !isWithin(templateRoot, sourcePath) ||
+      !isWithin(stagingRoot, destinationPath)
+    ) {
+      throw new ValidationCliError(
+        'Template file path escapes the trusted project root.',
+      );
     }
 
     const sourceStat = lstatSync(sourcePath);
@@ -102,7 +107,9 @@ function copyTemplateTree(
     }
 
     if (!sourceStat.isFile()) {
-      throw new ValidationCliError('Template contains an unsupported filesystem entry.');
+      throw new ValidationCliError(
+        'Template contains an unsupported filesystem entry.',
+      );
     }
 
     mkdirSync(dirname(destinationPath), { recursive: true });
@@ -135,7 +142,9 @@ export function generateProjectFromTemplate(
   }
 
   if (!isWithin(destinationParent, destination)) {
-    throw new ValidationCliError('Project destination escapes its validated parent directory.');
+    throw new ValidationCliError(
+      'Project destination escapes its validated parent directory.',
+    );
   }
 
   const destinationExisted = existsSync(destination);
@@ -144,17 +153,22 @@ export function generateProjectFromTemplate(
     const destinationStat = lstatSync(destination);
 
     if (!destinationStat.isDirectory() || destinationStat.isSymbolicLink()) {
-      throw new ValidationCliError('Project destination is not a safe empty directory.');
+      throw new ValidationCliError(
+        'Project destination is not a safe empty directory.',
+      );
     }
 
     if (readdirSync(destination).length > 0) {
-      throw new ValidationCliError('Project destination must be empty before generation.');
+      throw new ValidationCliError(
+        'Project destination must be empty before generation.',
+      );
     }
   }
 
   const stagingRoot = mkdtempSync(
     join(destinationParent, `.stellarforge-${context.input.projectName}-`),
   );
+  let removedExistingDestination = false;
 
   try {
     copyTemplateTree(templateRoot, '.', stagingRoot, {
@@ -164,11 +178,17 @@ export function generateProjectFromTemplate(
 
     if (destinationExisted) {
       rmdirSync(destination);
+      removedExistingDestination = true;
     }
 
     renameSync(stagingRoot, destination);
   } catch (error) {
     rmSync(stagingRoot, { recursive: true, force: true });
+
+    if (removedExistingDestination && !existsSync(destination)) {
+      mkdirSync(destination);
+    }
+
     throw error;
   }
 
