@@ -1,6 +1,6 @@
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { createNewCommand } from '../src/commands/new.js';
 import {
@@ -33,14 +33,14 @@ describe('Smart Contract template', () => {
       );
       const readme = readFileSync(join(projectRoot, 'README.md'), 'utf8');
 
-      expect(existsSync(join(projectRoot, 'contracts', 'hello', 'src', 'lib.rs'))).toBe(
-        true,
-      );
-      expect(existsSync(join(projectRoot, 'contracts', 'hello', 'src', 'test.rs'))).toBe(
-        true,
-      );
+      expect(
+        existsSync(join(projectRoot, 'contracts', 'hello', 'src', 'lib.rs')),
+      ).toBe(true);
+      expect(
+        existsSync(join(projectRoot, 'contracts', 'hello', 'src', 'test.rs')),
+      ).toBe(true);
       expect(rootManifest).toContain('soroban-sdk = "26"');
-      expect(rootManifest).toContain('wasm32v1-none').toBe(false);
+      expect(rootManifest).not.toContain('wasm32v1-none');
       expect(contractManifest).toContain(
         'name = "stellarforge-starter-contract"',
       );
