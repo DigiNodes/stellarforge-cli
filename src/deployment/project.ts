@@ -4,6 +4,7 @@ import type { DevProcessSpec } from '../dev/project.js';
 import { ValidationCliError } from '../errors/errors.js';
 
 const SAFE_IDENTITY_ALIAS = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/;
+const STELLAR_ACCOUNT_OR_SECRET_STRKEY = /^[GS][A-Z2-7]{55}$/;
 
 export interface TestnetDeploymentInput {
   readonly cwd: string;
@@ -20,7 +21,10 @@ export function resolveTestnetDeploymentPlan(
     );
   }
 
-  if (!SAFE_IDENTITY_ALIAS.test(input.source)) {
+  if (
+    STELLAR_ACCOUNT_OR_SECRET_STRKEY.test(input.source) ||
+    !SAFE_IDENTITY_ALIAS.test(input.source)
+  ) {
     throw new ValidationCliError(
       'Deployment source must be a named Stellar CLI identity alias. Raw secret keys, seed phrases, public keys, and path-like values are not accepted.',
     );
