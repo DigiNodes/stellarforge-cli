@@ -39,9 +39,14 @@ describe('template generation', () => {
         join(templateRoot, 'package.json'),
         '{"name":"{{projectName}}","template":"{{templateId}}"}\n',
       );
-      writeFileSync(join(templateRoot, 'src', 'index.ts'), 'export const app = "{{projectName}}";\n');
+      writeFileSync(
+        join(templateRoot, 'src', 'index.ts'),
+        'export const app = "{{projectName}}";\n',
+      );
 
-      const result = generateProjectFromTemplate(context(root), { templateRoot });
+      const result = generateProjectFromTemplate(context(root), {
+        templateRoot,
+      });
 
       expect(result).toEqual({
         projectName: 'demo-app',
@@ -51,16 +56,19 @@ describe('template generation', () => {
       expect(readFileSync(join(root, 'demo-app', 'package.json'), 'utf8')).toBe(
         '{"name":"demo-app","template":"basic-app"}\n',
       );
-      expect(readFileSync(join(root, 'demo-app', 'src', 'index.ts'), 'utf8')).toBe(
-        'export const app = "demo-app";\n',
-      );
+      expect(
+        readFileSync(join(root, 'demo-app', 'src', 'index.ts'), 'utf8'),
+      ).toBe('export const app = "demo-app";\n');
     }));
 
   it('preserves binary file bytes without substitution', () =>
     withTempDirectory((root) => {
       const templateRoot = join(root, 'template');
       mkdirSync(templateRoot);
-      const binary = Buffer.from([0, 123, 123, 112, 114, 111, 106, 101, 99, 116, 78, 97, 109, 101, 125, 125, 255]);
+      const binary = Buffer.from([
+        0, 123, 123, 112, 114, 111, 106, 101, 99, 116, 78, 97, 109, 101, 125,
+        125, 255,
+      ]);
       writeFileSync(join(templateRoot, 'asset.bin'), binary);
 
       generateProjectFromTemplate(context(root), { templateRoot });
@@ -81,7 +89,9 @@ describe('template generation', () => {
 
       expect(existsSync(join(root, 'demo-app'))).toBe(false);
       expect(
-        readdirSync(root).filter((name) => name.startsWith('.stellarforge-demo-app-')),
+        readdirSync(root).filter((name) =>
+          name.startsWith('.stellarforge-demo-app-'),
+        ),
       ).toEqual([]);
     }));
 
@@ -96,7 +106,9 @@ describe('template generation', () => {
       expect(() =>
         generateProjectFromTemplate(context(root), { templateRoot }),
       ).toThrow('must be empty');
-      expect(readFileSync(join(root, 'demo-app', 'existing.txt'), 'utf8')).toBe('keep me');
+      expect(readFileSync(join(root, 'demo-app', 'existing.txt'), 'utf8')).toBe(
+        'keep me',
+      );
     }));
 
   it('rejects template symbolic links instead of following paths outside the trusted root', () =>
