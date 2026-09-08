@@ -9,8 +9,7 @@ class TestChild implements ManagedChildProcess {
   readonly stdout = new PassThrough();
   readonly stderr = new PassThrough();
   #exitListener:
-    | ((code: number | null, signal: NodeJS.Signals | null) => void)
-    | undefined;
+    ((code: number | null, signal: NodeJS.Signals | null) => void) | undefined;
 
   once(event: 'error', listener: (error: Error) => void): this;
   once(
