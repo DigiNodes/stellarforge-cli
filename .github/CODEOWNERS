@@ -1,0 +1,29 @@
+# StellarForge CLI sensitive-area ownership
+#
+# CODEOWNERS requests review from the listed owner when matching files change.
+# Enforcement still requires the repository ruleset to require code-owner review.
+
+# CI, security scanning, dependency automation, and future release workflows
+/.github/workflows/ @dDevAhmed
+/.github/dependabot.yml @dDevAhmed
+/.github/CODEOWNERS @dDevAhmed
+
+# Release/versioning configuration and package supply-chain surface
+/.changeset/ @dDevAhmed
+/package.json @dDevAhmed
+/package-lock.json @dDevAhmed
+/CHANGELOG.md @dDevAhmed
+
+# Public security policy and architecture trust boundaries
+/SECURITY.md @dDevAhmed
+/docs/contributing/security-guidelines.md @dDevAhmed
+/docs/contributing/dependency-policy.md @dDevAhmed
+/docs/contributing/changesets.md @dDevAhmed
+/docs/architecture/threat-model.md @dDevAhmed
+/docs/architecture/trust-boundaries.md @dDevAhmed
+/docs/adr/ADR-0003-release-and-versioning-strategy.md @dDevAhmed
+/docs/adr/ADR-0004-security-baseline.md @dDevAhmed
+
+# Current CLI failure/output boundaries that protect error and terminal handling
+/src/errors/ @dDevAhmed
+/src/output/ @dDevAhmed
