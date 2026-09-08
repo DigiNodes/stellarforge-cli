@@ -52,7 +52,9 @@ describe('Rust diagnostic', () => {
     const diagnostic = createRustDiagnostic(execute).run();
 
     expect(diagnostic.status).toBe('fail');
-    expect(diagnostic.message).toBe('Rust is unavailable or could not be executed.');
+    expect(diagnostic.message).toBe(
+      'Rust is unavailable or could not be executed.',
+    );
     expect(JSON.stringify(diagnostic)).not.toContain('SECRET_TOKEN');
   });
 

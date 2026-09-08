@@ -4,7 +4,10 @@ import { isAtLeast, parseNumericVersion } from './version.js';
 
 const MINIMUM_RUST = { major: 1, minor: 84, patch: 0 } as const;
 
-function parseToolVersion(output: string, tool: 'rustc' | 'cargo'): string | null {
+function parseToolVersion(
+  output: string,
+  tool: 'rustc' | 'cargo',
+): string | null {
   const match = new RegExp(`^${tool} (\\d+\\.\\d+\\.\\d+)`, 'i').exec(
     output.trim(),
   );
@@ -40,7 +43,8 @@ export function createRustDiagnostic(
           label: 'Rust',
           status: 'fail',
           message: 'Rust returned an unrecognized version.',
-          remediation: 'Verify `rustc --version` works and reinstall Rust if necessary.',
+          remediation:
+            'Verify `rustc --version` works and reinstall Rust if necessary.',
         };
       }
 
@@ -93,7 +97,8 @@ export function createCargoDiagnostic(
           label: 'Cargo',
           status: 'fail',
           message: 'Cargo returned an unrecognized version.',
-          remediation: 'Verify `cargo --version` works and reinstall Rust if necessary.',
+          remediation:
+            'Verify `cargo --version` works and reinstall Rust if necessary.',
         };
       }
 
