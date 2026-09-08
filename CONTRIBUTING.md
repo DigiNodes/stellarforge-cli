@@ -17,7 +17,7 @@ Thank you for contributing to StellarForge CLI. The project is being built as pr
 3. Make the smallest coherent change that satisfies the issue.
 4. Add or update tests for behavior changes. Follow `docs/contributing/testing.md` for fixture and integration-test conventions.
 5. Update documentation where behavior, commands, configuration, or contributor workflows change.
-6. Add a Changeset when the PR affects the published CLI or user-visible behavior.
+6. Add a Changeset when the PR affects the published CLI or user-visible behavior. Follow `docs/contributing/changesets.md` for release-impact and command guidance.
 7. Run the available local checks before opening a PR. Follow `docs/contributing/static-quality.md` for lint, formatting, and type-check expectations.
 8. Open a pull request and complete the PR template accurately.
 
@@ -33,6 +33,8 @@ A Changeset is normally required for user-visible or published-package changes, 
 - meaningful user-facing performance improvements.
 
 A Changeset is normally not required for documentation-only changes, tests with no shipped behavior change, issue/PR templates, or internal CI maintenance. Maintainers may request one when release communication is still warranted.
+
+Use `npm run changeset` to create release intent, `npm run changeset:status` to inspect pending changes, and `npm run changeset:version` only when intentionally generating local version/changelog updates. Publishing remains a separate protected workflow and is not part of normal contributor PRs.
 
 ## Security Expectations
 
