@@ -1,5 +1,9 @@
 import { runCommand, type RunCommand } from './process.js';
-import type { DiagnosticCheck, DiagnosticResult, DiagnosticStatus } from './types.js';
+import type {
+  DiagnosticCheck,
+  DiagnosticResult,
+  DiagnosticStatus,
+} from './types.js';
 
 export interface DockerDiagnosticOptions {
   readonly execute?: RunCommand;
@@ -53,7 +57,11 @@ export function createDockerDiagnostic(
         };
       }
 
-      const daemon = execute('docker', ['info', '--format', '{{.ServerVersion}}']);
+      const daemon = execute('docker', [
+        'info',
+        '--format',
+        '{{.ServerVersion}}',
+      ]);
 
       if (daemon.error || daemon.status !== 0 || daemon.stdout.trim() === '') {
         return {
