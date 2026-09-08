@@ -1,10 +1,11 @@
 import { Command } from 'commander';
-import { InternalCliError, ValidationCliError } from '../errors/errors.js';
+import { InternalCliError } from '../errors/errors.js';
 import { orchestrateProjectGeneration } from '../generator/orchestrator.js';
-import type {
-  ProjectGeneratorServices,
-  ValidatedProjectInput,
-} from '../generator/types.js';
+import type { ProjectGeneratorServices } from '../generator/types.js';
+import {
+  planProjectDestination,
+  validateProjectInput,
+} from '../generator/validation.js';
 import { TerminalOutput } from '../output/terminal.js';
 
 export interface NewCommandOptions {
@@ -15,23 +16,8 @@ export interface NewCommandOptions {
 
 function createScaffoldServices(): ProjectGeneratorServices {
   return {
-    validate(input): ValidatedProjectInput {
-      const projectName = input.projectName.trim();
-
-      if (projectName.length === 0) {
-        throw new ValidationCliError('Project name must not be empty.');
-      }
-
-      return {
-        projectName,
-        cwd: input.cwd,
-      };
-    },
-    planDestination() {
-      throw new InternalCliError({
-        cause: new Error('Destination planning is not implemented yet.'),
-      });
-    },
+    validate: validateProjectInput,
+    planDestination: planProjectDestination,
     selectTemplate() {
       throw new InternalCliError({
         cause: new Error('Template selection is not implemented yet.'),
