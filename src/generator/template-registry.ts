@@ -1,8 +1,5 @@
 import { ValidationCliError } from '../errors/errors.js';
-import type {
-  TemplateSelection,
-  ValidatedProjectInput,
-} from './types.js';
+import type { TemplateSelection, ValidatedProjectInput } from './types.js';
 
 export const TEMPLATE_IDS = [
   'basic-app',
@@ -28,7 +25,8 @@ const TEMPLATES: readonly TemplateMetadata[] = [
   {
     id: 'full-stack',
     name: 'Full Stack App',
-    description: 'Frontend, backend, and contract-oriented application starter.',
+    description:
+      'Frontend, backend, and contract-oriented application starter.',
   },
   {
     id: 'smart-contract',
@@ -38,7 +36,8 @@ const TEMPLATES: readonly TemplateMetadata[] = [
   {
     id: 'api-service',
     name: 'API Service',
-    description: 'Backend API service starter with Stellar integration boundaries.',
+    description:
+      'Backend API service starter with Stellar integration boundaries.',
   },
 ] as const;
 
