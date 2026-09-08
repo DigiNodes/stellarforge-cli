@@ -30,9 +30,9 @@ describe('template registry', () => {
   });
 
   it('selects basic-app by default', () => {
-    expect(
-      selectTemplate({ projectName: 'demo', cwd: '/workspace' }),
-    ).toEqual({ templateId: 'basic-app' });
+    expect(selectTemplate({ projectName: 'demo', cwd: '/workspace' })).toEqual({
+      templateId: 'basic-app',
+    });
   });
 
   it('selects a known requested template', () => {
