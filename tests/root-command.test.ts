@@ -2,20 +2,23 @@ import { describe, expect, it } from 'vitest';
 import { createRootCommand } from '../src/commands/root.js';
 
 describe('StellarForge root command', () => {
-  it('defines the stable root identity without registering product commands early', () => {
+  it('defines the stable root identity and registers the doctor command', () => {
     const program = createRootCommand('1.2.3');
 
     expect(program.name()).toBe('stellarforge');
-    expect(program.commands).toHaveLength(0);
+    expect(program.commands.map((command) => command.name())).toEqual([
+      'doctor',
+    ]);
   });
 
   it('provides useful global help information', () => {
     const help = createRootCommand('1.2.3').helpInformation();
 
-    expect(help).toContain('Usage: stellarforge [options]');
+    expect(help).toContain('Usage: stellarforge [options] [command]');
     expect(help).toContain(
       'Open infrastructure for building production-ready Stellar applications.',
     );
+    expect(help).toContain('doctor');
     expect(help).toContain('-V, --version');
     expect(help).toContain('-h, --help');
   });

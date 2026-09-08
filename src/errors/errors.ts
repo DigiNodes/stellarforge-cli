@@ -4,6 +4,7 @@ export const EXIT_CODES = {
   validation: 2,
   subprocess: 3,
   internal: 4,
+  diagnostic: 5,
 } as const;
 
 export type CliExitCode = (typeof EXIT_CODES)[keyof typeof EXIT_CODES];
