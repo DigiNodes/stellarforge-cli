@@ -1,6 +1,6 @@
 import { createRootCommand } from './commands/root.js';
 
-export function runCli(argv: string[] = process.argv): void {
+export async function runCli(argv: string[] = process.argv): Promise<void> {
   const program = createRootCommand();
-  program.parse(argv);
+  await program.parseAsync(argv);
 }

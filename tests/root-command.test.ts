@@ -9,6 +9,7 @@ describe('StellarForge root command', () => {
     expect(program.commands.map((command) => command.name())).toEqual([
       'doctor',
       'new',
+      'dev',
     ]);
   });
 
@@ -21,6 +22,7 @@ describe('StellarForge root command', () => {
     );
     expect(help).toContain('doctor');
     expect(help).toContain('new');
+    expect(help).toContain('dev');
     expect(help).toContain('-V, --version');
     expect(help).toContain('-h, --help');
   });
