@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { resolveCliVersion } from '../version.js';
+import { createDeployCommand } from './deploy.js';
 import { createDevCommand } from './dev.js';
 import { createDoctorCommand } from './doctor.js';
 import { createNewCommand } from './new.js';
@@ -20,5 +21,6 @@ export function createRootCommand(version = resolveCliVersion()): Command {
     .addCommand(createDoctorCommand())
     .addCommand(createNewCommand())
     .addCommand(createDevCommand())
-    .addCommand(createTestCommand());
+    .addCommand(createTestCommand())
+    .addCommand(createDeployCommand());
 }
