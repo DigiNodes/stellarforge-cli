@@ -86,7 +86,9 @@ function assertDestinationWithinRoot(root: string, destination: string): void {
   if (
     relativeDestination.length === 0 ||
     relativeDestination === '..' ||
-    relativeDestination.startsWith(`..${process.platform === 'win32' ? '\\' : '/'}`) ||
+    relativeDestination.startsWith(
+      `..${process.platform === 'win32' ? '\\' : '/'}`,
+    ) ||
     isAbsolute(relativeDestination)
   ) {
     throw new ValidationCliError(
