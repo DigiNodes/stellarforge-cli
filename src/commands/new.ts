@@ -1,7 +1,8 @@
 import { Command } from 'commander';
-import { InternalCliError } from '../errors/errors.js';
 import { orchestrateProjectGeneration } from '../generator/orchestrator.js';
+import { generateProjectFromTemplate } from '../generator/template-generation.js';
 import { selectTemplate } from '../generator/template-registry.js';
+import { resolveBundledTemplateRoot } from '../generator/template-sources.js';
 import type { ProjectGeneratorServices } from '../generator/types.js';
 import {
   planProjectDestination,
@@ -19,21 +20,21 @@ interface NewCommandFlags {
   readonly template?: string;
 }
 
-function createScaffoldServices(): ProjectGeneratorServices {
+function createDefaultServices(): ProjectGeneratorServices {
   return {
     validate: validateProjectInput,
     planDestination: planProjectDestination,
     selectTemplate,
-    generate() {
-      throw new InternalCliError({
-        cause: new Error('Project generation is not implemented yet.'),
+    generate(context) {
+      return generateProjectFromTemplate(context, {
+        templateRoot: resolveBundledTemplateRoot(context.template.templateId),
       });
     },
   };
 }
 
 export function createNewCommand(options: NewCommandOptions = {}): Command {
-  const services = options.services ?? createScaffoldServices();
+  const services = options.services ?? createDefaultServices();
   const output = options.output ?? new TerminalOutput();
   const cwd = options.cwd ?? process.cwd;
 
