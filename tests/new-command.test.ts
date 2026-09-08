@@ -65,13 +65,7 @@ describe('new command', () => {
       cwd: () => '/workspace',
     });
 
-    command.parse([
-      'node',
-      'new',
-      'demo',
-      '--template',
-      'smart-contract',
-    ]);
+    command.parse(['node', 'new', 'demo', '--template', 'smart-contract']);
 
     expect(calls[0]).toBe('validate:demo:/workspace:smart-contract');
   });
