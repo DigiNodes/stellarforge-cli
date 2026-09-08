@@ -38,7 +38,9 @@ describe('doctor command', () => {
     command.parse(['node', 'doctor']);
 
     expect(exitCode).toBe(EXIT_CODES.success);
-    expect(captured.stdoutText()).toContain('No diagnostics are registered yet.');
+    expect(captured.stdoutText()).toContain(
+      'No diagnostics are registered yet.',
+    );
     expect(captured.stdoutText()).toContain(
       'Summary: 0 passed, 0 warnings, 0 failed.',
     );

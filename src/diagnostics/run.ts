@@ -11,7 +11,8 @@ function failedCheckResult(check: DiagnosticCheck): DiagnosticResult {
     label: check.label,
     status: 'fail',
     message: 'Diagnostic check could not complete.',
-    remediation: 'Retry the command or inspect the relevant tool configuration.',
+    remediation:
+      'Retry the command or inspect the relevant tool configuration.',
   };
 }
 

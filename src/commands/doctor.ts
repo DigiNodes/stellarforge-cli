@@ -44,7 +44,8 @@ export function createDoctorCommand(
 ): Command {
   const checks = options.checks ?? [];
   const output = options.output ?? new TerminalOutput();
-  const setExitCode = options.setExitCode ?? ((code) => (process.exitCode = code));
+  const setExitCode =
+    options.setExitCode ?? ((code) => (process.exitCode = code));
 
   return new Command('doctor')
     .description('Check the local StellarForge development environment.')
@@ -52,9 +53,7 @@ export function createDoctorCommand(
       const report = runDiagnostics(checks);
       renderDiagnosticReport(report, output);
       setExitCode(
-        report.summary.fail > 0
-          ? EXIT_CODES.diagnostic
-          : EXIT_CODES.success,
+        report.summary.fail > 0 ? EXIT_CODES.diagnostic : EXIT_CODES.success,
       );
     });
 }
