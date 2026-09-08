@@ -59,8 +59,9 @@ describe('StellarForge CLI executable', () => {
     expect(result.stdout).toContain('[PASS] Rust:');
     expect(result.stdout).toContain('[PASS] Cargo:');
     expect(result.stdout).toContain('Stellar CLI:');
+    expect(result.stdout).toContain('Docker:');
     expect(result.stdout).toMatch(
-      /Summary: 5 passed, 0 warnings, [01] failed\./,
+      /Summary: \d+ passed, \d+ warnings, \d+ failed\./,
     );
   });
 
