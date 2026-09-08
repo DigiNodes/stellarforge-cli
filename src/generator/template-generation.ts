@@ -12,10 +12,7 @@ import {
 } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { ValidationCliError } from '../errors/errors.js';
-import type {
-  GenerationContext,
-  ProjectGenerationResult,
-} from './types.js';
+import type { GenerationContext, ProjectGenerationResult } from './types.js';
 
 const SUBSTITUTION_TOKEN = /\{\{([A-Za-z][A-Za-z0-9]*)\}\}/g;
 
@@ -97,7 +94,9 @@ function copyTemplateTree(
     const sourceStat = lstatSync(sourcePath);
 
     if (sourceStat.isSymbolicLink()) {
-      throw new ValidationCliError('Template symbolic links are not supported.');
+      throw new ValidationCliError(
+        'Template symbolic links are not supported.',
+      );
     }
 
     if (sourceStat.isDirectory()) {
@@ -138,7 +137,9 @@ export function generateProjectFromTemplate(
   }
 
   if (lstatSync(templateRoot).isSymbolicLink()) {
-    throw new ValidationCliError('Template source must not be a symbolic link.');
+    throw new ValidationCliError(
+      'Template source must not be a symbolic link.',
+    );
   }
 
   if (!isWithin(destinationParent, destination)) {
