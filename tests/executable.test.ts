@@ -56,7 +56,9 @@ describe('StellarForge CLI executable', () => {
     expect(result.stdout).toContain('[PASS] Node.js:');
     expect(result.stdout).toContain('[PASS] npm:');
     expect(result.stdout).toContain('[PASS] Git:');
-    expect(result.stdout).toContain('Summary: 3 passed, 0 warnings, 0 failed.');
+    expect(result.stdout).toContain('[PASS] Rust:');
+    expect(result.stdout).toContain('[PASS] Cargo:');
+    expect(result.stdout).toContain('Summary: 5 passed, 0 warnings, 0 failed.');
   });
 
   it('prints the package version from the built executable', () => {
