@@ -17,7 +17,9 @@ function resolveNodeTestPlan(projectRoot: string): DevProcessSpec | undefined {
 
   let projectPackage: ProjectPackage;
   try {
-    projectPackage = JSON.parse(readFileSync(packagePath, 'utf8')) as ProjectPackage;
+    projectPackage = JSON.parse(
+      readFileSync(packagePath, 'utf8'),
+    ) as ProjectPackage;
   } catch (error) {
     throw new ValidationCliError('package.json is not valid JSON.', {
       cause: error,
