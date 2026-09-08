@@ -1,6 +1,10 @@
 import { Command } from 'commander';
 import { createGitDiagnostic } from '../diagnostics/git.js';
 import { runDiagnostics } from '../diagnostics/run.js';
+import {
+  createCargoDiagnostic,
+  createRustDiagnostic,
+} from '../diagnostics/rust.js';
 import { createRuntimeDiagnostics } from '../diagnostics/runtime.js';
 import type {
   DiagnosticCheck,
@@ -21,7 +25,12 @@ function formatResult(result: DiagnosticResult): string {
 }
 
 function createDefaultDiagnostics(): readonly DiagnosticCheck[] {
-  return [...createRuntimeDiagnostics(), createGitDiagnostic()];
+  return [
+    ...createRuntimeDiagnostics(),
+    createGitDiagnostic(),
+    createRustDiagnostic(),
+    createCargoDiagnostic(),
+  ];
 }
 
 export function renderDiagnosticReport(
