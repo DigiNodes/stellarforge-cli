@@ -14,7 +14,13 @@ function check(
   return {
     id,
     label,
-    run: () => ({ id, label, status, message, remediation }),
+    run: () => ({
+      id,
+      label,
+      status,
+      message,
+      ...(remediation === undefined ? {} : { remediation }),
+    }),
   };
 }
 
