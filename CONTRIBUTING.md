@@ -48,7 +48,7 @@ Contributions must follow secure engineering practices. In particular:
 - avoid privileged workflow execution of untrusted pull-request code;
 - include tests for security-sensitive behavior.
 
-Changes involving filesystem mutation, subprocess execution, dependency installation, deployment, credentials, release automation, or workflow permissions receive heightened review.
+Changes involving filesystem mutation, subprocess execution, dependency installation, deployment, credentials, release automation, or workflow permissions receive heightened review. Sensitive ownership boundaries are documented in `docs/contributing/ownership.md`; CODEOWNERS can request review, while mandatory enforcement depends on the repository ruleset.
 
 ## Pull Requests
 
