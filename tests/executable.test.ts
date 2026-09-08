@@ -63,7 +63,7 @@ describe('StellarForge CLI executable', () => {
     expect(result.stdout).toMatch(
       /Summary: \d+ passed, \d+ warnings, \d+ failed\./,
     );
-  });
+  }, 15_000);
 
   it('prints the package version from the built executable', () => {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {

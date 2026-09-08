@@ -3,6 +3,7 @@ import { ValidationCliError } from '../errors/errors.js';
 
 const BUNDLED_TEMPLATE_DIRECTORIES = {
   'basic-app': 'basic-app',
+  'full-stack': 'full-stack',
 } as const;
 
 type BundledTemplateId = keyof typeof BUNDLED_TEMPLATE_DIRECTORIES;
