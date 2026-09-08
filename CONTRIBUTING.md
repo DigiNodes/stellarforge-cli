@@ -18,7 +18,7 @@ Thank you for contributing to StellarForge CLI. The project is being built as pr
 4. Add or update tests for behavior changes. Follow `docs/contributing/testing.md` for fixture and integration-test conventions.
 5. Update documentation where behavior, commands, configuration, or contributor workflows change.
 6. Add a Changeset when the PR affects the published CLI or user-visible behavior.
-7. Run the available local checks before opening a PR.
+7. Run the available local checks before opening a PR. Follow `docs/contributing/static-quality.md` for lint, formatting, and type-check expectations.
 8. Open a pull request and complete the PR template accurately.
 
 ## Changesets
