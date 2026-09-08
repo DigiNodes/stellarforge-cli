@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check frontend/src/app.js && node --check backend/src/server.js",
+    "check": "node --check frontend/src/app.js && node --check backend/src/server.js && node --check backend/src/start.js",
     "test": "node --test frontend/test backend/test",
-    "start:backend": "node backend/src/server.js"
+    "start:backend": "node backend/src/start.js"
   },
   "engines": {
     "node": ">=22.13.0"
