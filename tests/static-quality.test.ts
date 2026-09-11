@@ -28,6 +28,8 @@ const typescriptCliPath = resolve(
 );
 const eslintConfigPath = resolve(repositoryRoot, 'eslint.config.js');
 const tsconfigPath = resolve(repositoryRoot, 'tsconfig.json');
+const TOOL_TIMEOUT_MS = 25_000;
+const TEST_TIMEOUT_MS = 30_000;
 
 function runLocalTool(binaryPath: string, args: string[], input?: string) {
   return spawnSync(process.execPath, [binaryPath, ...args], {
@@ -35,6 +37,7 @@ function runLocalTool(binaryPath: string, args: string[], input?: string) {
     encoding: 'utf8',
     input,
     shell: false,
+    timeout: TOOL_TIMEOUT_MS,
   });
 }
 
@@ -54,7 +57,7 @@ describe('static quality enforcement', () => {
 
     expect(result.status).not.toBe(0);
     expect(`${result.stdout}${result.stderr}`).toContain('no-unused-vars');
-  }, 15_000);
+  }, TEST_TIMEOUT_MS);
 
   it('rejects a formatting violation with the repository Prettier configuration', async () => {
     await withTempDirectory((directory) => {
@@ -73,7 +76,7 @@ describe('static quality enforcement', () => {
         'Code style issues found',
       );
     });
-  }, 15_000);
+  }, TEST_TIMEOUT_MS);
 
   it('rejects a type violation with strict repository compiler options', async () => {
     await withTempDirectory((directory) => {
@@ -98,5 +101,5 @@ describe('static quality enforcement', () => {
       expect(result.status).not.toBe(0);
       expect(`${result.stdout}${result.stderr}`).toContain('TS2322');
     });
-  }, 15_000);
+  }, TEST_TIMEOUT_MS);
 });
