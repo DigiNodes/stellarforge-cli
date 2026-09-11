@@ -21,7 +21,8 @@
     "test": "vitest run",
     "changeset": "changeset",
     "changeset:status": "changeset status",
-    "changeset:version": "changeset version"
+    "changeset:version": "changeset version",
+    "test:e2e": "vitest run tests/e2e-mvp.test.ts"
   },
   "dependencies": {
     "commander": "15.0.0"
