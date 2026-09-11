@@ -54,9 +54,19 @@ This path never publishes.
 
 ## First release bootstrap
 
-The repository starts at `0.0.0`. The CLI-038 Changeset prepares the first release PR as a minor release, producing `0.1.0`.
+The repository starts at `0.0.0`. npm Trusted Publishing is configured from an existing package's settings, so namespace bootstrap is deliberately separate from normal automated releases.
 
-Do not set `NPM_PUBLISH_ENABLED=true` merely because the release PR exists. First verify npm namespace ownership and configure the trusted publisher/environment controls above.
+Before merging the generated `0.1.0` release PR:
+
+1. run the manual Release workflow readiness job and inspect `npm pack --dry-run`;
+2. from an approved maintainer workstation, authenticate interactively to the npm account/organization that owns the `@stellarforge` scope;
+3. publish the reviewed `0.0.0` package once with a non-default bootstrap tag, for example `npm publish --access public --tag bootstrap`;
+4. configure npm Trusted Publishing on the newly existing `@stellarforge/cli` package for `DigiNodes/stellarforge-cli`, workflow `release.yml`, environment `npm-release`, with direct publish allowed;
+5. protect the GitHub `npm-release` environment with required maintainer review;
+6. set repository variable `NPM_PUBLISH_ENABLED=true`;
+7. merge the reviewed release PR so `0.1.0` is the first normal automated release.
+
+The bootstrap publication uses interactive maintainer authentication only. Do not create or store a long-lived npm CI publishing token.
 
 npm Trusted Publishing currently requires a compatible hosted GitHub Actions runner, Node.js 22.14+ and npm 11.5.1+. The release job pins Node 24.8.0 and npm 11.5.1 for this reason.
 
