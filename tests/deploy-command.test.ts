@@ -2,7 +2,7 @@ import { PassThrough } from 'node:stream';
 import { describe, expect, it } from 'vitest';
 import { createDeployCommand } from '../src/commands/deploy.js';
 import type { ManagedChildProcess } from '../src/dev/orchestrator.js';
-import { SubprocessCliError } from '../src/errors/errors.js';
+import { SubprocessCliError, ValidationCliError } from '../src/errors/errors.js';
 import { createCapturedTerminalOutput } from './helpers/index.js';
 
 class DeployChild implements ManagedChildProcess {
@@ -96,6 +96,57 @@ describe('deploy command', () => {
       'Deploying smart contract to Stellar Testnet.',
     );
     expect(captured.stdoutText()).toContain('[stellar:deploy] CABC123');
+  });
+
+  it('uses resolved project configuration when CLI overrides are absent', async () => {
+    const child = new DeployChild();
+    let received:
+      | {
+          readonly cwd: string;
+          readonly network: string;
+          readonly source: string;
+        }
+      | undefined;
+    const command = createDeployCommand({
+      cwd: () => '/workspace',
+      resolveConfig: () => ({
+        network: 'testnet',
+        identity: 'configured-deployer',
+      }),
+      resolvePlan(input) {
+        received = input;
+        return [
+          {
+            label: 'stellar:deploy',
+            command: 'stellar',
+            args: ['contract', 'deploy'],
+            cwd: input.cwd,
+          },
+        ];
+      },
+      spawnProcess: () => child,
+    });
+
+    const running = command.parseAsync(['node', 'deploy']);
+    child.exit(0);
+    await running;
+
+    expect(received).toEqual({
+      cwd: '/workspace',
+      network: 'testnet',
+      source: 'configured-deployer',
+    });
+  });
+
+  it('fails when neither CLI input nor project configuration supplies required values', async () => {
+    const command = createDeployCommand({
+      cwd: () => '/workspace',
+      resolveConfig: () => ({}),
+    });
+
+    await expect(command.parseAsync(['node', 'deploy'])).rejects.toBeInstanceOf(
+      ValidationCliError,
+    );
   });
 
   it('preserves a failed Stellar CLI deployment as a subprocess failure', async () => {
