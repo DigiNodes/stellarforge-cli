@@ -22,7 +22,7 @@
     "changeset": "changeset",
     "changeset:status": "changeset status",
     "changeset:version": "changeset version",
-    "test:e2e": "vitest run tests/e2e-mvp.test.ts"
+    "test:e2e": "node scripts/e2e-smoke.mjs"
   },
   "dependencies": {
     "commander": "15.0.0"
