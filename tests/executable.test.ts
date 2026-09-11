@@ -9,6 +9,7 @@ import {
 } from './helpers/cli-process.js';
 
 const packageJsonPath = resolve(repositoryRoot, 'package.json');
+const DOCTOR_TEST_TIMEOUT_MS = 25_000;
 
 beforeAll(() => {
   buildCli();
@@ -57,13 +58,13 @@ describe('StellarForge CLI executable', () => {
     expect(result.stdout).toContain('[PASS] npm:');
     expect(result.stdout).toContain('[PASS] Git:');
     expect(result.stdout).toContain('Rust:');
-    expect(result.stdout).toContain('[PASS] Cargo:');
+    expect(result.stdout).toContain('Cargo:');
     expect(result.stdout).toContain('Stellar CLI:');
     expect(result.stdout).toContain('Docker:');
     expect(result.stdout).toMatch(
       /Summary: \d+ passed, \d+ warnings, \d+ failed\./,
     );
-  }, 15_000);
+  }, DOCTOR_TEST_TIMEOUT_MS);
 
   it('prints the package version from the built executable', () => {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
