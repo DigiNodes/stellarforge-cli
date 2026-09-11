@@ -1,7 +1,7 @@
 {
   "name": "@stellarforge/cli",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
   "description": "Command-line interface for building production-ready Stellar applications.",
   "type": "module",
   "packageManager": "npm@10.9.2",
@@ -22,7 +22,9 @@
     "changeset": "changeset",
     "changeset:status": "changeset status",
     "changeset:version": "changeset version",
-    "test:e2e": "node scripts/e2e-smoke.mjs"
+    "test:e2e": "node scripts/e2e-smoke.mjs",
+    "release:dry-run": "npm pack --dry-run --json",
+    "release:publish": "changeset publish"
   },
   "dependencies": {
     "commander": "15.0.0"
@@ -36,5 +38,24 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.69.0",
     "vitest": "5.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DigiNodes/stellarforge-cli.git"
+  },
+  "homepage": "https://github.com/DigiNodes/stellarforge-cli#readme",
+  "bugs": {
+    "url": "https://github.com/DigiNodes/stellarforge-cli/issues"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }
