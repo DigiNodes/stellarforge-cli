@@ -1,3 +1,4 @@
+import { createNpmInvocation } from '../process/npm.js';
 import type { DiagnosticCheck, DiagnosticResult } from './types.js';
 import { runCommand, type RunCommand } from './process.js';
 import {
@@ -67,7 +68,8 @@ export function createNpmDiagnostic(
     id: 'npm',
     label: 'npm',
     run(): DiagnosticResult {
-      const result = execute('npm', ['--version']);
+      const npm = createNpmInvocation(['--version']);
+      const result = execute(npm.command, npm.args);
 
       if (result.error || result.status !== 0) {
         return failure(
