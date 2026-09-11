@@ -3,21 +3,20 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { createNewCommand } from '../src/commands/new.js';
+import { createNpmInvocation } from '../src/process/npm.js';
 import {
   createCapturedTerminalOutput,
   withTempDirectory,
 } from './helpers/index.js';
 
 function runNpmScript(projectRoot: string, script: string) {
-  return spawnSync(
-    process.platform === 'win32' ? 'npm.cmd' : 'npm',
-    ['run', script],
-    {
-      cwd: projectRoot,
-      encoding: 'utf8',
-      shell: false,
-    },
-  );
+  const npm = createNpmInvocation(['run', script]);
+
+  return spawnSync(npm.command, [...npm.args], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+    shell: false,
+  });
 }
 
 describe('Full Stack template', () => {
