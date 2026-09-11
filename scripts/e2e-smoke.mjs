@@ -9,6 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
+import process from 'node:process';
 import { delimiter, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
