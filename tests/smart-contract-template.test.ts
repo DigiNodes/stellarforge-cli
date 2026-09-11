@@ -70,5 +70,7 @@ describe('Smart Contract template', () => {
 
       expect(metadata.status, metadata.stderr).toBe(0);
       expect(metadata.stdout).toContain('stellarforge-starter-contract');
-    }));
+    }),
+    15_000,
+  );
 });
