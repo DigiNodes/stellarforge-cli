@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ValidationCliError } from '../src/errors/errors.js';
+import { createNpmInvocation } from '../src/process/npm.js';
 import { resolveDevProcessPlan } from '../src/dev/project.js';
 import { withTempDirectory } from './helpers/index.js';
 
@@ -19,10 +20,11 @@ describe('development project plan', () => {
       const plan = resolveDevProcessPlan(root);
 
       expect(plan).toHaveLength(1);
+      const npm = createNpmInvocation(['run', 'start']);
       expect(plan[0]).toEqual({
         label: 'demo',
-        command: process.platform === 'win32' ? 'npm.cmd' : 'npm',
-        args: ['run', 'start'],
+        command: npm.command,
+        args: npm.args,
         cwd: root,
       });
     }));
