@@ -44,7 +44,8 @@ describe('development project plan', () => {
 
       const [spec] = resolveDevProcessPlan(root);
 
-      expect(spec?.args).toEqual(['run', 'dev']);
+      const npm = createNpmInvocation(['run', 'dev']);
+      expect(spec).toMatchObject({ command: npm.command, args: npm.args });
       expect(spec?.args).not.toContain(
         'node dev.js --flag && echo unsafe-if-shell-expanded',
       );
