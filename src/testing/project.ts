@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { DevProcessSpec } from '../dev/project.js';
 import { ValidationCliError } from '../errors/errors.js';
+import { createNpmInvocation } from '../process/npm.js';
 
 interface ProjectPackage {
   readonly name?: unknown;
@@ -46,10 +47,12 @@ function resolveNodeTestPlan(projectRoot: string): DevProcessSpec | undefined {
       ? projectPackage.name
       : 'app';
 
+  const npm = createNpmInvocation(['run', 'test']);
+
   return {
     label: `${projectName}:test`,
-    command: process.platform === 'win32' ? 'npm.cmd' : 'npm',
-    args: ['run', 'test'],
+    command: npm.command,
+    args: npm.args,
     cwd: projectRoot,
   };
 }

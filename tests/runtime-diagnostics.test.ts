@@ -4,6 +4,7 @@ import {
   createNpmDiagnostic,
 } from '../src/diagnostics/runtime.js';
 import type { RunCommand } from '../src/diagnostics/process.js';
+import { createNpmInvocation } from '../src/process/npm.js';
 
 function commandResult(
   status: number | null,
@@ -59,7 +60,8 @@ describe('npm diagnostic', () => {
 
     const result = createNpmDiagnostic(execute).run();
 
-    expect(calls).toEqual([{ executable: 'npm', args: ['--version'] }]);
+    const npm = createNpmInvocation(['--version']);
+    expect(calls).toEqual([{ executable: npm.command, args: npm.args }]);
     expect(result.status).toBe('pass');
     expect(result.message).toContain('10.9.2');
   });

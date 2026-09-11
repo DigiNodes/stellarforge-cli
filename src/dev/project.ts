@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ValidationCliError } from '../errors/errors.js';
+import { createNpmInvocation } from '../process/npm.js';
 
 export interface DevProcessSpec {
   readonly label: string;
@@ -64,11 +65,13 @@ export function resolveDevProcessPlan(cwd: string): readonly DevProcessSpec[] {
       ? projectPackage.name
       : 'app';
 
+  const npm = createNpmInvocation(['run', script]);
+
   return [
     {
       label,
-      command: process.platform === 'win32' ? 'npm.cmd' : 'npm',
-      args: ['run', script],
+      command: npm.command,
+      args: npm.args,
       cwd: projectRoot,
     },
   ];

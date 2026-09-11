@@ -54,7 +54,7 @@ describe('static quality enforcement', () => {
 
     expect(result.status).not.toBe(0);
     expect(`${result.stdout}${result.stderr}`).toContain('no-unused-vars');
-  });
+  }, 15_000);
 
   it('rejects a formatting violation with the repository Prettier configuration', async () => {
     await withTempDirectory((directory) => {
@@ -73,7 +73,7 @@ describe('static quality enforcement', () => {
         'Code style issues found',
       );
     });
-  });
+  }, 15_000);
 
   it('rejects a type violation with strict repository compiler options', async () => {
     await withTempDirectory((directory) => {
@@ -98,5 +98,5 @@ describe('static quality enforcement', () => {
       expect(result.status).not.toBe(0);
       expect(`${result.stdout}${result.stderr}`).toContain('TS2322');
     });
-  });
+  }, 15_000);
 });

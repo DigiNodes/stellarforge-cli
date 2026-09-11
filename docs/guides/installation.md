@@ -10,7 +10,7 @@ The CLI foundation supports maintained Node.js LTS lines covered by the package 
 - npm `>=10.9.0`
 - repository toolchain metadata records npm `10.9.2`
 
-Node.js 22 and Node.js 24 are the intended supported LTS majors for the current foundation. The minimum Node.js 22 patch level is aligned with the CLI's current linting/tooling dependency requirements. Do not use an end-of-life Node release for development or CI.
+Node.js 22 and Node.js 24 are the supported LTS majors for the current MVP. The minimum Node.js 22 patch level is aligned with the CLI's current linting/tooling dependency requirements. Linux, macOS, and Windows are exercised by the repository platform matrix. See [Platform Support](../reference/platform-support.md). Do not use an end-of-life Node release for development or CI.
 
 ## Contributor Setup
 
