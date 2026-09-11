@@ -1,4 +1,4 @@
-import { existsSync, lstatSync, readFileSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, type Stats } from 'node:fs';
 import { resolve } from 'node:path';
 import { ValidationCliError } from '../errors/errors.js';
 import {
@@ -28,7 +28,7 @@ export function loadProjectConfig(cwd: string): StellarForgeConfig | undefined {
     return undefined;
   }
 
-  let metadata;
+  let metadata: Stats;
   try {
     metadata = lstatSync(configPath);
   } catch (error) {
