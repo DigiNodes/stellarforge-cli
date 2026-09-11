@@ -49,22 +49,26 @@ describe('StellarForge CLI executable', () => {
     expect(result.stdout).toContain('-V, --version');
   });
 
-  it('runs default doctor checks safely in the CI toolchain', () => {
-    const result = runBuiltCli(['doctor']);
+  it(
+    'runs default doctor checks safely in the CI toolchain',
+    () => {
+      const result = runBuiltCli(['doctor']);
 
-    expect([0, 5]).toContain(result.status);
-    expect(result.stderr).toBe('');
-    expect(result.stdout).toContain('[PASS] Node.js:');
-    expect(result.stdout).toContain('[PASS] npm:');
-    expect(result.stdout).toContain('[PASS] Git:');
-    expect(result.stdout).toContain('Rust:');
-    expect(result.stdout).toContain('Cargo:');
-    expect(result.stdout).toContain('Stellar CLI:');
-    expect(result.stdout).toContain('Docker:');
-    expect(result.stdout).toMatch(
-      /Summary: \d+ passed, \d+ warnings, \d+ failed\./,
-    );
-  }, DOCTOR_TEST_TIMEOUT_MS);
+      expect([0, 5]).toContain(result.status);
+      expect(result.stderr).toBe('');
+      expect(result.stdout).toContain('[PASS] Node.js:');
+      expect(result.stdout).toContain('[PASS] npm:');
+      expect(result.stdout).toContain('[PASS] Git:');
+      expect(result.stdout).toContain('Rust:');
+      expect(result.stdout).toContain('Cargo:');
+      expect(result.stdout).toContain('Stellar CLI:');
+      expect(result.stdout).toContain('Docker:');
+      expect(result.stdout).toMatch(
+        /Summary: \d+ passed, \d+ warnings, \d+ failed\./,
+      );
+    },
+    DOCTOR_TEST_TIMEOUT_MS,
+  );
 
   it('prints the package version from the built executable', () => {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
