@@ -20,7 +20,7 @@ The platform jobs run the repository test suite and production build. This inclu
 - compiled CLI startup, help, version, and parser exit behavior;
 - project path validation and generation safety;
 - generated Basic App, Full Stack, Smart Contract, and API Service smoke checks;
-- platform-specific executable selection such as `npm.cmd`, `cargo.exe`, and `stellar.exe` on Windows;
+- platform-specific executable selection such as the Windows npm wrapper, `cargo.exe`, and `stellar.exe`;
 - subprocess supervision and failure propagation;
 - project test/development workflow resolution;
 - project configuration loading and security validation.
@@ -33,7 +33,7 @@ StellarForge code should expose platform differences deliberately instead of hid
 
 ### Windows
 
-- npm subprocesses use `npm.cmd`;
+- npm subprocesses use a fixed `cmd.exe /d /s /c npm ...` wrapper because Windows `.cmd` shims are not directly executable under the CLI's `shell: false` policy;
 - Cargo subprocesses use `cargo.exe`;
 - Stellar deployment subprocesses use `stellar.exe`;
 - path tests must use Node path APIs rather than assuming POSIX separators;
