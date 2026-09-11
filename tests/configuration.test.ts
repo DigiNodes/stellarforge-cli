@@ -108,7 +108,8 @@ describe('project configuration', () => {
       );
 
       expect(() => loadProjectConfig(root)).toThrow(ValidationCliError);
-    }));
+    }),
+  );
 
   it('rejects a symlinked project configuration', () =>
     withTempDirectory((root) => {
