@@ -1,0 +1,215 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  select-mode:
+    name: Select release mode
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      mode: ${{ steps.mode.outputs.mode }}
+      publish-plan-artifact-id: ${{ steps.mode.outputs.publish-plan-artifact-id }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.8.0'
+          package-manager-cache: false
+
+      - name: Install from committed lockfile
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Build release candidate
+        run: npm run build
+
+      - name: Select Changesets mode
+        id: mode
+        uses: changesets/action/select-mode@0138f456ec3d73906fcd11169ce59502d8d241c1
+
+  version:
+    name: Create or update release PR
+    if: needs.select-mode.outputs.mode == 'version'
+    needs: select-mode
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.8.0'
+          package-manager-cache: false
+
+      - name: Install from committed lockfile
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Create or update release PR
+        uses: changesets/action/version@0138f456ec3d73906fcd11169ce59502d8d241c1
+        with:
+          github-token: ${{ github.token }}
+          pr-title: 'release: version packages'
+          commit-message: 'release: version packages'
+
+  pack:
+    name: Validate and pack release
+    if: needs.select-mode.outputs.mode == 'publish'
+    needs: select-mode
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      pack-dir-artifact-id: ${{ steps.pack.outputs.pack-dir-artifact-id }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.8.0'
+          package-manager-cache: false
+
+      - name: Install from committed lockfile
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Run release quality checks
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run format:check
+          npm test
+          npm run build
+
+      - name: Inspect npm package without publishing
+        run: npm run release:dry-run
+
+      - name: Pack exact Changesets publish artifacts
+        id: pack
+        uses: changesets/action/pack@0138f456ec3d73906fcd11169ce59502d8d241c1
+        with:
+          publish-plan-artifact-id: ${{ needs.select-mode.outputs.publish-plan-artifact-id }}
+
+  publish:
+    name: Publish npm package and GitHub release
+    if: needs.select-mode.outputs.mode == 'publish' && vars.NPM_PUBLISH_ENABLED == 'true'
+    needs:
+      - select-mode
+      - pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm-release
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js for npm Trusted Publishing
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.8.0'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: Pin Trusted Publishing compatible npm
+        run: npm install --global npm@11.5.1 --ignore-scripts --no-audit --no-fund
+
+      - name: Verify release runtime
+        run: |
+          node --version
+          npm --version
+
+      - name: Publish packed artifacts
+        id: publish
+        uses: changesets/action/publish@0138f456ec3d73906fcd11169ce59502d8d241c1
+        with:
+          github-token: ${{ github.token }}
+          pack-dir-artifact-id: ${{ needs.pack.outputs.pack-dir-artifact-id }}
+          create-github-releases: true
+          push-git-tags: true
+
+  publish-disabled:
+    name: Publication disabled
+    if: needs.select-mode.outputs.mode == 'publish' && vars.NPM_PUBLISH_ENABLED != 'true'
+    needs:
+      - select-mode
+      - pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+
+    steps:
+      - name: Explain protected publication gate
+        run: |
+          echo "Release artifacts validated and packed, but npm publication is disabled."
+          echo "Configure npm Trusted Publishing, protect the npm-release environment,"
+          echo "then set repository variable NPM_PUBLISH_ENABLED=true."
+
+  readiness:
+    name: Manual release readiness dry-run
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.8.0'
+          package-manager-cache: false
+
+      - name: Install from committed lockfile
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Run release readiness checks
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run format:check
+          npm test
+          npm run build
+          npm run release:dry-run
+          npm run changeset:status
