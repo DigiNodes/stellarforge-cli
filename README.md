@@ -202,7 +202,7 @@ Some implementation directories/files will appear as their corresponding foundat
 
 The proposed release strategy uses Semantic Versioning and Changesets. Release-impacting PRs will record their intended version/changelog effect close to the code change.
 
-See [ADR-0003](docs/adr/ADR-0003-release-and-versioning-strategy.md).
+See [ADR-0003](docs/adr/ADR-0003-release-and-versioning-strategy.md) and the [Release Process](docs/contributing/release-process.md).
 
 ---
 
