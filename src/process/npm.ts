@@ -3,9 +3,7 @@ export interface NpmInvocation {
   readonly args: readonly string[];
 }
 
-export function createNpmInvocation(
-  args: readonly string[],
-): NpmInvocation {
+export function createNpmInvocation(args: readonly string[]): NpmInvocation {
   if (process.platform === 'win32') {
     return {
       command: 'cmd.exe',
