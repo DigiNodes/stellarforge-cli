@@ -2,6 +2,7 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ValidationCliError } from '../src/errors/errors.js';
+import { createNpmInvocation } from '../src/process/npm.js';
 import { resolveTestProcessPlan } from '../src/testing/project.js';
 import { withTempDirectory } from './helpers/index.js';
 
@@ -16,11 +17,12 @@ describe('project test workflow resolution', () => {
         }),
       );
 
+      const npm = createNpmInvocation(['run', 'test']);
       expect(resolveTestProcessPlan(root)).toEqual([
         {
           label: 'demo:test',
-          command: process.platform === 'win32' ? 'npm.cmd' : 'npm',
-          args: ['run', 'test'],
+          command: npm.command,
+          args: npm.args,
           cwd: root,
         },
       ]);
