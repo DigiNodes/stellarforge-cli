@@ -1,0 +1,49 @@
+name: E2E Smoke
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Linked CLI MVP smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.13.0'
+          package-manager-cache: false
+
+      - name: Install from committed lockfile
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Build production CLI
+        run: npm run build
+
+      - name: Link built CLI
+        run: npm link --ignore-scripts
+
+      - name: Verify linked executable
+        run: |
+          stellarforge --help
+          stellarforge --version
+
+      - name: Run deterministic MVP smoke path
+        run: npm run test:e2e

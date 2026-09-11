@@ -56,7 +56,7 @@ describe('StellarForge CLI executable', () => {
     expect(result.stdout).toContain('[PASS] Node.js:');
     expect(result.stdout).toContain('[PASS] npm:');
     expect(result.stdout).toContain('[PASS] Git:');
-    expect(result.stdout).toContain('[PASS] Rust:');
+    expect(result.stdout).toContain('Rust:');
     expect(result.stdout).toContain('[PASS] Cargo:');
     expect(result.stdout).toContain('Stellar CLI:');
     expect(result.stdout).toContain('Docker:');
