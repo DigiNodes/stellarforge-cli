@@ -1,6 +1,6 @@
 # ADR-0003: Release and Versioning Strategy
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-09-06
 - **Decision owners:** StellarForge Core Team
 
@@ -17,9 +17,9 @@ Adopt the following release strategy:
 1. Semantic Versioning for public versions.
 2. Changesets for contributor release intent, version updates, and changelog generation.
 3. npm remains the selected package-manager/release ecosystem unless changed by a separate architecture decision.
-4. GitHub Actions will automate the release flow after the package foundation exists and the workflow can be tested safely.
+4. GitHub Actions automate release PR creation, package validation/packing, and protected publication after the package foundation is validated.
 5. Git tags and GitHub Releases will correspond to published versions.
-6. npm Trusted Publishing/OIDC and package provenance should be preferred when package publication begins and the supported environment permits it.
+6. npm Trusted Publishing/OIDC is the required normal publication mechanism; public GitHub-hosted publication retains npm provenance.
 7. Release automation must be protected from untrusted pull-request execution and use least-privilege permissions.
 
 ## Version Semantics
@@ -112,10 +112,10 @@ Rejected because it becomes error-prone as contribution volume increases.
 
 Not selected for the MVP because explicit changeset files make release intent reviewable per PR without forcing commit-message conventions to carry the entire release model.
 
-## Follow-up Work
+## Implementation Status
 
-- add `.changeset/config.json` and contributor guidance;
-- establish package metadata before first package release;
-- implement release automation only after the package foundation exists;
-- configure trusted publishing/provenance before production npm publication where supported;
-- document release operations in `docs/contributing/release-process.md`.
+The repository now includes the Changesets configuration, public package metadata, a protected release workflow, release-policy tests, and release operations documentation.
+
+Production npm publication remains intentionally gated until maintainers complete the one-time namespace bootstrap, configure npm Trusted Publishing for `release.yml`, protect the `npm-release` environment, and explicitly enable `NPM_PUBLISH_ENABLED`.
+
+See `docs/contributing/release-process.md` for the operational checklist, dry-run procedure, rollback guidance, and first-release bootstrap.
