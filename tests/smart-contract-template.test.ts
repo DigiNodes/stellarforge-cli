@@ -9,8 +9,10 @@ import {
 } from './helpers/index.js';
 
 describe('Smart Contract template', () => {
-  it('generates a valid Cargo workspace with current Stellar contract guidance and no secrets', () =>
-    withTempDirectory((root) => {
+  it(
+    'generates a valid Cargo workspace with current Stellar contract guidance and no secrets',
+    () =>
+      withTempDirectory((root) => {
       const captured = createCapturedTerminalOutput();
       const command = createNewCommand({
         cwd: () => root,
@@ -69,8 +71,8 @@ describe('Smart Contract template', () => {
       );
 
       expect(metadata.status, metadata.stderr).toBe(0);
-      expect(metadata.stdout).toContain('stellarforge-starter-contract');
-    }),
+        expect(metadata.stdout).toContain('stellarforge-starter-contract');
+      }),
     15_000,
   );
 });
