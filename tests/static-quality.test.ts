@@ -28,6 +28,8 @@ const typescriptCliPath = resolve(
 );
 const eslintConfigPath = resolve(repositoryRoot, 'eslint.config.js');
 const tsconfigPath = resolve(repositoryRoot, 'tsconfig.json');
+const TOOL_TIMEOUT_MS = 25_000;
+const TEST_TIMEOUT_MS = 30_000;
 
 function runLocalTool(binaryPath: string, args: string[], input?: string) {
   return spawnSync(process.execPath, [binaryPath, ...args], {
@@ -35,68 +37,84 @@ function runLocalTool(binaryPath: string, args: string[], input?: string) {
     encoding: 'utf8',
     input,
     shell: false,
+    timeout: TOOL_TIMEOUT_MS,
   });
 }
 
 describe('static quality enforcement', () => {
-  it('rejects a lint violation with the repository ESLint configuration', () => {
-    const result = runLocalTool(
-      eslintCliPath,
-      [
-        '--config',
-        eslintConfigPath,
-        '--stdin',
-        '--stdin-filename',
-        'src/main.ts',
-      ],
-      'const unused = 1;\n',
-    );
-
-    expect(result.status).not.toBe(0);
-    expect(`${result.stdout}${result.stderr}`).toContain('no-unused-vars');
-  }, 15_000);
-
-  it('rejects a formatting violation with the repository Prettier configuration', async () => {
-    await withTempDirectory((directory) => {
-      const fixturePath = join(directory, 'bad-format.ts');
-      writeFileSync(fixturePath, 'const value={answer:42}\n');
-
-      const result = runLocalTool(prettierCliPath, [
-        '--check',
-        '--config',
-        resolve(repositoryRoot, '.prettierrc'),
-        fixturePath,
-      ]);
-
-      expect(result.status).not.toBe(0);
-      expect(`${result.stdout}${result.stderr}`).toContain(
-        'Code style issues found',
-      );
-    });
-  }, 15_000);
-
-  it('rejects a type violation with strict repository compiler options', async () => {
-    await withTempDirectory((directory) => {
-      const fixturePath = join(directory, 'bad-types.ts');
-      const fixtureConfigPath = join(directory, 'tsconfig.json');
-
-      writeFileSync(fixturePath, "const count: number = 'not-a-number';\n");
-      writeFileSync(
-        fixtureConfigPath,
-        JSON.stringify({
-          extends: tsconfigPath,
-          compilerOptions: {
-            types: [],
-            noEmit: true,
-          },
-          include: ['./bad-types.ts'],
-        }),
+  it(
+    'rejects a lint violation with the repository ESLint configuration',
+    () => {
+      const result = runLocalTool(
+        eslintCliPath,
+        [
+          '--config',
+          eslintConfigPath,
+          '--stdin',
+          '--stdin-filename',
+          'src/main.ts',
+        ],
+        'const unused = 1;\n',
       );
 
-      const result = runLocalTool(typescriptCliPath, ['-p', fixtureConfigPath]);
-
       expect(result.status).not.toBe(0);
-      expect(`${result.stdout}${result.stderr}`).toContain('TS2322');
-    });
-  }, 15_000);
+      expect(`${result.stdout}${result.stderr}`).toContain('no-unused-vars');
+    },
+    TEST_TIMEOUT_MS,
+  );
+
+  it(
+    'rejects a formatting violation with the repository Prettier configuration',
+    async () => {
+      await withTempDirectory((directory) => {
+        const fixturePath = join(directory, 'bad-format.ts');
+        writeFileSync(fixturePath, 'const value={answer:42}\n');
+
+        const result = runLocalTool(prettierCliPath, [
+          '--check',
+          '--config',
+          resolve(repositoryRoot, '.prettierrc'),
+          fixturePath,
+        ]);
+
+        expect(result.status).not.toBe(0);
+        expect(`${result.stdout}${result.stderr}`).toContain(
+          'Code style issues found',
+        );
+      });
+    },
+    TEST_TIMEOUT_MS,
+  );
+
+  it(
+    'rejects a type violation with strict repository compiler options',
+    async () => {
+      await withTempDirectory((directory) => {
+        const fixturePath = join(directory, 'bad-types.ts');
+        const fixtureConfigPath = join(directory, 'tsconfig.json');
+
+        writeFileSync(fixturePath, "const count: number = 'not-a-number';\n");
+        writeFileSync(
+          fixtureConfigPath,
+          JSON.stringify({
+            extends: tsconfigPath,
+            compilerOptions: {
+              types: [],
+              noEmit: true,
+            },
+            include: ['./bad-types.ts'],
+          }),
+        );
+
+        const result = runLocalTool(typescriptCliPath, [
+          '-p',
+          fixtureConfigPath,
+        ]);
+
+        expect(result.status).not.toBe(0);
+        expect(`${result.stdout}${result.stderr}`).toContain('TS2322');
+      });
+    },
+    TEST_TIMEOUT_MS,
+  );
 });

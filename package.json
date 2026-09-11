@@ -1,6 +1,6 @@
 {
   "name": "@stellarforge/cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": false,
   "description": "Command-line interface for building production-ready Stellar applications.",
   "type": "module",
