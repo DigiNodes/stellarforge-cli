@@ -30,7 +30,7 @@ stellarforge test
 stellarforge deploy
 ```
 
-These commands are planned and will become available incrementally through the roadmap. Do not assume a command documented here is implemented until the corresponding release notes state that it is available.
+These MVP commands are now implemented in the repository. The package remains under active pre-v1 development and is not yet presented as a stable published npm release. See the [Command Reference](docs/reference/commands.md) for exact behavior.
 
 ---
 
@@ -38,7 +38,7 @@ These commands are planned and will become available incrementally through the r
 
 ### Project Scaffolding
 
-Planned command:
+Implemented command:
 
 ```bash
 stellarforge new my-app
@@ -59,7 +59,7 @@ Additional domain templates may be considered after the MVP based on validated d
 
 ### Environment Diagnostics
 
-Planned command:
+Implemented command:
 
 ```bash
 stellarforge doctor
@@ -69,7 +69,7 @@ Diagnostics will check the developer tooling required by supported workflows and
 
 ### Local Development
 
-Planned command:
+Implemented command:
 
 ```bash
 stellarforge dev
@@ -79,7 +79,7 @@ This command will orchestrate supported local-development processes; it will not
 
 ### Unified Testing
 
-Planned command:
+Implemented command:
 
 ```bash
 stellarforge test
@@ -89,7 +89,7 @@ The CLI will provide a consistent entry point for supported project tests while 
 
 ### Stellar Testnet Deployment
 
-Planned command:
+Implemented command:
 
 ```bash
 stellarforge deploy
@@ -147,7 +147,7 @@ See [SECURITY.md](SECURITY.md), the [threat model](docs/architecture/threat-mode
 | `stellarforge --help` | Display CLI usage/help | Planned |
 | `stellarforge --version` | Display CLI version | Planned |
 
-`stellarforge add`, plugin architecture, and remote template registries are **post-v1 candidates**, not MVP commitments.
+`stellarforge add`, plugin architecture, remote template registries, and Mainnet deployment are **not implemented** and remain post-v1 or separately reviewed candidates.\n\nSee [Quick Start](docs/guides/quick-start.md), [Command Reference](docs/reference/commands.md), [Configuration](docs/reference/configuration.md), and [Troubleshooting](docs/reference/troubleshooting.md).
 
 ---
 
