@@ -54,17 +54,30 @@ This path never publishes.
 
 ## First release bootstrap
 
-The repository starts at `0.0.0`. npm Trusted Publishing is configured from an existing package's settings, so namespace bootstrap is deliberately separate from normal automated releases.
+The repository is now versioned at `0.1.0` on `main`, but the package remains unpublished until the npm namespace and Trusted Publisher are configured.
 
-Before merging the generated `0.1.0` release PR:
+npm Trusted Publishing can only be attached after the package exists on npm. Therefore the one-time registry bootstrap must use the reviewed pre-`0.1.0` commit rather than changing `main` back to `0.0.0`.
 
-1. run the manual Release workflow readiness job and inspect `npm pack --dry-run`;
-2. from an approved maintainer workstation, authenticate interactively to the npm account/organization that owns the `@stellarforge` scope;
-3. publish the reviewed `0.0.0` package once with a non-default bootstrap tag, for example `npm publish --access public --tag bootstrap`;
-4. configure npm Trusted Publishing on the newly existing `@stellarforge/cli` package for `DigiNodes/stellarforge-cli`, workflow `release.yml`, environment `npm-release`, with direct publish allowed;
-5. protect the GitHub `npm-release` environment with required maintainer review;
-6. set repository variable `NPM_PUBLISH_ENABLED=true`;
-7. merge the reviewed release PR so `0.1.0` is the first normal automated release.
+The approved bootstrap source is the last pre-release commit:
+
+```text
+8684d940afc8e2d9e56658061de779429757b780
+```
+
+From an approved maintainer workstation:
+
+1. clone `DigiNodes/stellarforge-cli` and check out the bootstrap commit above;
+2. run `npm ci --ignore-scripts --no-audit --no-fund`, `npm run build`, and `npm run release:dry-run`;
+3. authenticate interactively to the npm account/organization that owns the `@stellarforge` scope, using the required 2FA flow;
+4. publish `@stellarforge/cli@0.0.0` once with a non-default bootstrap tag, for example `npm publish --access public --tag bootstrap`;
+5. configure npm Trusted Publishing on the newly existing `@stellarforge/cli` package for organization `DigiNodes`, repository `stellarforge-cli`, workflow `release.yml`, environment `npm-release`, with direct `npm publish` allowed;
+6. create/protect the GitHub `npm-release` environment with required maintainer review;
+7. set repository Actions variable `NPM_PUBLISH_ENABLED=true`;
+8. enable GitHub Dependency Graph so the existing Dependency Review workflow becomes enforceable;
+9. merge a reviewed release-activation change to `main` (or another approved `main` push) to trigger the protected publish path for the already-versioned `0.1.0` package;
+10. approve the `npm-release` environment deployment and verify npm, Git tag, GitHub Release, and provenance all identify `0.1.0`.
+
+Do **not** republish, rewrite, or downgrade the `0.1.0` commit on `main` merely to bootstrap the npm namespace.
 
 The bootstrap publication uses interactive maintainer authentication only. Do not create or store a long-lived npm CI publishing token.
 
