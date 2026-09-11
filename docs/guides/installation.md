@@ -43,9 +43,7 @@ node dist/cli.js
 
 The package metadata maps the installed command name `stellarforge` to `dist/cli.js`. When the package is eventually installed or linked through an approved workflow, package managers can expose that executable as `stellarforge`.
 
-At the CLI-002 stage, successful startup intentionally produces no command output. The root command, global help, and invalid-command behavior are implemented separately in CLI-003.
-
-Do not install undocumented global dependencies. Stellar-specific tools required by individual commands will be documented with those commands and validated by `stellarforge doctor` where applicable.
+After building, verify the executable with:\n\n```bash\nnode dist/cli.js --help\nnode dist/cli.js --version\n```\n\nThe implemented command behavior is documented in the [Command Reference](../reference/commands.md).\n\nDo not install undocumented global dependencies. Stellar-specific tools required by individual commands will be documented with those commands and validated by `stellarforge doctor` where applicable.
 
 ## Package Publication
 
