@@ -2,19 +2,20 @@
 
 > The command-line interface for the StellarForge ecosystem, designed to help developers create, validate, test, and deploy structured Stellar applications.
 
-> **Status:** 🚧 Foundation / MVP Development  
+> **Status:** 🚧 Implemented MVP / pre-v1 stabilization  
+> **Current source version:** 0.1.0  
 > **License:** MIT  
-> **Planned implementation:** TypeScript on Node.js
+> **Runtime:** TypeScript on Node.js
 
 ---
 
 ## Overview
 
-StellarForge CLI is planned as the primary command-line entry point into the **StellarForge** developer-tooling ecosystem.
+StellarForge CLI is the primary command-line entry point into the **StellarForge** developer-tooling ecosystem.
 
 The project addresses repetitive setup around Stellar application development: project structure, supported tooling, configuration, local workflows, testing, and deployment orchestration. Rather than claiming to replace the underlying Stellar tools, StellarForge CLI will provide a consistent layer that coordinates them through documented conventions and reusable project templates.
 
-The repository is currently in its foundation phase. Architecture, security, release engineering, contributor workflows, and the first implementation milestones are being established before the CLI is presented as production-ready software.
+The initial MVP command surface and release/security foundation are implemented. The project is now in pre-v1 stabilization: compatibility, documentation, security, usability, and release-readiness evidence are being hardened before the CLI is presented as a stable v1.0 tool.
 
 ---
 
@@ -44,7 +45,7 @@ Implemented command:
 stellarforge new my-app
 ```
 
-The generator will create supported project foundations with validated paths, controlled templates, explicit overwrite behavior, and testable output.
+The generator creates supported project foundations with validated paths, controlled templates, explicit overwrite behavior, and testable output.
 
 ### Initial Templates
 
@@ -65,7 +66,7 @@ Implemented command:
 stellarforge doctor
 ```
 
-Diagnostics will check the developer tooling required by supported workflows and provide actionable remediation without exposing sensitive environment values.
+Diagnostics check the developer tooling required by supported workflows and provide actionable remediation without exposing sensitive environment values.
 
 ### Local Development
 
@@ -75,7 +76,7 @@ Implemented command:
 stellarforge dev
 ```
 
-This command will orchestrate supported local-development processes; it will not reimplement the underlying Stellar development tools.
+This command orchestrates supported local-development processes; it does not reimplement the underlying Stellar development tools.
 
 ### Unified Testing
 
@@ -85,7 +86,7 @@ Implemented command:
 stellarforge test
 ```
 
-The CLI will provide a consistent entry point for supported project tests while preserving meaningful failures and exit codes.
+The CLI provides a consistent entry point for supported project tests while preserving meaningful failures and exit codes.
 
 ### Stellar Testnet Deployment
 
@@ -135,17 +136,17 @@ See [SECURITY.md](SECURITY.md), the [threat model](docs/architecture/threat-mode
 
 ---
 
-## Planned Commands
+## Implemented Commands
 
 | Command | MVP purpose | Status |
 | --- | --- | --- |
-| `stellarforge new` | Create a supported Stellar project | Planned |
-| `stellarforge doctor` | Validate the development environment | Planned |
-| `stellarforge dev` | Orchestrate supported local development | Planned |
-| `stellarforge test` | Run supported project tests | Planned |
-| `stellarforge deploy` | Deploy through the MVP Testnet workflow | Planned |
-| `stellarforge --help` | Display CLI usage/help | Planned |
-| `stellarforge --version` | Display CLI version | Planned |
+| `stellarforge new` | Create a supported Stellar project | Implemented |
+| `stellarforge doctor` | Validate the development environment | Implemented |
+| `stellarforge dev` | Orchestrate supported local development | Implemented |
+| `stellarforge test` | Run supported project tests | Implemented |
+| `stellarforge deploy` | Deploy through the MVP Testnet workflow | Implemented |
+| `stellarforge --help` | Display CLI usage/help | Implemented |
+| `stellarforge --version` | Display CLI version | Implemented |
 
 `stellarforge add`, plugin architecture, remote template registries, and Mainnet deployment are **not implemented** and remain post-v1 or separately reviewed candidates.\n\nSee [Quick Start](docs/guides/quick-start.md), [Command Reference](docs/reference/commands.md), [Configuration](docs/reference/configuration.md), and [Troubleshooting](docs/reference/troubleshooting.md).
 
@@ -168,9 +169,9 @@ See [ROADMAP.md](ROADMAP.md) for scope and post-v1 candidates.
 
 ---
 
-## Repository Foundation
+## Repository Structure
 
-As implementation begins, the repository is being organized around:
+The implemented repository is organized around:
 
 ```text
 stellarforge-cli/
@@ -194,13 +195,13 @@ stellarforge-cli/
 └── LICENSE
 ```
 
-Some implementation directories/files will appear as their corresponding foundation issues are completed.
-
 ---
 
 ## Release & Versioning
 
-The proposed release strategy uses Semantic Versioning and Changesets. Release-impacting PRs will record their intended version/changelog effect close to the code change.
+The release strategy uses Semantic Versioning and Changesets. Protected release automation, package validation, cross-platform CI, CodeQL, Dependency Review, and deterministic E2E smoke coverage are implemented.
+
+The source is currently versioned at `0.1.0`, but first public npm publication remains blocked on the one-time REL-001 npm namespace/Trusted Publishing administration. Until that is verified, use the source-checkout instructions in the [Installation Guide](docs/guides/installation.md) rather than assuming registry availability.
 
 See [ADR-0003](docs/adr/ADR-0003-release-and-versioning-strategy.md) and the [Release Process](docs/contributing/release-process.md).
 
@@ -238,4 +239,4 @@ The root `DigiNodes/StellarForge` repository coordinates ecosystem-level archite
 
 ## License
 
-StellarForge CLI is intended to be released under the MIT License. The repository license file is established as part of the public foundation before code distribution.
+StellarForge CLI is released under the MIT License. See [LICENSE](LICENSE).
