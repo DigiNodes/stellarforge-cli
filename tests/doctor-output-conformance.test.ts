@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createDoctorCommand } from '../src/commands/doctor.js';
 import type { DiagnosticCheck } from '../src/diagnostics/types.js';
 import { EXIT_CODES } from '../src/errors/errors.js';
