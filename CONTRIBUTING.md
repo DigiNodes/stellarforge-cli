@@ -7,8 +7,9 @@ Thank you for contributing to StellarForge CLI. The project is being built as pr
 1. Read the relevant issue completely.
 2. Confirm the issue is available and assigned when assignment is required.
 3. Check linked ADRs, architecture docs, and dependencies.
-4. Ask for clarification in the issue before making architecture-expanding assumptions.
-5. Do not disclose suspected vulnerabilities in public issues; follow `SECURITY.md`.
+4. For Stellar Wave work, read `docs/contributing/wave-architecture.md` before implementation; it defines frozen contracts, protected/core surfaces, and parallel-contribution rules.
+5. Ask for clarification in the issue before making architecture-expanding assumptions.
+6. Do not disclose suspected vulnerabilities in public issues; follow `SECURITY.md`.
 
 ## Development Workflow
 
