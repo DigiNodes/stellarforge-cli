@@ -1,0 +1,117 @@
+name: Contributor PR Guard
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  guard:
+    name: Wave PR scope and ownership
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate linked Wave issue and protected scope
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            const refs = [...body.matchAll(/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi)].map((m) => Number(m[1]));
+            const uniqueRefs = [...new Set(refs)];
+            if (uniqueRefs.length !== 1) {
+              core.setFailed('Wave contributor PRs must use exactly one closing reference such as Closes #123.');
+              return;
+            }
+            const { data: issue } = await github.rest.issues.get({ owner, repo, issue_number: uniqueRefs[0] });
+            const labels = new Set(issue.labels.map((label) => label.name));
+            if (!labels.has('Stellar Wave')) {
+              core.setFailed('#' + uniqueRefs[0] + ' is not a Stellar Wave issue.');
+              return;
+            }
+            if (issue.state !== 'open') {
+              core.setFailed('Linked Wave issue is not open.');
+              return;
+            }
+
+            const dependencySection = (issue.body || '').split(/## Dependencies/i)[1] || '';
+            const dependencyText = dependencySection.split(/\n---|\n## /)[0];
+            const dependencyIds = [...new Set(dependencyText.match(/SW-\d{3}/g) || [])];
+            if (dependencyIds.length) {
+              const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+                owner, repo, state: 'open', per_page: 100,
+              });
+              const openWaveIds = new Set(
+                openIssues
+                  .filter((item) => !item.pull_request && /^SW-\d{3}\b/.test(item.title))
+                  .map((item) => item.title.match(/^SW-\d{3}/)[0]),
+              );
+              const unresolved = dependencyIds.filter((id) => openWaveIds.has(id));
+              if (unresolved.length) {
+                core.setFailed('Linked issue still has unresolved dependencies: ' + unresolved.join(', '));
+                return;
+              }
+            }
+
+            if (!issue.assignees.some((a) => a.login === pr.user.login)) {
+              core.setFailed('PR author must claim and be assigned to the linked Wave issue before merge.');
+              return;
+            }
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner, repo, pull_number: pr.number, per_page: 100,
+            });
+            const protectedPatterns = [
+              /^\.github\/workflows\//, /^\.github\/CODEOWNERS$/, /^\.changeset\//,
+              /^docs\/adr\//, /^docs\/architecture\//,
+              /^src\/(?:errors|output|config|process|deployment)\//,
+              /^src\/generator\/(?:validation|template-generation|template-registry|template-sources)\.ts$/,
+              /^src\/dev\/(?:orchestrator|environment)\.ts$/,
+              /^(?:package|package-lock)\.json$/, /^SECURITY\.md$/,
+            ];
+            const protectedFiles = files.map((f) => f.filename)
+              .filter((name) => protectedPatterns.some((pattern) => pattern.test(name)));
+
+            const currentNames = new Set(files.map((file) => file.filename));
+            const openPulls = await github.paginate(github.rest.pulls.list, {
+              owner, repo, state: 'open', per_page: 100,
+            });
+            const conflicts = [];
+            for (const other of openPulls) {
+              if (other.number === pr.number || other.draft) continue;
+              const otherFiles = await github.paginate(github.rest.pulls.listFiles, {
+                owner, repo, pull_number: other.number, per_page: 100,
+              });
+              const overlap = otherFiles
+                .map((file) => file.filename)
+                .filter((name) => currentNames.has(name))
+                .filter((name) =>
+                  protectedPatterns.some((pattern) => pattern.test(name)) ||
+                  name.startsWith('src/'),
+                );
+              if (overlap.length) conflicts.push('#' + other.number + ': ' + overlap.join(', '));
+            }
+            if (conflicts.length) {
+              core.setFailed('Potential contributor conflict with open PRs: ' + conflicts.join(' | '));
+              return;
+            }
+
+            if (protectedFiles.length && !labels.has('protected-surface')) {
+              core.setFailed('PR touches protected surfaces not declared by the linked issue: ' + protectedFiles.join(', '));
+              return;
+            }
+            if (!/##\s+(?:Testing|Tests)/i.test(body)) {
+              core.setFailed('PR body must include a Testing/Tests section.');
+              return;
+            }
+            if (!/##\s+Security/i.test(body)) {
+              core.setFailed('PR body must include a Security section.');
+              return;
+            }
+            core.info('Validated Wave issue #' + issue.number + ' for PR #' + pr.number + '.');
