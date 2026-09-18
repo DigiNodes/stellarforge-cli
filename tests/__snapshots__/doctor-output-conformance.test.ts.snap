@@ -1,0 +1,27 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`doctor output conformance > keeps a failure rendering stable 1`] = `
+"[PASS] Node.js: Supported version detected.
+[FAIL] Stellar CLI: Required CLI is missing.
+  Remediation: Install the official Stellar CLI.
+Summary: 1 passed, 0 warnings, 1 failed.
+Overall health: action required.
+"
+`;
+
+exports[`doctor output conformance > keeps a warning rendering stable 1`] = `
+"[PASS] Node.js: Supported version detected.
+[WARN] Docker: Docker is not available.
+  Remediation: Install Docker only if the selected workflow requires it.
+Summary: 1 passed, 1 warnings, 0 failed.
+Overall health: usable with warnings.
+"
+`;
+
+exports[`doctor output conformance > keeps an all-pass rendering stable 1`] = `
+"[PASS] Node.js: Supported version detected.
+[PASS] Git: Git is available.
+Summary: 2 passed, 0 warnings, 0 failed.
+Overall health: ready.
+"
+`;
