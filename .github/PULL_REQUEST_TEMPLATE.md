@@ -6,6 +6,8 @@
 
 Closes #
 
+<!-- Stellar Wave PRs must close exactly one assigned Wave issue. -->
+
 ## Scope
 
 <!-- List the work completed. Call out anything intentionally left out. -->
@@ -46,7 +48,9 @@ Release notes:
 
 ## Checklist
 
+- [ ] I read `docs/contributing/wave-architecture.md` for Stellar Wave work
 - [ ] I stayed within the agreed issue scope
+- [ ] I checked for overlapping open contributor PRs
 - [ ] I did not include secrets or sensitive data
 - [ ] I reviewed new/updated dependencies if any
 - [ ] I considered failure/error paths, not only the happy path
