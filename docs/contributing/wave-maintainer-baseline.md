@@ -21,6 +21,14 @@ The MVP smoke workflow and protected release automation are already implemented.
 
 ## Contributor backlog baseline
 
+Maintainer conformance audit on 2026-09-18 verified:
+
+- GitHub issues #96 through #215 map to exactly one `SW-001` through `SW-120` issue each;
+- every Wave issue has `Stellar Wave`, type, area, priority, difficulty, points, and workstream labels;
+- the canonical 120-node dependency graph contains no missing IDs and no cycles;
+- protected/high-conflict surfaces are sequenced in the canonical plan;
+- the first batch and reserve set are explicitly identified.
+
 The contributor plan contains exactly 120 IDs, `SW-001` through `SW-120`. The canonical dependency graph is `wave-backlog-plan.md`.
 
 Maintainer policy:
