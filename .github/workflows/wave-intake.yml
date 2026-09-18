@@ -32,7 +32,7 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const READY_LIMIT = 20;
+            const READY_LIMIT = 16;
             const FIRST_BATCH = new Set([
               'SW-001','SW-002','SW-003','SW-004','SW-005','SW-006',
               'SW-007','SW-008','SW-009','SW-010','SW-011','SW-012',
@@ -88,14 +88,21 @@ jobs:
               state.push({ issue, id, unresolved });
             }
 
-            const currentlyReady = state.filter(({ issue, unresolved }) => {
+            const seedReady = state.filter(({ issue, id, unresolved }) => {
               const labels = new Set(issue.labels.map((label) => label.name));
-              return unresolved.length === 0 &&
+              return FIRST_BATCH.has(id) &&
+                unresolved.length === 0 &&
+                !labels.has('status: in progress');
+            }).length;
+            const nonSeedReady = state.filter(({ issue, id, unresolved }) => {
+              const labels = new Set(issue.labels.map((label) => label.name));
+              return !FIRST_BATCH.has(id) &&
+                unresolved.length === 0 &&
                 labels.has('intake: ready') &&
                 !labels.has('status: in progress');
-            });
+            }).length;
 
-            let capacity = Math.max(0, READY_LIMIT - currentlyReady.length);
+            let capacity = Math.max(0, READY_LIMIT - seedReady - nonSeedReady);
 
             for (const entry of state) {
               const { issue, id, unresolved } = entry;
