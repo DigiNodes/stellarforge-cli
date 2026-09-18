@@ -1,0 +1,62 @@
+name: Contributor PR Stale Review
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    name: Review inactive contributor PRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Warn and close stale Wave PRs
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const now = Date.now();
+            const DAY = 24 * 60 * 60 * 1000;
+            const WARN_AFTER = 7 * DAY;
+            const CLOSE_AFTER = 21 * DAY;
+            const pulls = await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open', per_page: 100 });
+
+            for (const pr of pulls) {
+              if (pr.draft) continue;
+              const age = now - new Date(pr.updated_at).getTime();
+              const labels = new Set(pr.labels.map((label) => label.name));
+              if (labels.has('do-not-close')) continue;
+
+              const ref = (pr.body || '').match(/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/i);
+              if (!ref) continue;
+              let issue;
+              try {
+                ({ data: issue } = await github.rest.issues.get({ owner, repo, issue_number: Number(ref[1]) }));
+              } catch {
+                continue;
+              }
+              if (!issue.labels.some((label) => label.name === 'Stellar Wave')) continue;
+
+              if (age >= CLOSE_AFTER) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: pr.number,
+                  body: 'Closing this contributor PR after 21 days without activity. The linked issue can be reclaimed. A maintainer can reopen the PR if work resumes.',
+                });
+                await github.rest.pulls.update({ owner, repo, pull_number: pr.number, state: 'closed' });
+                continue;
+              }
+              if (age >= WARN_AFTER && !labels.has('status: stale')) {
+                await github.rest.issues.addLabels({ owner, repo, issue_number: pr.number, labels: ['status: stale'] });
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: pr.number,
+                  body: 'This PR has had no activity for 7 days. Please post an update or push progress. It may be closed after 21 days of inactivity.',
+                });
+              }
+            }
