@@ -39,6 +39,26 @@ jobs:
               core.setFailed('Linked Wave issue is not open.');
               return;
             }
+
+            const dependencySection = (issue.body || '').split(/## Dependencies/i)[1] || '';
+            const dependencyText = dependencySection.split(/\n---|\n## /)[0];
+            const dependencyIds = [...new Set(dependencyText.match(/SW-\d{3}/g) || [])];
+            if (dependencyIds.length) {
+              const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+                owner, repo, state: 'open', per_page: 100,
+              });
+              const openWaveIds = new Set(
+                openIssues
+                  .filter((item) => !item.pull_request && /^SW-\d{3}\b/.test(item.title))
+                  .map((item) => item.title.match(/^SW-\d{3}/)[0]),
+              );
+              const unresolved = dependencyIds.filter((id) => openWaveIds.has(id));
+              if (unresolved.length) {
+                core.setFailed('Linked issue still has unresolved dependencies: ' + unresolved.join(', '));
+                return;
+              }
+            }
+
             if (!issue.assignees.some((a) => a.login === pr.user.login)) {
               core.setFailed('PR author must claim and be assigned to the linked Wave issue before merge.');
               return;
@@ -57,6 +77,31 @@ jobs:
             ];
             const protectedFiles = files.map((f) => f.filename)
               .filter((name) => protectedPatterns.some((pattern) => pattern.test(name)));
+
+            const currentNames = new Set(files.map((file) => file.filename));
+            const openPulls = await github.paginate(github.rest.pulls.list, {
+              owner, repo, state: 'open', per_page: 100,
+            });
+            const conflicts = [];
+            for (const other of openPulls) {
+              if (other.number === pr.number || other.draft) continue;
+              const otherFiles = await github.paginate(github.rest.pulls.listFiles, {
+                owner, repo, pull_number: other.number, per_page: 100,
+              });
+              const overlap = otherFiles
+                .map((file) => file.filename)
+                .filter((name) => currentNames.has(name))
+                .filter((name) =>
+                  protectedPatterns.some((pattern) => pattern.test(name)) ||
+                  name.startsWith('src/'),
+                );
+              if (overlap.length) conflicts.push('#' + other.number + ': ' + overlap.join(', '));
+            }
+            if (conflicts.length) {
+              core.setFailed('Potential contributor conflict with open PRs: ' + conflicts.join(' | '));
+              return;
+            }
+
             if (protectedFiles.length && !labels.has('protected-surface')) {
               core.setFailed('PR touches protected surfaces not declared by the linked issue: ' + protectedFiles.join(', '));
               return;
