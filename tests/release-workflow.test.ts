@@ -30,16 +30,16 @@ describe('release automation policy', () => {
 
   it('pins release actions and separates OIDC from versioning', () => {
     expect(workflow).toContain(
-      'changesets/action/select-mode@0138f456ec3d73906fcd11169ce59502d8d241c1',
+      'changesets/action/select-mode@22ccf9aa43179fe9e27dc62e575971d28cce197c',
     );
     expect(workflow).toContain(
-      'changesets/action/version@0138f456ec3d73906fcd11169ce59502d8d241c1',
+      'changesets/action/version@22ccf9aa43179fe9e27dc62e575971d28cce197c',
     );
     expect(workflow).toContain(
-      'changesets/action/pack@0138f456ec3d73906fcd11169ce59502d8d241c1',
+      'changesets/action/pack@22ccf9aa43179fe9e27dc62e575971d28cce197c',
     );
     expect(workflow).toContain(
-      'changesets/action/publish@0138f456ec3d73906fcd11169ce59502d8d241c1',
+      'changesets/action/publish@22ccf9aa43179fe9e27dc62e575971d28cce197c',
     );
     expect(workflow.match(/id-token: write/g)).toHaveLength(1);
     expect(workflow).toContain('environment: npm-release');
