@@ -6,7 +6,7 @@
   "type": "module",
   "packageManager": "npm@10.9.2",
   "bin": {
-    "stellarforge": "./dist/cli.js"
+    "stellarforge": "dist/cli.js"
   },
   "engines": {
     "node": ">=22.13.0 <25",
