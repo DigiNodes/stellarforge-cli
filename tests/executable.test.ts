@@ -21,7 +21,7 @@ describe('StellarForge CLI executable', () => {
       bin?: Record<string, string>;
     };
 
-    expect(packageJson.bin?.stellarforge).toBe('./dist/cli.js');
+    expect(packageJson.bin?.stellarforge).toBe('dist/cli.js');
   });
 
   it('preserves the Node.js shebang in the built artifact', () => {
