@@ -1,6 +1,6 @@
 # Changesets Contributor Workflow
 
-StellarForge CLI uses Changesets to record release intent close to the pull request that introduces a user-visible package change. The project is still pre-release and the npm package remains private, so this workflow currently supports local version and changelog generation only. It does not publish packages or create release tags.
+StellarForge CLI uses Changesets to record release intent close to the pull request that introduces a user-visible package change. The package metadata is public-ready, while actual publication remains gated by npm Trusted Publishing, the protected `npm-release` environment, and the `NPM_PUBLISH_ENABLED` repository variable.
 
 ## When a Changeset Is Required
 
@@ -31,7 +31,7 @@ Review the generated file before committing it. A typical file for this reposito
 
 ```markdown
 ---
-"@stellarforge/cli": patch
+"@diginodes/stellarforge-cli": patch
 ---
 
 Describe the user-visible change clearly.
@@ -71,28 +71,8 @@ This command consumes pending changeset files and updates package versions/chang
 
 For ordinary feature pull requests, contributors should normally commit the changeset file itself rather than committing generated release-version changes.
 
-## Private Package Behavior
+## Protected Publishing
 
-`@stellarforge/cli` is currently marked `private: true`. The Changesets configuration therefore explicitly enables private-package versioning while keeping private-package tags disabled:
+The package is marked `private: false` and the Changesets configuration declares public access. That metadata alone does not authorize publication. The release workflow publishes only when npm Trusted Publishing is configured, the protected `npm-release` environment approves the job, and `NPM_PUBLISH_ENABLED` is exactly `true`.
 
-```json
-"privatePackages": {
-  "version": true,
-  "tag": false
-}
-```
-
-This allows us to prove version/changelog generation during development without enabling package publication or release tagging.
-
-## Publishing Is Out of Scope
-
-The following are intentionally not part of the current Changesets integration:
-
-- `changeset publish`;
-- npm publication;
-- npm credentials or tokens;
-- Git tags;
-- GitHub Releases;
-- release-publishing GitHub Actions.
-
-Protected publication automation will be implemented separately only after package identity, security gates, trusted publishing, and release-readiness requirements are satisfied.
+Publishing uses GitHub Actions OIDC rather than a long-lived `NPM_TOKEN`. Maintainers must not run routine releases manually after the one-time registry bootstrap.
