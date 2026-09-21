@@ -2,7 +2,7 @@
 
 StellarForge CLI has completed its initial MVP implementation and the repository contains protected release automation. The source is versioned at `0.1.0`, but the first public npm publication is still pending the one-time registry and Trusted Publishing setup tracked in REL-001.
 
-Until that publication is verified, use a source checkout for development and evaluation rather than assuming `@stellarforge/cli` is available from the npm registry.
+Until that publication is verified, use a source checkout for development and evaluation rather than assuming `@diginodes/stellarforge-cli` is available from the npm registry.
 
 ## Contributor prerequisites
 
