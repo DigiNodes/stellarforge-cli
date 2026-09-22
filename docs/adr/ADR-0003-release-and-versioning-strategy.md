@@ -116,6 +116,6 @@ Not selected for the MVP because explicit changeset files make release intent re
 
 The repository now includes the Changesets configuration, public package metadata, a protected release workflow, release-policy tests, and release operations documentation.
 
-Production npm publication remains intentionally gated until maintainers complete the one-time namespace bootstrap, configure npm Trusted Publishing for `release.yml`, protect the `npm-release` environment, and explicitly enable `NPM_PUBLISH_ENABLED`.
+The one-time namespace bootstrap, npm Trusted Publisher for `release.yml`, and protected `npm-release` environment are configured. Production npm publication remains intentionally dormant while `NPM_PUBLISH_ENABLED=false`; maintainers enable it only for an approved release and verify the resulting npm provenance, tag, and GitHub Release.
 
 See `docs/contributing/release-process.md` for the operational checklist, dry-run procedure, rollback guidance, and first-release bootstrap.
