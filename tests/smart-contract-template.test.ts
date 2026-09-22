@@ -8,9 +8,12 @@ import {
   withTempDirectory,
 } from './helpers/index.js';
 
+const cargoAvailable =
+  spawnSync('cargo', ['--version'], { shell: false }).status === 0;
+
 describe('Smart Contract template', () => {
   it(
-    'generates a valid Cargo workspace with current Stellar contract guidance and no secrets',
+    'generates a workspace with current Stellar contract guidance and no secrets',
     () =>
       withTempDirectory((root) => {
         const captured = createCapturedTerminalOutput();
@@ -59,12 +62,32 @@ describe('Smart Contract template', () => {
         expect(captured.stdoutText()).toContain(
           'Created demo.contract from smart-contract',
         );
+      }),
+    15_000,
+  );
+
+  it.skipIf(!cargoAvailable)(
+    'generates a Cargo workspace accepted by cargo metadata',
+    () =>
+      withTempDirectory((root) => {
+        const command = createNewCommand({
+          cwd: () => root,
+          output: createCapturedTerminalOutput().output,
+        });
+
+        command.parse([
+          'node',
+          'new',
+          'demo-contract',
+          '--template',
+          'smart-contract',
+        ]);
 
         const metadata = spawnSync(
           'cargo',
           ['metadata', '--no-deps', '--format-version=1'],
           {
-            cwd: projectRoot,
+            cwd: join(root, 'demo-contract'),
             encoding: 'utf8',
             shell: false,
           },

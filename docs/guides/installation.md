@@ -1,8 +1,8 @@
 # Installation
 
-StellarForge CLI has completed its initial MVP implementation and the repository contains protected release automation. The source is versioned at `0.1.0`, but the first public npm publication is still pending the one-time registry and Trusted Publishing setup tracked in REL-001.
+StellarForge CLI has completed its initial MVP implementation and the repository contains protected release automation. The source is versioned at `0.1.0`. The npm namespace bootstrap and Trusted Publisher configuration are complete, but the first supported OIDC release has not been approved or published.
 
-Until that publication is verified, use a source checkout for development and evaluation rather than assuming `@diginodes/stellarforge-cli` is available from the npm registry.
+The npm registry currently contains `@diginodes/stellarforge-cli@0.0.0` only as a namespace bootstrap placeholder. Do not treat that version as an end-user release. Until a supported version is published and verified, use a source checkout for development and evaluation.
 
 ## Contributor prerequisites
 
@@ -14,6 +14,8 @@ The current runtime support contract is:
 - Linux, macOS, and Windows are exercised by the repository CI matrix.
 
 Repository toolchain metadata currently records npm `10.9.2`.
+
+Rust and Cargo are not required for most TypeScript contributions. When Cargo is available, the test suite also validates the generated Smart Contract workspace with `cargo metadata`; that one external-tool validation is skipped when Cargo is absent. Contributors working on Smart Contract or Cargo-specific issues should install a supported Rust toolchain and confirm `cargo --version` succeeds.
 
 See [Platform Support](../reference/platform-support.md). Do not use an end-of-life or unsupported Node release for development or CI.
 
@@ -63,9 +65,9 @@ Do not install undocumented global dependencies. Stellar-specific tools required
 
 ## Public npm installation
 
-The package metadata is publication-ready (`private: false`), and protected release automation is implemented. However, **registry availability must not be assumed until REL-001 is complete and the first protected OIDC publication has been verified**.
+The package metadata is publication-ready (`private: false`), and protected release automation is implemented. However, **the existing `0.0.0` registry entry is a bootstrap placeholder, not a supported release**.
 
-After publication, the public installation instructions should be updated using the verified npm package identity and supported install command. Do not add an npm install example here before that registry verification.
+After the first protected OIDC publication is approved and verified, add the supported npm installation command here. Until then, do not direct users to install the bootstrap placeholder.
 
 ## Release security state
 
@@ -78,6 +80,6 @@ The release workflow is designed around:
 - no long-lived `NPM_TOKEN`;
 - npm provenance where supported.
 
-The remaining one-time administrative work is tracked by REL-001 and includes the npm namespace bootstrap, Trusted Publisher configuration, protected GitHub environment, publication variable, and first protected publication.
+The npm namespace, Trusted Publisher, protected GitHub environment, and Dependency Graph are configured. `NPM_PUBLISH_ENABLED` remains `false` as a deliberate kill switch. REL-001 remains open only for the first approved protected OIDC publication and its npm/tag/GitHub Release/provenance verification.
 
 See [Release Process](../contributing/release-process.md) for the complete release contract.
