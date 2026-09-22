@@ -2,7 +2,7 @@
 
 StellarForge CLI uses Semantic Versioning, Changesets, npm Trusted Publishing, and GitHub Releases.
 
-## Safety state before first publication
+## Safety state before the first supported publication
 
 Release automation is intentionally merged in a non-publishing state. The workflow can create release PRs and validate/pack release artifacts, but the npm publish job runs only when **all** of these controls are in place:
 
@@ -16,7 +16,7 @@ Release automation is intentionally merged in a non-publishing state. The workfl
 3. the GitHub `npm-release` environment exists and requires maintainer approval;
 4. the repository variable `NPM_PUBLISH_ENABLED` is set to `true`.
 
-Until then, release artifacts are built, tested, inspected, and packed, but publication stops at the protected gate.
+The first three controls are configured. `NPM_PUBLISH_ENABLED` deliberately remains `false`, so release artifacts are built, tested, inspected, and packed while publication stops at the protected gate.
 
 No long-lived `NPM_TOKEN` is used.
 
@@ -52,31 +52,28 @@ npm run changeset:status
 
 This path never publishes.
 
-## First release bootstrap
+## Completed namespace bootstrap
 
-The repository is now versioned at `0.1.0` on `main`, but the package remains unpublished until the npm namespace and Trusted Publisher are configured.
+The repository is versioned at `0.1.0` on `main`. The `@diginodes/stellarforge-cli` package now exists on npm as the `0.0.0` bootstrap placeholder, and the Trusted Publisher is bound to `DigiNodes/stellarforge-cli`, `release.yml`, and the `npm-release` environment.
 
-npm Trusted Publishing can only be attached after the package exists on npm. Therefore the one-time registry bootstrap must use the reviewed pre-`0.1.0` commit rather than changing `main` back to `0.0.0`.
+The bootstrap was intentionally published before enabling routine OIDC releases because npm Trusted Publishing can only be attached after the package exists. It is not a supported end-user release and must never be republished or reused.
 
-The approved bootstrap source is the last pre-release commit:
+The published bootstrap source is the reviewed bootstrap commit:
 
 ```text
-8684d940afc8e2d9e56658061de779429757b780
+8c2cf209eef97349a46cfb1dfb2002834c8e29b6
 ```
 
-From an approved maintainer workstation:
+The completed administrative record is:
 
-1. clone `DigiNodes/stellarforge-cli` and check out the bootstrap commit above;
-2. run `npm ci --ignore-scripts --no-audit --no-fund`, `npm run build`, and `npm run release:dry-run`;
-3. apply the reviewed package-identity patch that changes only the npm package name to `@diginodes/stellarforge-cli` while retaining bootstrap version `0.0.0`;
-4. authenticate interactively as an owner of the `diginodes` npm organization, using the required 2FA flow;
-5. publish `@diginodes/stellarforge-cli@0.0.0` once with a non-default bootstrap tag, for example `npm publish --access public --tag bootstrap`;
-6. configure npm Trusted Publishing on the newly existing `@diginodes/stellarforge-cli` package for organization `DigiNodes`, repository `stellarforge-cli`, workflow `release.yml`, environment `npm-release`, with direct `npm publish` allowed;
-7. create/protect the GitHub `npm-release` environment with required maintainer review;
-8. set repository Actions variable `NPM_PUBLISH_ENABLED=true`;
-9. verify GitHub Dependency Graph keeps the existing Dependency Review workflow enforceable;
-10. merge a reviewed release-activation change to `main` (or another approved `main` push) to trigger the protected publish path for the already-versioned `0.1.0` package;
-11. approve the `npm-release` environment deployment and verify npm, Git tag, GitHub Release, and provenance all identify `0.1.0`.
+1. `@diginodes/stellarforge-cli@0.0.0` was published once from a reviewed bootstrap commit using interactive maintainer authentication and 2FA;
+2. npm Trusted Publishing is configured for the repository, workflow, and protected environment above;
+3. the GitHub `npm-release` environment requires maintainer approval and contains no npm publishing secret;
+4. GitHub Dependency Graph is enabled and Dependency Review is healthy;
+5. a post-merge release dry run built, tested, and packed `0.1.0` while correctly skipping publication;
+6. repository variable `NPM_PUBLISH_ENABLED` remains `false` until an approved release window.
+
+For the first supported release, maintainers must review the release plan, set `NPM_PUBLISH_ENABLED=true`, merge or trigger the approved release path from `main`, approve the `npm-release` deployment, and verify npm, Git tag, GitHub Release, and provenance all identify the same version. If release approval is withdrawn, leave or restore the variable to `false`.
 
 Do **not** republish, rewrite, or downgrade the `0.1.0` commit on `main` merely to bootstrap the npm namespace.
 
