@@ -23,6 +23,19 @@ jobs:
             const repo = context.repo.repo;
             const pr = context.payload.pull_request;
             const body = pr.body || '';
+            const trustedAssociations = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
+            if (trustedAssociations.has(pr.author_association)) {
+              core.info('Skipping contributor-only Wave checks for trusted maintainer PR.');
+              return;
+            }
+            const { data: collaborator } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner, repo, username: pr.user.login,
+            });
+            const trustedPermissions = new Set(['admin', 'maintain', 'write']);
+            if (trustedPermissions.has(collaborator.permission)) {
+              core.info('Skipping contributor-only Wave checks for repository collaborator PR.');
+              return;
+            }
             const refs = [...body.matchAll(/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi)].map((m) => Number(m[1]));
             const uniqueRefs = [...new Set(refs)];
             if (uniqueRefs.length !== 1) {

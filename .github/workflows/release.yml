@@ -44,7 +44,7 @@ jobs:
 
       - name: Select Changesets mode
         id: mode
-        uses: changesets/action/select-mode@0138f456ec3d73906fcd11169ce59502d8d241c1
+        uses: changesets/action/select-mode@22ccf9aa43179fe9e27dc62e575971d28cce197c # v2.0.0
 
   version:
     name: Create or update release PR
@@ -72,7 +72,7 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Create or update release PR
-        uses: changesets/action/version@0138f456ec3d73906fcd11169ce59502d8d241c1
+        uses: changesets/action/version@22ccf9aa43179fe9e27dc62e575971d28cce197c # v2.0.0
         with:
           github-token: ${{ github.token }}
           pr-title: 'release: version packages'
@@ -117,7 +117,7 @@ jobs:
 
       - name: Pack exact Changesets publish artifacts
         id: pack
-        uses: changesets/action/pack@0138f456ec3d73906fcd11169ce59502d8d241c1
+        uses: changesets/action/pack@22ccf9aa43179fe9e27dc62e575971d28cce197c # v2.0.0
         with:
           publish-plan-artifact-id: ${{ needs.select-mode.outputs.publish-plan-artifact-id }}
 
@@ -157,7 +157,7 @@ jobs:
 
       - name: Publish packed artifacts
         id: publish
-        uses: changesets/action/publish@0138f456ec3d73906fcd11169ce59502d8d241c1
+        uses: changesets/action/publish@22ccf9aa43179fe9e27dc62e575971d28cce197c # v2.0.0
         with:
           github-token: ${{ github.token }}
           pack-dir-artifact-id: ${{ needs.pack.outputs.pack-dir-artifact-id }}

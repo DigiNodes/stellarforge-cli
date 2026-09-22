@@ -6,7 +6,7 @@ StellarForge CLI uses Semantic Versioning, Changesets, npm Trusted Publishing, a
 
 Release automation is intentionally merged in a non-publishing state. The workflow can create release PRs and validate/pack release artifacts, but the npm publish job runs only when **all** of these controls are in place:
 
-1. the `@stellarforge/cli` npm scope/package is owned by the StellarForge maintainers;
+1. the `@diginodes/stellarforge-cli` npm scope/package is owned by the StellarForge maintainers through the `diginodes` npm organization;
 2. npm Trusted Publishing is configured for:
    - GitHub organization: `DigiNodes`
    - repository: `stellarforge-cli`
@@ -68,14 +68,15 @@ From an approved maintainer workstation:
 
 1. clone `DigiNodes/stellarforge-cli` and check out the bootstrap commit above;
 2. run `npm ci --ignore-scripts --no-audit --no-fund`, `npm run build`, and `npm run release:dry-run`;
-3. authenticate interactively to the npm account/organization that owns the `@stellarforge` scope, using the required 2FA flow;
-4. publish `@stellarforge/cli@0.0.0` once with a non-default bootstrap tag, for example `npm publish --access public --tag bootstrap`;
-5. configure npm Trusted Publishing on the newly existing `@stellarforge/cli` package for organization `DigiNodes`, repository `stellarforge-cli`, workflow `release.yml`, environment `npm-release`, with direct `npm publish` allowed;
-6. create/protect the GitHub `npm-release` environment with required maintainer review;
-7. set repository Actions variable `NPM_PUBLISH_ENABLED=true`;
-8. enable GitHub Dependency Graph so the existing Dependency Review workflow becomes enforceable;
-9. merge a reviewed release-activation change to `main` (or another approved `main` push) to trigger the protected publish path for the already-versioned `0.1.0` package;
-10. approve the `npm-release` environment deployment and verify npm, Git tag, GitHub Release, and provenance all identify `0.1.0`.
+3. apply the reviewed package-identity patch that changes only the npm package name to `@diginodes/stellarforge-cli` while retaining bootstrap version `0.0.0`;
+4. authenticate interactively as an owner of the `diginodes` npm organization, using the required 2FA flow;
+5. publish `@diginodes/stellarforge-cli@0.0.0` once with a non-default bootstrap tag, for example `npm publish --access public --tag bootstrap`;
+6. configure npm Trusted Publishing on the newly existing `@diginodes/stellarforge-cli` package for organization `DigiNodes`, repository `stellarforge-cli`, workflow `release.yml`, environment `npm-release`, with direct `npm publish` allowed;
+7. create/protect the GitHub `npm-release` environment with required maintainer review;
+8. set repository Actions variable `NPM_PUBLISH_ENABLED=true`;
+9. verify GitHub Dependency Graph keeps the existing Dependency Review workflow enforceable;
+10. merge a reviewed release-activation change to `main` (or another approved `main` push) to trigger the protected publish path for the already-versioned `0.1.0` package;
+11. approve the `npm-release` environment deployment and verify npm, Git tag, GitHub Release, and provenance all identify `0.1.0`.
 
 Do **not** republish, rewrite, or downgrade the `0.1.0` commit on `main` merely to bootstrap the npm namespace.
 
@@ -89,7 +90,7 @@ The Changesets publish action is responsible for package publication, the packag
 
 After publication, verify:
 
-- npm shows `@stellarforge/cli@<version>`;
+- npm shows `@diginodes/stellarforge-cli@<version>`;
 - Git contains the matching package tag;
 - the GitHub Release points to the same version/tag;
 - npm displays provenance for the public package.
