@@ -41,7 +41,7 @@ A v1.0 release requires all required Automated and Manual items to pass and no r
 | Subprocesses avoid constructed shell interpolation | process/command tests and code review | Automated + review |
 | Project configuration rejects secret-bearing fields/raw StrKeys and does not execute code | configuration tests | Automated |
 | Logs/errors do not intentionally echo secret values | configuration/deploy/E2E tests | Automated |
-| npm publishing uses OIDC/Trusted Publishing rather than a long-lived npm token | release workflow + npm publisher configuration | Blocked on REL-001 |
+| npm publishing uses OIDC/Trusted Publishing rather than a long-lived npm token | configured publisher + first-release provenance verification | Manual verification on first release |
 | Security reporting path is documented | `SECURITY.md` | Manual review |
 
 Any unresolved security vulnerability affecting the release candidate blocks v1.0 regardless of checklist status.
@@ -106,7 +106,7 @@ Before each v0.7–v0.9 release candidate and v1.0:
 9. npm package version, Git tag, GitHub Release, and provenance agree for an actual publication.
 10. the protected `npm-release` environment and Trusted Publisher are active before publication.
 
-The actual npm publication portion remains blocked until REL-001 is completed.
+The release path is configured and has passed its non-publishing dry run. Actual npm publication remains deliberately disabled until maintainers approve the first supported release and set `NPM_PUBLISH_ENABLED=true`.
 
 ## 6. Performance and usability targets
 
@@ -153,9 +153,9 @@ The following remain post-v1 candidates unless a new architecture/product decisi
 
 ## 9. Current blockers and follow-up policy
 
-### External blocker
+### Remaining release activation
 
-- **REL-001** — npm namespace bootstrap, npm Trusted Publisher, protected GitHub `npm-release` environment, publication variable, and first protected OIDC publication.
+- **REL-001** — namespace bootstrap, npm Trusted Publisher, protected GitHub `npm-release` environment, and Dependency Graph are complete. The remaining acceptance step is the first approved protected OIDC publication and verification that npm, Git tag, GitHub Release, and provenance agree.
 
 ### Gap handling
 
