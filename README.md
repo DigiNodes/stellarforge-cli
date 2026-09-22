@@ -148,7 +148,9 @@ See [SECURITY.md](SECURITY.md), the [threat model](docs/architecture/threat-mode
 | `stellarforge --help` | Display CLI usage/help | Implemented |
 | `stellarforge --version` | Display CLI version | Implemented |
 
-`stellarforge add`, plugin architecture, remote template registries, and Mainnet deployment are **not implemented** and remain post-v1 or separately reviewed candidates.\n\nSee [Quick Start](docs/guides/quick-start.md), [Command Reference](docs/reference/commands.md), [Configuration](docs/reference/configuration.md), and [Troubleshooting](docs/reference/troubleshooting.md).
+`stellarforge add`, plugin architecture, remote template registries, and Mainnet deployment are **not implemented** and remain post-v1 or separately reviewed candidates.
+
+See [Quick Start](docs/guides/quick-start.md), [Command Reference](docs/reference/commands.md), [Configuration](docs/reference/configuration.md), and [Troubleshooting](docs/reference/troubleshooting.md).
 
 ---
 
@@ -201,7 +203,7 @@ stellarforge-cli/
 
 The release strategy uses Semantic Versioning and Changesets. Protected release automation, package validation, cross-platform CI, CodeQL, Dependency Review, and deterministic E2E smoke coverage are implemented.
 
-The source is currently versioned at `0.1.0`, but first public npm publication remains blocked on the one-time REL-001 npm namespace/Trusted Publishing administration. Until that is verified, use the source-checkout instructions in the [Installation Guide](docs/guides/installation.md) rather than assuming registry availability.
+The source is currently versioned at `0.1.0`. The npm namespace bootstrap and Trusted Publisher configuration are complete, but the registry contains only the `0.0.0` bootstrap placeholder. The first supported OIDC publication remains intentionally disabled until a release is approved. Until then, use the source-checkout instructions in the [Installation Guide](docs/guides/installation.md).
 
 See [ADR-0003](docs/adr/ADR-0003-release-and-versioning-strategy.md) and the [Release Process](docs/contributing/release-process.md).
 
