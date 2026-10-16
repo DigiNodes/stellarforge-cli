@@ -4,6 +4,7 @@ import {
   type ProjectConfigOverrides,
   type ResolvedProjectConfig,
 } from '../config/project.js';
+import { validateIdentityAlias } from '../config/schema.js';
 import {
   superviseDevProcesses,
   type DevOrchestratorOptions,
@@ -69,6 +70,14 @@ export function createDeployCommand(
           'Deployment identity is required. Pass `--source <identity>` or set a named identity in stellarforge.config.json.',
         );
       }
+
+      if (configuration.network !== 'testnet') {
+        throw new ValidationCliError(
+          'Deployment is Testnet-only in the MVP. Use `--network testnet` or set network to `testnet` in stellarforge.config.json.',
+        );
+      }
+
+      validateIdentityAlias(configuration.identity);
 
       const plan = resolvePlan({
         cwd: projectRoot,
