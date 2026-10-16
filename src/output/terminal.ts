@@ -35,6 +35,9 @@ function consumeCsiSequence(message: string, startIndex: number): number {
   return index;
 }
 
+const SENSITIVE_KEY_PATTERN =
+  /((?:private[_-]?key|secret|password|passphrase|seed|mnemonic|token))\s*[:=]\s*([^\s\r\n"'`]+)/gi;
+
 export function sanitizeTerminalText(message: string): string {
   let sanitized = '';
   let index = 0;
@@ -64,7 +67,7 @@ export function sanitizeTerminalText(message: string): string {
     index += 1;
   }
 
-  return sanitized;
+  return sanitized.replace(SENSITIVE_KEY_PATTERN, '$1=[REDACTED]');
 }
 
 export class TerminalOutput {
