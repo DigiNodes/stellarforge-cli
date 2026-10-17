@@ -7,7 +7,7 @@ import { createNewCommand } from './new.js';
 import { createTestCommand } from './test.js';
 
 export function createRootCommand(version = resolveCliVersion()): Command {
-  return new Command()
+  const program = new Command()
     .name('stellarforge')
     .description(
       'Open infrastructure for building production-ready Stellar applications.',
@@ -23,4 +23,12 @@ export function createRootCommand(version = resolveCliVersion()): Command {
     .addCommand(createDevCommand())
     .addCommand(createTestCommand())
     .addCommand(createDeployCommand());
+
+  for (const command of program.commands) {
+    command.exitOverride();
+    command.showHelpAfterError();
+    command.showSuggestionAfterError(true);
+  }
+
+  return program;
 }
