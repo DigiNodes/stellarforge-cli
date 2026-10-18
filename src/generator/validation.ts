@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, statSync } from 'node:fs';
-import { isAbsolute, relative, resolve } from 'node:path';
+import { existsSync, readdirSync, realpathSync, statSync } from 'node:fs';
+import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { ValidationCliError } from '../errors/errors.js';
 import type {
   DestinationPlan,
@@ -14,6 +14,7 @@ export interface DestinationFileSystem {
   exists(path: string): boolean;
   isDirectory(path: string): boolean;
   entries(path: string): readonly string[];
+  realpath?(path: string): string;
 }
 
 const nodeFileSystem: DestinationFileSystem = {
@@ -22,6 +23,7 @@ const nodeFileSystem: DestinationFileSystem = {
     return statSync(path).isDirectory();
   },
   entries: readdirSync,
+  realpath: realpathSync,
 };
 
 function validateProjectName(projectName: string): string {
@@ -98,6 +100,56 @@ function assertDestinationWithinRoot(root: string, destination: string): void {
   }
 }
 
+function assertSymlinkAncestorContainment(
+  root: string,
+  destination: string,
+  fileSystem: DestinationFileSystem,
+): void {
+  if (!fileSystem.realpath || !fileSystem.exists(root)) {
+    return;
+  }
+
+  try {
+    const realRoot = fileSystem.realpath(root);
+    let existing = destination;
+    while (!fileSystem.exists(existing)) {
+      const parent = dirname(existing);
+      if (parent === existing) break;
+      existing = parent;
+    }
+
+    if (fileSystem.exists(existing)) {
+      const realExisting = fileSystem.realpath(existing);
+      const rel = relative(realRoot, realExisting);
+      if (rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
+        throw new ValidationCliError(
+          'Project destination must remain inside the current working directory.',
+        );
+      }
+    }
+
+    let current = destination;
+    while (current !== dirname(current)) {
+      const parent = dirname(current);
+      if (fileSystem.exists(current) && fileSystem.exists(parent)) {
+        const realCurrent = fileSystem.realpath(current);
+        const realParent = fileSystem.realpath(parent);
+        const rel = relative(realParent, realCurrent);
+        if (rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
+          throw new ValidationCliError(
+            'Project destination must remain inside the current working directory.',
+          );
+        }
+      }
+      current = parent;
+    }
+  } catch (error) {
+    if (error instanceof ValidationCliError) {
+      throw error;
+    }
+  }
+}
+
 export function planProjectDestination(
   input: ValidatedProjectInput,
   fileSystem: DestinationFileSystem = nodeFileSystem,
@@ -106,6 +158,7 @@ export function planProjectDestination(
   const destination = resolve(root, input.projectName);
 
   assertDestinationWithinRoot(root, destination);
+  assertSymlinkAncestorContainment(root, destination, fileSystem);
 
   if (fileSystem.exists(destination)) {
     if (!fileSystem.isDirectory(destination)) {

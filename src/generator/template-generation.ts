@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  realpathSync,
   renameSync,
   rmdirSync,
   rmSync,
@@ -124,6 +125,60 @@ function copyTemplateTree(
   }
 }
 
+function assertDestinationContainment(root: string, destination: string): void {
+  const destinationParent = dirname(destination);
+
+  if (!isWithin(destinationParent, destination)) {
+    throw new ValidationCliError(
+      'Project destination escapes its validated parent directory.',
+    );
+  }
+
+  if (existsSync(root)) {
+    try {
+      const realRoot = realpathSync(root);
+      let existing = destination;
+      while (!existsSync(existing)) {
+        const parent = dirname(existing);
+        if (parent === existing) break;
+        existing = parent;
+      }
+
+      if (existsSync(existing)) {
+        const realExisting = realpathSync(existing);
+        const rel = relative(realRoot, realExisting);
+        if (rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
+          throw new ValidationCliError(
+            'Project destination escapes its validated parent directory.',
+          );
+        }
+      }
+    } catch (error) {
+      if (error instanceof ValidationCliError) throw error;
+    }
+  }
+
+  let current = destination;
+  while (current !== dirname(current)) {
+    const parent = dirname(current);
+    if (existsSync(current) && existsSync(parent)) {
+      try {
+        const realCurrent = realpathSync(current);
+        const realParent = realpathSync(parent);
+        const rel = relative(realParent, realCurrent);
+        if (rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
+          throw new ValidationCliError(
+            'Project destination escapes its validated parent directory.',
+          );
+        }
+      } catch (error) {
+        if (error instanceof ValidationCliError) throw error;
+      }
+    }
+    current = parent;
+  }
+}
+
 export function generateProjectFromTemplate(
   context: GenerationContext,
   options: TemplateGenerationOptions,
@@ -131,6 +186,7 @@ export function generateProjectFromTemplate(
   const templateRoot = resolve(options.templateRoot);
   const destination = resolve(context.destination.destination);
   const destinationParent = dirname(destination);
+  const root = resolve(context.input.cwd);
 
   if (!existsSync(templateRoot) || !lstatSync(templateRoot).isDirectory()) {
     throw new ValidationCliError('Selected template source is unavailable.');
@@ -142,11 +198,7 @@ export function generateProjectFromTemplate(
     );
   }
 
-  if (!isWithin(destinationParent, destination)) {
-    throw new ValidationCliError(
-      'Project destination escapes its validated parent directory.',
-    );
-  }
+  assertDestinationContainment(root, destination);
 
   const destinationExisted = existsSync(destination);
 
