@@ -4,6 +4,13 @@ All notable changes to StellarForge CLI will be documented in this file.
 
 The project follows [Semantic Versioning](https://semver.org/) and uses Changesets to capture release intent and generate version/changelog updates.
 
+## 0.1.1
+
+### Patch Changes
+
+- 1a83ca2: Report unknown commands as `unknown command` with a suggestion and the available command list, map subcommand usage errors (such as unknown options) to the validation exit code `2` with a one-line `--help` hint, and redact secret-like values (Stellar secret keys, seed phrases, tokens, passwords) from supervised subprocess output, including values split across output chunks.
+- 3398eae: Return the doctor diagnostic exit code when environment checks fail.
+
 ## 0.1.0 — 2026-09-11
 
 ### Added
