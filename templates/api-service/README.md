@@ -30,15 +30,24 @@ cp .env.example .env
 node --env-file=.env src/start.js
 ```
 
-Supported values:
+Supported values and defaults:
 
-- `API_HOST`
-- `API_PORT`
-- `STELLAR_NETWORK`
-- `STELLAR_HORIZON_URL`
-- `STELLAR_RPC_URL`
+- `API_HOST` — local interface to bind (default: `127.0.0.1`);
+- `API_PORT` — port number between 1 and 65535 (default: `3000`);
+- `STELLAR_NETWORK` — network identifier such as `TESTNET`, `FUTURENET`, or `STANDALONE` (default: `TESTNET`);
+- `STELLAR_HORIZON_URL` — Horizon API endpoint (default: `https://horizon-testnet.stellar.org`);
+- `STELLAR_RPC_URL` — Soroban RPC endpoint (default: `https://soroban-testnet.stellar.org`).
 
-`.env` is ignored by Git. Never commit secret keys, seed phrases, signing material, or production credentials. Remote Stellar endpoints must use HTTPS; plain HTTP is allowed only for localhost development.
+### Validation rules
+
+Configuration is validated at startup via `src/config.js`:
+
+- Remote Stellar endpoints must use HTTPS; plain HTTP is allowed only for `localhost` and `127.0.0.1` development (e.g. `http://127.0.0.1:8000`);
+- Endpoint URLs must be valid absolute URLs and cannot contain embedded credentials or secrets;
+- `API_PORT` must be a valid integer port between 1 and 65535;
+- `STELLAR_NETWORK` and `API_HOST` must not be empty.
+
+`.env` is ignored by Git. Never commit secret keys, seed phrases, signing material, or production credentials.
 
 ## Check and test
 

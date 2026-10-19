@@ -40,6 +40,9 @@ describe('API Service template', () => {
         expect(existsSync(join(projectRoot, 'test', 'server.test.js'))).toBe(
           true,
         );
+        expect(existsSync(join(projectRoot, 'test', 'config.test.js'))).toBe(
+          true,
+        );
         expect(captured.stdoutText()).toContain(
           'Created demo-api from api-service',
         );
@@ -58,6 +61,8 @@ describe('API Service template', () => {
         expect(environmentExample).toContain('STELLAR_NETWORK=TESTNET');
         expect(environmentExample).toContain('STELLAR_HORIZON_URL=https://');
         expect(environmentExample).toContain('STELLAR_RPC_URL=https://');
+        expect(environmentExample).toContain('STELLAR_NETWORK=STANDALONE');
+        expect(environmentExample).toContain('http://127.0.0.1:8000');
         expect(environmentExample).not.toMatch(/SECRET|SEED|PRIVATE_KEY/);
 
         const check = runNpmScript(projectRoot, 'check');
@@ -74,6 +79,13 @@ describe('API Service template', () => {
         expect(generatedReadme).toContain('src/stellar-client.js');
         expect(generatedReadme).toContain('Never commit secret keys');
         expect(generatedReadme).toContain('official Stellar documentation');
+        expect(generatedReadme).toContain('Validation rules');
+        expect(generatedReadme).toContain(
+          'https://horizon-testnet.stellar.org',
+        );
+        expect(generatedReadme).toContain(
+          'https://soroban-testnet.stellar.org',
+        );
       }),
     15_000,
   );
