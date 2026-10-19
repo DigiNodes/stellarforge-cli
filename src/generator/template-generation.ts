@@ -72,9 +72,11 @@ function copyTemplateTree(
   variables: Readonly<Record<string, string>>,
 ): void {
   const sourceDirectory = resolve(templateRoot, relativeDirectory);
-  const entries = readdirSync(sourceDirectory, { withFileTypes: true }).sort(
-    (a, b) => a.name.localeCompare(b.name),
-  );
+  const entries = readdirSync(sourceDirectory, { withFileTypes: true }).sort((a, b) => {
+    if (a.name < b.name) return -1;
+    if (a.name > b.name) return 1;
+    return 0;
+  });
 
   for (const entry of entries) {
     assertSafeEntryName(entry.name);
