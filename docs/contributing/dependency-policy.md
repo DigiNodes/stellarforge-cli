@@ -30,9 +30,28 @@ Before adding a dependency, consider:
 
 `.github/workflows/dependency-review.yml` reviews dependency changes on pull requests using GitHub's Dependency Review Action.
 
+The workflow contract is:
+
+| Setting | Required behavior |
+| --- | --- |
+| Trigger | `pull_request`, using the default opened, synchronize, and reopened events; no branch or path filters |
+| Permissions | Top-level `contents: read`; no job-level override, write permission, or secrets required |
+| Job | `dependency-review`, displayed as `Dependency Review`, on `ubuntu-latest` with a 10-minute timeout |
+| Action | `actions/dependency-review-action`, pinned to a reviewed full 40-character commit SHA |
+| Failure threshold | `fail-on-severity: high`, covering newly introduced high and critical vulnerabilities |
+| Execution | No conditional skips, `continue-on-error`, checkout, install, or arbitrary command steps |
+
+This is an unprivileged PR check, not `pull_request_target`. It compares dependency changes between the PR's base and head; it is not a full audit of every dependency already present in the base branch. There are no severity exceptions or package allowlists configured in this workflow.
+
 The baseline policy fails a pull request when it introduces a dependency with a known vulnerability rated `high` or `critical`. Lower-severity findings remain review signals and may still block a change when the affected dependency is security-sensitive, unnecessary, directly exploitable in the CLI threat model, or otherwise conflicts with maintainer judgment.
 
 Dependency Review is a complement to normal code review. A green dependency-review result does not make a new package automatically acceptable.
+
+Contributors must resolve high/critical findings by removing or replacing the dependency or selecting a reviewed fixed version. Maintainers review the dependency's purpose, ownership, license, transitive footprint, and install scripts as well as the automated result. Lowering the threshold, adding exceptions, skipping a failing job, or granting write permissions is not a routine way to unblock a PR. Any proposed policy/workflow change requires explicit supply-chain/security maintainer review and corresponding documentation and conformance-test updates.
+
+If the check cannot run because of a service, repository configuration, or fork-approval problem, maintainers must resolve that blocker and rerun the check; an absent or skipped result is not a pass. Mandatory merge enforcement is configured separately through the [repository ruleset](repository-ruleset.md), not by this document or the workflow alone. Dependency Review introduces no auto-merge behavior: dependency PRs still require the normal checks and maintainer review.
+
+`tests/dependency-review-policy.test.ts` checks this deliberately small workflow's complete executable shape and the documented settings. It includes negative cases for filters, privileged triggers/permissions, weakened severity, conditional skips, error suppression, extra inputs, and added steps. Run it with `npm test -- tests/dependency-review-policy.test.ts` after the standard clean install. The check is static and does not call GitHub or execute an action.
 
 ## Dependabot Updates
 
