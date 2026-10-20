@@ -1,3 +1,4 @@
+
 import { Command } from 'commander';
 import {
   resolveProjectConfig,
@@ -35,13 +36,17 @@ interface DeployCommandFlags {
 export function createDeployCommand(
   options: DeployCommandOptions = {},
 ): Command {
-  const cwd = options.cwd ?? process.cwd;
-  const output = options.output ?? new TerminalOutput();
-  const resolveConfig = options.resolveConfig ?? resolveProjectConfig;
-  const resolvePlan = options.resolvePlan ?? resolveTestnetDeploymentPlan;
+  const {
+    cwd = () => process.cwd(),
+    output = new TerminalOutput(),
+    resolveConfig = resolveProjectConfig,
+    resolvePlan = resolveTestnetDeploymentPlan,
+  } = options;
 
   return new Command('deploy')
-    .description('Deploy a supported StellarForge project to Stellar Testnet.')
+    .description(
+      'Deploy a supported StellarForge project to Stellar Testnet.',
+    )
     .option(
       '--network <network>',
       'Deployment network. CLI value overrides stellarforge.config.json.',
@@ -52,19 +57,27 @@ export function createDeployCommand(
     )
     .action(async (flags: DeployCommandFlags) => {
       const projectRoot = cwd();
+
       const overrides: ProjectConfigOverrides = {
-        ...(flags.network === undefined ? {} : { network: flags.network }),
-        ...(flags.source === undefined ? {} : { identity: flags.source }),
+        ...(flags.network === undefined
+          ? {}
+          : { network: flags.network }),
+        ...(flags.source === undefined
+          ? {}
+          : { identity: flags.source }),
       };
+
       const configuration = resolveConfig(projectRoot, overrides);
 
-      if (configuration.network === undefined) {
+      const { network, identity } = configuration;
+
+      if (network === undefined) {
         throw new ValidationCliError(
           'Deployment network is required. Pass `--network testnet` or set an explicit network in stellarforge.config.json.',
         );
       }
 
-      if (configuration.identity === undefined) {
+      if (identity === undefined) {
         throw new ValidationCliError(
           'Deployment identity is required. Pass `--source <identity>` or set a named identity in stellarforge.config.json.',
         );
@@ -72,11 +85,15 @@ export function createDeployCommand(
 
       const plan = resolvePlan({
         cwd: projectRoot,
-        network: configuration.network,
-        source: configuration.identity,
+        network,
+        source: identity,
       });
 
       output.info('Deploying smart contract to Stellar Testnet.');
-      await superviseDevProcesses(plan, { ...options, output });
+
+      await superviseDevProcesses(plan, {
+        ...options,
+        output,
+      });
     });
 }
