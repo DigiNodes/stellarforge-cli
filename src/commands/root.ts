@@ -1,3 +1,4 @@
+
 import { Command } from 'commander';
 import { resolveCliVersion } from '../version.js';
 import { createDeployCommand } from './deploy.js';
@@ -6,19 +7,32 @@ import { createDoctorCommand } from './doctor.js';
 import { createNewCommand } from './new.js';
 import { createTestCommand } from './test.js';
 
-// Commander implements `unknownCommand()` publicly but omits it from typings.
+// Commander exposes unknownCommand() at runtime but omits it from its typings.
 interface UnknownCommandReporter {
   unknownCommand(): never;
 }
 
-function applyUsageErrorHandling(command: Command, remediation: string): void {
+function applyUsageErrorHandling(
+  command: Command,
+  remediation: string,
+): void {
   command
     .exitOverride()
     .showHelpAfterError(remediation)
     .showSuggestionAfterError(true);
 }
 
-export function createRootCommand(version = resolveCliVersion()): Command {
+function reportUnknownCommand(command: Command): void {
+  if (command.args.length === 0) {
+    return;
+  }
+
+  (command as unknown as UnknownCommandReporter).unknownCommand();
+}
+
+export function createRootCommand(
+  version = resolveCliVersion(),
+): Command {
   const program = new Command()
     .name('stellarforge')
     .description(
@@ -26,29 +40,34 @@ export function createRootCommand(version = resolveCliVersion()): Command {
     )
     .usage('[options] [command]')
     .version(version)
-    // Operands reach the action so unknown commands are reported as such
-    // rather than as excess arguments.
+    // Allow operands through so the root action can report unknown commands.
     .allowExcessArguments()
     .action((_options: unknown, command: Command) => {
-      if (command.args.length > 0) {
-        (command as unknown as UnknownCommandReporter).unknownCommand();
-      }
-    })
-    .addCommand(createDoctorCommand())
-    .addCommand(createNewCommand())
-    .addCommand(createDevCommand())
-    .addCommand(createTestCommand())
-    .addCommand(createDeployCommand());
+      reportUnknownCommand(command);
+    });
 
-  const commandNames = program.commands.map((command) => command.name());
+  const subcommands = [
+    createDoctorCommand(),
+    createNewCommand(),
+    createDevCommand(),
+    createTestCommand(),
+    createDeployCommand(),
+  ];
+
+  for (const command of subcommands) {
+    program.addCommand(command);
+  }
+
+  const commandNames = subcommands
+    .map((command) => command.name())
+    .join(', ');
+
   applyUsageErrorHandling(
     program,
-    `Available commands: ${commandNames.join(', ')}.\nRun 'stellarforge --help' for usage.`,
+    `Available commands: ${commandNames}.\nRun 'stellarforge --help' for usage.`,
   );
 
-  // `addCommand` does not inherit parent settings, so subcommand usage errors
-  // must be configured explicitly to share the root's exit-code mapping.
-  for (const command of program.commands) {
+  for (const command of subcommands) {
     applyUsageErrorHandling(
       command,
       `Run 'stellarforge ${command.name()} --help' for usage.`,
