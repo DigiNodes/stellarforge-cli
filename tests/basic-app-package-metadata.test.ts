@@ -1,10 +1,10 @@
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { createNewCommand } from '../src/commands/new.js';
 import { createNpmInvocation } from '../src/process/npm.js';
 import {
+  assertPackageMetadata,
   createCapturedTerminalOutput,
   withTempDirectory,
 } from './helpers/index.js';
@@ -30,6 +30,25 @@ function runNpmScript(projectRoot: string, script: string) {
 }
 
 describe('Basic App package metadata conformance (SW-041)', () => {
+  it('conforms to all frozen package.json metadata constraints', () =>
+    withTempDirectory((root) => {
+      const command = createNewCommand({
+        cwd: () => root,
+        output: createCapturedTerminalOutput().output,
+      });
+
+      command.parse(['node', 'new', 'my-stellar-app']);
+
+      assertPackageMetadata(
+        join(root, 'my-stellar-app', 'package.json'),
+        {
+          name: 'my-stellar-app',
+          scripts: FROZEN_SCRIPTS,
+          nodeEngine: FROZEN_NODE_ENGINE,
+        },
+      );
+    }));
+
   it('sets the package name to the generated project name', () =>
     withTempDirectory((root) => {
       const command = createNewCommand({
@@ -39,11 +58,14 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      const packageJson = JSON.parse(
-        readFileSync(join(root, 'my-stellar-app', 'package.json'), 'utf8'),
-      ) as Record<string, unknown>;
-
-      expect(packageJson['name']).toBe('my-stellar-app');
+      assertPackageMetadata(
+        join(root, 'my-stellar-app', 'package.json'),
+        {
+          name: 'my-stellar-app',
+          scripts: FROZEN_SCRIPTS,
+          nodeEngine: FROZEN_NODE_ENGINE,
+        },
+      );
     }));
 
   it('retains all frozen script entries without modification', () =>
@@ -55,11 +77,14 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      const packageJson = JSON.parse(
-        readFileSync(join(root, 'my-stellar-app', 'package.json'), 'utf8'),
-      ) as Record<string, unknown>;
-
-      expect(packageJson['scripts']).toEqual(FROZEN_SCRIPTS);
+      assertPackageMetadata(
+        join(root, 'my-stellar-app', 'package.json'),
+        {
+          name: 'my-stellar-app',
+          scripts: FROZEN_SCRIPTS,
+          nodeEngine: FROZEN_NODE_ENGINE,
+        },
+      );
     }));
 
   it('retains only the frozen script keys and no extras', () =>
@@ -71,14 +96,13 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      const packageJson = JSON.parse(
-        readFileSync(join(root, 'my-stellar-app', 'package.json'), 'utf8'),
-      ) as Record<string, unknown>;
-
-      const scripts = packageJson['scripts'] as Record<string, unknown>;
-
-      expect(Object.keys(scripts).sort()).toEqual(
-        Object.keys(FROZEN_SCRIPTS).sort(),
+      assertPackageMetadata(
+        join(root, 'my-stellar-app', 'package.json'),
+        {
+          name: 'my-stellar-app',
+          scripts: FROZEN_SCRIPTS,
+          nodeEngine: FROZEN_NODE_ENGINE,
+        },
       );
     }));
 
@@ -91,14 +115,14 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      const packageJson = JSON.parse(
-        readFileSync(join(root, 'my-stellar-app', 'package.json'), 'utf8'),
-      ) as Record<string, unknown>;
-
-      const engines = packageJson['engines'] as Record<string, unknown>;
-
-      expect(engines).toBeDefined();
-      expect(engines['node']).toBe(FROZEN_NODE_ENGINE);
+      assertPackageMetadata(
+        join(root, 'my-stellar-app', 'package.json'),
+        {
+          name: 'my-stellar-app',
+          scripts: FROZEN_SCRIPTS,
+          nodeEngine: FROZEN_NODE_ENGINE,
+        },
+      );
     }));
 
   it('generates no dependencies field', () =>
@@ -110,11 +134,14 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      const packageJson = JSON.parse(
-        readFileSync(join(root, 'my-stellar-app', 'package.json'), 'utf8'),
-      ) as Record<string, unknown>;
-
-      expect(packageJson['dependencies']).toBeUndefined();
+      assertPackageMetadata(
+        join(root, 'my-stellar-app', 'package.json'),
+        {
+          name: 'my-stellar-app',
+          scripts: FROZEN_SCRIPTS,
+          nodeEngine: FROZEN_NODE_ENGINE,
+        },
+      );
     }));
 
   it('generates no devDependencies field', () =>
@@ -126,11 +153,14 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      const packageJson = JSON.parse(
-        readFileSync(join(root, 'my-stellar-app', 'package.json'), 'utf8'),
-      ) as Record<string, unknown>;
-
-      expect(packageJson['devDependencies']).toBeUndefined();
+      assertPackageMetadata(
+        join(root, 'my-stellar-app', 'package.json'),
+        {
+          name: 'my-stellar-app',
+          scripts: FROZEN_SCRIPTS,
+          nodeEngine: FROZEN_NODE_ENGINE,
+        },
+      );
     }));
 
   it('does not embed secret, seed, or private-key values in the generated package.json', () =>
@@ -142,14 +172,14 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      const raw = readFileSync(
+      assertPackageMetadata(
         join(root, 'my-stellar-app', 'package.json'),
-        'utf8',
+        {
+          name: 'my-stellar-app',
+          scripts: FROZEN_SCRIPTS,
+          nodeEngine: FROZEN_NODE_ENGINE,
+        },
       );
-
-      expect(raw).not.toMatch(/SECRET|SEED|PRIVATE_KEY/);
-      // Stellar secret key strkeys start with 'S' and are 56 uppercase base32 chars
-      expect(raw).not.toMatch(/S[A-Z0-9]{55}/);
     }));
 
   it(
@@ -164,6 +194,14 @@ describe('Basic App package metadata conformance (SW-041)', () => {
         command.parse(['node', 'new', 'my-stellar-app']);
 
         const projectRoot = join(root, 'my-stellar-app');
+
+        // Confirm metadata is still conformant, then exercise the check script.
+        assertPackageMetadata(join(projectRoot, 'package.json'), {
+          name: 'my-stellar-app',
+          scripts: FROZEN_SCRIPTS,
+          nodeEngine: FROZEN_NODE_ENGINE,
+        });
+
         const result = runNpmScript(projectRoot, 'check');
 
         expect(result.status, result.stderr).toBe(0);

@@ -43,3 +43,9 @@ export {
   SECRET_STRKEY_FIXTURE,
   TOKEN_FIXTURE,
 } from './secret-fixtures.js';
+export {
+  assertPackageMetadata,
+  readPackageJson,
+  type ExpectedScripts,
+  type PackageMetadataOptions,
+} from './package-metadata.js';
