@@ -15,6 +15,9 @@ import {
 const MINIMUM_NODE: NumericVersion = { major: 22, minor: 13, patch: 0 };
 const MAXIMUM_NODE_MAJOR = 25;
 const MINIMUM_NPM: NumericVersion = { major: 10, minor: 9, patch: 0 };
+const NODE_REMEDIATION = 'Install Node.js >=22.13.0 and <25.';
+const NPM_REMEDIATION =
+  'Install npm >=10.9.0 and ensure it is available on PATH.';
 
 function failure(
   id: string,
@@ -39,7 +42,7 @@ export function createNodeDiagnostic(
           'node',
           'Node.js',
           'Could not determine a valid Node.js version.',
-          'Install a supported Node.js release (>=22.13.0 and <25).',
+          NODE_REMEDIATION,
         );
       }
 
@@ -51,7 +54,7 @@ export function createNodeDiagnostic(
           'node',
           'Node.js',
           `Unsupported Node.js version ${nodeVersion}.`,
-          'Use Node.js >=22.13.0 and <25.',
+          NODE_REMEDIATION,
         );
       }
 
@@ -80,7 +83,7 @@ export function createNpmDiagnostic(
           'npm',
           'npm',
           'npm is unavailable or could not be executed.',
-          'Install npm >=10.9.0 and ensure it is available on PATH.',
+          NPM_REMEDIATION,
         );
       }
 
@@ -92,7 +95,7 @@ export function createNpmDiagnostic(
           'npm',
           'npm',
           'npm returned an unrecognized version.',
-          'Install npm >=10.9.0 and verify `npm --version` returns a numeric version.',
+          NPM_REMEDIATION,
         );
       }
 
@@ -101,7 +104,7 @@ export function createNpmDiagnostic(
           'npm',
           'npm',
           `Unsupported npm version ${version}.`,
-          'Upgrade to npm >=10.9.0.',
+          NPM_REMEDIATION,
         );
       }
 
