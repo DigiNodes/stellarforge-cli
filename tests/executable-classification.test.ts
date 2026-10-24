@@ -110,3 +110,49 @@ describe('diagnostics classify missing executables consistently', () => {
     expect(calls).toEqual([{ executable: 'git', args: ['--version'] }]);
   });
 });
+
+describe('diagnostic timeouts', () => {
+  const timeout = Object.assign(new Error('private process details'), {
+    code: 'ETIMEDOUT',
+  });
+  const execute: RunCommand = () => result(null, '', 'private stderr', timeout);
+
+  it('classifies the structured timeout code without relying on message text', () => {
+    expect(classifyCommandResult(execute('tool', []))).toBe('timed-out');
+    expect(
+      classifyCommandResult(result(null, '', '', new Error('ETIMEDOUT'))),
+    ).toBe('failed');
+  });
+
+  it('returns safe timeout guidance for Git, Rust and Cargo', () => {
+    for (const check of [
+      createGitDiagnostic(execute),
+      createRustDiagnostic(execute),
+      createCargoDiagnostic(execute),
+    ]) {
+      const diagnostic = check.run();
+      expect(diagnostic.status).toBe('fail');
+      expect(diagnostic.message).toContain('timed out');
+      expect(diagnostic.remediation).toContain('responds promptly');
+      expect(JSON.stringify(diagnostic)).not.toContain('private');
+    }
+  });
+
+  it.each([false, true])(
+    'preserves Docker required=%s for client and daemon timeouts',
+    (required) => {
+      for (const daemonTimeout of [false, true]) {
+        const diagnostic = createDockerDiagnostic({
+          required,
+          execute: (executable, args) =>
+            daemonTimeout && args[0] === '--version'
+              ? result(0, 'Docker version 27.0.0')
+              : execute(executable, args),
+        }).run();
+        expect(diagnostic.status).toBe(required ? 'fail' : 'warn');
+        expect(diagnostic.message).toContain('timed out');
+        expect(JSON.stringify(diagnostic)).not.toContain('private');
+      }
+    },
+  );
+});

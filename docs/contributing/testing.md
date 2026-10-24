@@ -83,3 +83,17 @@ npm test
 `npm run test:e2e` builds and exercises the compiled CLI with temporary project directories and a fake Stellar executable; it does not contact live services. `npm run benchmark:doctor` runs five baseline samples and a timeout scenario with temporary fake PATH executables. It reports min/median/max timings without machine-dependent pass thresholds and requires a POSIX environment.
 
 Before opening a pull request, run the full local validation set documented in the installation and contribution guides.
+
+## Smart Contract Cargo metadata conformance
+
+Run `npx vitest run tests/smart-contract-cargo-metadata.test.ts` to check generated
+workspace/package manifests, release settings, source paths, credential-free
+metadata and the CLI's Cargo test plan. The checks generate isolated projects
+through `stellarforge new` and do not install or compile the generated SDK.
+
+When Cargo is installed, the suite also runs
+`cargo metadata --offline --no-deps --format-version=1` to verify workspace
+membership, library targets and inherited normal/test dependencies. Only this
+semantic check is skipped when Cargo is unavailable; the manifest and command
+checks still run. Metadata validation does not replace a real `cargo test` or
+`stellar contract build` with the supported Rust/Stellar toolchain.

@@ -2,7 +2,7 @@ import type {
   ProjectGenerationResult,
   ProjectGeneratorInput,
   ProjectGeneratorServices,
-} from './types.js';
+} from './generator/types.js';
 
 export function orchestrateProjectGeneration(
   input: ProjectGeneratorInput,
