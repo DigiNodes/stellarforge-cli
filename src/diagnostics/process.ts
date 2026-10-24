@@ -29,7 +29,8 @@ export const runCommand: RunCommand = (executable, args) => {
   };
 };
 
-export type CommandOutcome = 'ok' | 'missing-executable' | 'failed';
+export type CommandOutcome =
+  'ok' | 'missing-executable' | 'timed-out' | 'failed';
 
 /**
  * Recognizes the platform-specific ways Node reports that an executable could
@@ -55,6 +56,12 @@ export function isExecutableNotFound(error: unknown): boolean {
 export function classifyCommandResult(result: CommandResult): CommandOutcome {
   if (result.error !== undefined && isExecutableNotFound(result.error)) {
     return 'missing-executable';
+  }
+
+  if (
+    (result.error as NodeJS.ErrnoException | undefined)?.code === 'ETIMEDOUT'
+  ) {
+    return 'timed-out';
   }
 
   if (result.error !== undefined || result.status !== 0) {
