@@ -11,9 +11,7 @@ on:
     types: [closed, reopened, edited]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  issues: write
+permissions: {}
 
 concurrency:
   group: wave-intake
@@ -24,6 +22,9 @@ jobs:
     name: Sync Wave dependency and intake state
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
 
     steps:
       - name: Reconcile Wave issues
