@@ -10,12 +10,18 @@ const packageJson = JSON.parse(
 ) as { name: string; version: string };
 
 function runPackDryRun(command?: string, args?: readonly string[]) {
-  const invocation = createNpmInvocation(args ?? ['pack', '--dry-run', '--json']);
-  const result = spawnSync(command ?? invocation.command, command ? (args ?? []) : invocation.args, {
-    cwd: root,
-    encoding: 'utf8',
-    shell: false,
-  });
+  const invocation = createNpmInvocation(
+    args ?? ['pack', '--dry-run', '--json'],
+  );
+  const result = spawnSync(
+    command ?? invocation.command,
+    command ? (args ?? []) : invocation.args,
+    {
+      cwd: root,
+      encoding: 'utf8',
+      shell: false,
+    },
+  );
   if (result.error || result.status !== 0) {
     throw new Error(
       `npm pack --dry-run failed: ${result.error?.message || result.stderr || result.stdout || 'unknown spawn failure'}`,
@@ -44,7 +50,9 @@ describe('npm pack content snapshot', () => {
       expect(path.startsWith('tests/')).toBe(false);
       expect(path.startsWith('.github/')).toBe(false);
       const basename = path.split('/').at(-1) ?? '';
-      expect(basename === '.env.example' || !/^\.env(?:\..*)?$/.test(basename)).toBe(true);
+      expect(
+        basename === '.env.example' || !/^\.env(?:\..*)?$/.test(basename),
+      ).toBe(true);
       expect(path).not.toBe('.npmrc');
     }
   });
@@ -69,8 +77,8 @@ describe('release dry-run artifact assertions', () => {
   });
 
   it('fails actionably when the dry-run command itself is misconfigured', () => {
-    expect(() => runPackDryRun('stellarforge-command-that-does-not-exist')).toThrow(
-      /npm pack --dry-run failed: .*ENOENT/i,
-    );
+    expect(() =>
+      runPackDryRun('stellarforge-command-that-does-not-exist'),
+    ).toThrow(/npm pack --dry-run failed: .*ENOENT/i);
   });
 });

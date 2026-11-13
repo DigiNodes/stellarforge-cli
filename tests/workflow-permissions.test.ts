@@ -20,7 +20,8 @@ describe('GHA least-privilege permissions audit (SW-105)', () => {
     const all = auditWorkflowDirectory(fixtures);
     expect(
       all.some(
-        (v) => v.file === 'pr-ci-bad-write-all.yml' && /write-all/.test(v.message),
+        (v) =>
+          v.file === 'pr-ci-bad-write-all.yml' && /write-all/.test(v.message),
       ),
     ).toBe(true);
   });

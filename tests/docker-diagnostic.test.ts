@@ -128,5 +128,6 @@ describe('Docker diagnostic', () => {
       expect(diagnostic.status).toBe('warn');
       expect(diagnostic.message).toContain('daemon');
       expect(diagnostic.message).not.toContain('unreachable');
-    });
+    },
+  );
 });

@@ -119,9 +119,10 @@ export function assertPackageMetadata(
   );
 
   // 2. Scripts — exact values
-  expect(pkg['scripts'], `package.json 'scripts' at ${packageJsonPath}`).toEqual(
-    options.scripts,
-  );
+  expect(
+    pkg['scripts'],
+    `package.json 'scripts' at ${packageJsonPath}`,
+  ).toEqual(options.scripts);
 
   // 2b. Scripts — no extra keys beyond what is expected
   const actualScriptKeys = Object.keys(

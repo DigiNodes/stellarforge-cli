@@ -43,7 +43,10 @@ function sanitizeText(value: string, maxLength: number): string {
     return '';
   }
 
-  let sanitized = value.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+  let sanitized = value
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   for (const pattern of SECRET_PATTERNS) {
     sanitized = sanitized.replace(pattern, '[REDACTED]');

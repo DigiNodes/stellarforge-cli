@@ -39,14 +39,11 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      assertPackageMetadata(
-        join(root, 'my-stellar-app', 'package.json'),
-        {
-          name: 'my-stellar-app',
-          scripts: FROZEN_SCRIPTS,
-          nodeEngine: FROZEN_NODE_ENGINE,
-        },
-      );
+      assertPackageMetadata(join(root, 'my-stellar-app', 'package.json'), {
+        name: 'my-stellar-app',
+        scripts: FROZEN_SCRIPTS,
+        nodeEngine: FROZEN_NODE_ENGINE,
+      });
     }));
 
   it('sets the package name to the generated project name', () =>
@@ -58,14 +55,11 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      assertPackageMetadata(
-        join(root, 'my-stellar-app', 'package.json'),
-        {
-          name: 'my-stellar-app',
-          scripts: FROZEN_SCRIPTS,
-          nodeEngine: FROZEN_NODE_ENGINE,
-        },
-      );
+      assertPackageMetadata(join(root, 'my-stellar-app', 'package.json'), {
+        name: 'my-stellar-app',
+        scripts: FROZEN_SCRIPTS,
+        nodeEngine: FROZEN_NODE_ENGINE,
+      });
     }));
 
   it('retains all frozen script entries without modification', () =>
@@ -77,14 +71,11 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      assertPackageMetadata(
-        join(root, 'my-stellar-app', 'package.json'),
-        {
-          name: 'my-stellar-app',
-          scripts: FROZEN_SCRIPTS,
-          nodeEngine: FROZEN_NODE_ENGINE,
-        },
-      );
+      assertPackageMetadata(join(root, 'my-stellar-app', 'package.json'), {
+        name: 'my-stellar-app',
+        scripts: FROZEN_SCRIPTS,
+        nodeEngine: FROZEN_NODE_ENGINE,
+      });
     }));
 
   it('retains only the frozen script keys and no extras', () =>
@@ -96,14 +87,11 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      assertPackageMetadata(
-        join(root, 'my-stellar-app', 'package.json'),
-        {
-          name: 'my-stellar-app',
-          scripts: FROZEN_SCRIPTS,
-          nodeEngine: FROZEN_NODE_ENGINE,
-        },
-      );
+      assertPackageMetadata(join(root, 'my-stellar-app', 'package.json'), {
+        name: 'my-stellar-app',
+        scripts: FROZEN_SCRIPTS,
+        nodeEngine: FROZEN_NODE_ENGINE,
+      });
     }));
 
   it('sets the engines.node constraint to the frozen minimum version', () =>
@@ -115,14 +103,11 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      assertPackageMetadata(
-        join(root, 'my-stellar-app', 'package.json'),
-        {
-          name: 'my-stellar-app',
-          scripts: FROZEN_SCRIPTS,
-          nodeEngine: FROZEN_NODE_ENGINE,
-        },
-      );
+      assertPackageMetadata(join(root, 'my-stellar-app', 'package.json'), {
+        name: 'my-stellar-app',
+        scripts: FROZEN_SCRIPTS,
+        nodeEngine: FROZEN_NODE_ENGINE,
+      });
     }));
 
   it('generates no dependencies field', () =>
@@ -134,14 +119,11 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      assertPackageMetadata(
-        join(root, 'my-stellar-app', 'package.json'),
-        {
-          name: 'my-stellar-app',
-          scripts: FROZEN_SCRIPTS,
-          nodeEngine: FROZEN_NODE_ENGINE,
-        },
-      );
+      assertPackageMetadata(join(root, 'my-stellar-app', 'package.json'), {
+        name: 'my-stellar-app',
+        scripts: FROZEN_SCRIPTS,
+        nodeEngine: FROZEN_NODE_ENGINE,
+      });
     }));
 
   it('generates no devDependencies field', () =>
@@ -153,14 +135,11 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      assertPackageMetadata(
-        join(root, 'my-stellar-app', 'package.json'),
-        {
-          name: 'my-stellar-app',
-          scripts: FROZEN_SCRIPTS,
-          nodeEngine: FROZEN_NODE_ENGINE,
-        },
-      );
+      assertPackageMetadata(join(root, 'my-stellar-app', 'package.json'), {
+        name: 'my-stellar-app',
+        scripts: FROZEN_SCRIPTS,
+        nodeEngine: FROZEN_NODE_ENGINE,
+      });
     }));
 
   it('does not embed secret, seed, or private-key values in the generated package.json', () =>
@@ -172,14 +151,11 @@ describe('Basic App package metadata conformance (SW-041)', () => {
 
       command.parse(['node', 'new', 'my-stellar-app']);
 
-      assertPackageMetadata(
-        join(root, 'my-stellar-app', 'package.json'),
-        {
-          name: 'my-stellar-app',
-          scripts: FROZEN_SCRIPTS,
-          nodeEngine: FROZEN_NODE_ENGINE,
-        },
-      );
+      assertPackageMetadata(join(root, 'my-stellar-app', 'package.json'), {
+        name: 'my-stellar-app',
+        scripts: FROZEN_SCRIPTS,
+        nodeEngine: FROZEN_NODE_ENGINE,
+      });
     }));
 
   it(

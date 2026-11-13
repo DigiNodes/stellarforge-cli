@@ -33,8 +33,7 @@ class FakeChild implements ManagedChildProcess {
   readonly killedSignals: NodeJS.Signals[] = [];
   #errorListener: ((error: Error) => void) | undefined;
   #exitListener:
-    | ((code: number | null, signal: NodeJS.Signals | null) => void)
-    | undefined;
+    ((code: number | null, signal: NodeJS.Signals | null) => void) | undefined;
 
   once(event: 'error', listener: (error: Error) => void): this;
   once(
@@ -254,7 +253,9 @@ describe('dev supervisor partial-line buffering (#159)', () => {
 
     // No trailing newline: the buffer must still reach the terminal.
     child.stdout.write('done');
-    const ended = new Promise<void>((resolve) => child.stdout.once('end', resolve));
+    const ended = new Promise<void>((resolve) =>
+      child.stdout.once('end', resolve),
+    );
     child.stdout.end();
     await ended;
     expect(captured.stdoutText()).toContain('[api] done');

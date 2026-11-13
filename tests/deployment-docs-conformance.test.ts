@@ -196,7 +196,10 @@ describe('SW-103: Testnet deployment documentation conformance', () => {
 
       for (const cmdLine of deployCommands) {
         await withTempDirectory(async (root) => {
-          writeFileSync(join(root, 'Cargo.toml'), '[workspace]\nmembers = []\n');
+          writeFileSync(
+            join(root, 'Cargo.toml'),
+            '[workspace]\nmembers = []\n',
+          );
           // Write default config so that commands without explicit flags can resolve
           writeFileSync(
             join(root, 'stellarforge.config.json'),

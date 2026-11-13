@@ -37,8 +37,7 @@ class FakeChild implements ManagedChildProcess {
   readonly killedSignals: NodeJS.Signals[] = [];
   #errorListener: ((error: Error) => void) | undefined;
   #exitListener:
-    | ((code: number | null, signal: NodeJS.Signals | null) => void)
-    | undefined;
+    ((code: number | null, signal: NodeJS.Signals | null) => void) | undefined;
 
   once(event: 'error', listener: (error: Error) => void): this;
   once(
@@ -114,20 +113,17 @@ describe('supervisor cleanup never orphans a child (#166)', () => {
   it('terminates every started child when one fails to spawn', async () => {
     const spawned: FakeChild[] = [];
 
-    const running = superviseDevProcesses(
-      specs('database', 'api', 'worker'),
-      {
-        spawnProcess(planned) {
-          if (planned.label === 'api') {
-            throw new Error('spawn EACCES');
-          }
-          const child = new FakeChild();
-          spawned.push(child);
-          return child;
-        },
-        signalSource: new FakeSignalSource(),
+    const running = superviseDevProcesses(specs('database', 'api', 'worker'), {
+      spawnProcess(planned) {
+        if (planned.label === 'api') {
+          throw new Error('spawn EACCES');
+        }
+        const child = new FakeChild();
+        spawned.push(child);
+        return child;
       },
-    );
+      signalSource: new FakeSignalSource(),
+    });
 
     await expect(running).rejects.toBeInstanceOf(SubprocessCliError);
 
@@ -143,13 +139,10 @@ describe('supervisor cleanup never orphans a child (#166)', () => {
     const children = [new FakeChild(), new FakeChild(), new FakeChild()];
     let index = 0;
 
-    const running = superviseDevProcesses(
-      specs('database', 'api', 'worker'),
-      {
-        spawnProcess: () => children[index++]!,
-        signalSource: new FakeSignalSource(),
-      },
-    );
+    const running = superviseDevProcesses(specs('database', 'api', 'worker'), {
+      spawnProcess: () => children[index++]!,
+      signalSource: new FakeSignalSource(),
+    });
 
     children[1]?.emitExit(3, null);
 
@@ -195,7 +188,7 @@ describe('supervisor cleanup never orphans a child (#166)', () => {
     children[0]?.emitExit(9, 'SIGKILL');
 
     await expect(running).rejects.toThrow(
-      'Development process \'api\' exited unexpectedly with code 9 after SIGKILL.',
+      "Development process 'api' exited unexpectedly with code 9 after SIGKILL.",
     );
   });
 

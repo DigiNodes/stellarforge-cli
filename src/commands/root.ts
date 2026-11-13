@@ -1,4 +1,3 @@
-
 import { Command } from 'commander';
 import { resolveCliVersion } from '../version.js';
 import { createDeployCommand } from './deploy.js';
@@ -12,10 +11,7 @@ interface UnknownCommandReporter {
   unknownCommand(): never;
 }
 
-function applyUsageErrorHandling(
-  command: Command,
-  remediation: string,
-): void {
+function applyUsageErrorHandling(command: Command, remediation: string): void {
   command
     .exitOverride()
     .showHelpAfterError(remediation)
@@ -30,9 +26,7 @@ function reportUnknownCommand(command: Command): void {
   (command as unknown as UnknownCommandReporter).unknownCommand();
 }
 
-export function createRootCommand(
-  version = resolveCliVersion(),
-): Command {
+export function createRootCommand(version = resolveCliVersion()): Command {
   const program = new Command()
     .name('stellarforge')
     .description(
@@ -58,9 +52,7 @@ export function createRootCommand(
     program.addCommand(command);
   }
 
-  const commandNames = subcommands
-    .map((command) => command.name())
-    .join(', ');
+  const commandNames = subcommands.map((command) => command.name()).join(', ');
 
   applyUsageErrorHandling(
     program,

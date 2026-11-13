@@ -64,7 +64,12 @@ function runDoctorWithChecks(checks: readonly DiagnosticCheck[]): {
 describe('SW-001: Doctor output snapshot conformance tests', () => {
   it('matches output snapshot and contract for all-pass diagnostics', () => {
     const checks: readonly DiagnosticCheck[] = [
-      mockCheck('node', 'Node.js', 'pass', 'Supported version 22.13.0 detected.'),
+      mockCheck(
+        'node',
+        'Node.js',
+        'pass',
+        'Supported version 22.13.0 detected.',
+      ),
       mockCheck('npm', 'npm', 'pass', 'Supported version 10.9.2 detected.'),
       mockCheck('git', 'Git', 'pass', 'git version 2.45.0 detected.'),
       mockCheck('rust', 'Rust', 'pass', 'rustc 1.84.0 detected.'),
@@ -94,7 +99,12 @@ describe('SW-001: Doctor output snapshot conformance tests', () => {
 
   it('matches output snapshot and contract for warning diagnostics (usable with warnings)', () => {
     const checks: readonly DiagnosticCheck[] = [
-      mockCheck('node', 'Node.js', 'pass', 'Supported version 22.13.0 detected.'),
+      mockCheck(
+        'node',
+        'Node.js',
+        'pass',
+        'Supported version 22.13.0 detected.',
+      ),
       mockCheck('npm', 'npm', 'pass', 'Supported version 10.9.2 detected.'),
       mockCheck(
         'docker',
@@ -123,7 +133,12 @@ describe('SW-001: Doctor output snapshot conformance tests', () => {
 
   it('matches output snapshot and contract for failure diagnostics (action required)', () => {
     const checks: readonly DiagnosticCheck[] = [
-      mockCheck('node', 'Node.js', 'pass', 'Supported version 22.13.0 detected.'),
+      mockCheck(
+        'node',
+        'Node.js',
+        'pass',
+        'Supported version 22.13.0 detected.',
+      ),
       mockCheck(
         'stellar',
         'Stellar CLI',

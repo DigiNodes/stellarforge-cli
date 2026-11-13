@@ -73,7 +73,8 @@ describe('Stellar deploy source validation', () => {
           source,
         }),
       ).toThrow(ValidationCliError);
-    }));
+    }),
+  );
 
   it.each(sensitiveSources)(
     'does not echo rejected source value %j',
@@ -107,7 +108,8 @@ describe('Stellar deploy source validation', () => {
 
       expect(spec?.args).toContain('--source-account');
       expect(spec?.args).toContain(source);
-    }));
+    }),
+  );
 
   it('rejects an unsafe source before the deploy subprocess starts', () =>
     withTempDirectory(async (root) => {

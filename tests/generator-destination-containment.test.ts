@@ -131,10 +131,7 @@ describe('generator destination containment', () => {
     });
 
     expect(() =>
-      planProjectDestination(
-        { ...input, projectName: '.' },
-        emptyFileSystem,
-      ),
+      planProjectDestination({ ...input, projectName: '.' }, emptyFileSystem),
     ).toThrow(ValidationCliError);
   });
 });
