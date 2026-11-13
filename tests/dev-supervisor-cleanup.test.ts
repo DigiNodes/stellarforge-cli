@@ -90,6 +90,10 @@ class FakeSignalSource implements DevSignalSource {
     }
   }
 
+  has(signal: NodeJS.Signals): boolean {
+    return this.#listeners.has(signal);
+  }
+
   emit(signal: NodeJS.Signals): void {
     const listener = this.#listeners.get(signal);
     this.#listeners.delete(signal);
