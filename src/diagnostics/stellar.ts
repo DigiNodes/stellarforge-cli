@@ -22,7 +22,7 @@ function parseStellarVersion(output: string): string | null {
   // merely because its numeric core is above the supported baseline.
   const match =
     /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.exec(value);
-  return match?.[1] ?? null;
+  return match ? `${match[1]}.${match[2]}.${match[3]}` : null;
 }
 
 export function createStellarDiagnostic(
