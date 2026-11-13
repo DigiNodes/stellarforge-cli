@@ -8,14 +8,16 @@ const packageJson = JSON.parse(
   readFileSync(join(root, 'package.json'), 'utf8'),
 ) as { name: string; version: string };
 
-function runPackDryRun() {
-  const result = spawnSync('npm', ['pack', '--dry-run', '--json'], {
+function runPackDryRun(command = 'npm', args = ['pack', '--dry-run', '--json']) {
+  const result = spawnSync(command, args, {
     cwd: root,
     encoding: 'utf8',
     shell: false,
   });
-  if (result.status !== 0) {
-    throw new Error(`npm pack --dry-run failed: ${result.stderr || result.stdout}`);
+  if (result.error || result.status !== 0) {
+    throw new Error(
+      `npm pack --dry-run failed: ${result.error?.message || result.stderr || result.stdout || 'unknown spawn failure'}`,
+    );
   }
   const [entry] = JSON.parse(result.stdout) as Array<{
     name: string;
@@ -65,13 +67,8 @@ describe('release dry-run artifact assertions', () => {
   });
 
   it('fails actionably when the dry-run command itself is misconfigured', () => {
-    const result = spawnSync('npm', ['pack', '--dry-run', '--not-a-flag'], {
-      cwd: root,
-      encoding: 'utf8',
-      shell: false,
-    });
-
-    expect(result.status).not.toBe(0);
-    expect(`${result.stdout}${result.stderr}`.length).toBeGreaterThan(0);
+    expect(() => runPackDryRun('stellarforge-command-that-does-not-exist')).toThrow(
+      /npm pack --dry-run failed: .*ENOENT/i,
+    );
   });
 });
