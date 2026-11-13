@@ -21,6 +21,21 @@ const JOB_PERMISSION_ALLOWLIST = {
   'wave-stale-prs.yml': {
     stale: new Set(['issues:write']),
   },
+  'codeql.yml': {
+    analyze: new Set(['security-events:write']),
+  },
+  'scorecard.yml': {
+    scorecard: new Set(['security-events:write', 'id-token:write']),
+  },
+  'wave-claim.yml': {
+    guidance: new Set(['issues:write']),
+  },
+  'wave-intake.yml': {
+    sync: new Set(['issues:write']),
+  },
+  'wave-pr-readiness.yml': {
+    readiness: new Set(['issues:write']),
+  },
 };
 
 function listYamlFiles(dir) {
