@@ -148,7 +148,7 @@ describe('dev supervisor startup order (#158)', () => {
 
     const child = new FakeChild();
     const running = superviseDevProcesses([spec('api')], {
-      spawnProcess(planned, _environment) {
+      spawnProcess(planned) {
         seen.push({ command: planned.command, args: planned.args });
         return child;
       },
