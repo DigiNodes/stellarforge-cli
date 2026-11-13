@@ -20,6 +20,8 @@ describe('Stellar CLI semantic-version grammar', () => {
     ['27.1.0+build.42', '27.1.0'],
     ['27.1.0-rc.1+sha.abcdef', '27.1.0'],
     ['28.0.0-preview.3', '28.0.0'],
+    ['27.10.25', '27.10.25'],
+    ['100.0.0', '100.0.0'],
     ['27.1.0-0', '27.1.0'],
     ['27.1.0+001', '27.1.0'],
   ])('accepts valid SemVer output %s', (output, expectedVersion) => {
@@ -45,6 +47,11 @@ describe('Stellar CLI semantic-version grammar', () => {
     '27.1.0-alpha.01',
     '27.1.0-alpha+',
     '27.1.0+build+extra',
+    '27.1.0a',
+    '27.1.0.0',
+    '27.1.0 (built 2026-01-01)',
+    '27.1.0 extra-tokens',
+    'vA.B.C',
   ])('rejects malformed SemVer output %s', (output) => {
     const diagnostic = runVersion(output);
 
