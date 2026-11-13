@@ -33,6 +33,7 @@ describe('Stellar CLI semantic-version grammar', () => {
 
   it.each([
     '027.1.0',
+    '9007199254740992.0.0',
     '27.01.0',
     '27.1.00',
     '27.1.0-',
