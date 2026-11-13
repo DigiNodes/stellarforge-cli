@@ -395,7 +395,7 @@ describe('critical path: end-to-end generation and E2E wiring', () => {
     expect(e2e).toContain('shell: false');
     expect(e2e).toContain('fakeStellar');
     expect(e2e).toContain('CFAKECONTRACTID');
-    expect(e2e).toContain('SECRET_');
+    expect(e2e).toContain('SECRET|TOKEN|PRIVATE KEY');
     expect(e2e).toContain('doesNotMatch');
     expect(e2e).not.toMatch(/mainnet|api\.stellar\.org|horizon/iu);
   });
