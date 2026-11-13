@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global process, console */
 /**
  * SW-105 — GitHub Actions least-privilege permissions conformance audit.
  * Static check only. Does not modify workflow permissions.
