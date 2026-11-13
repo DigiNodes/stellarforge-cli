@@ -14,7 +14,7 @@ function documentedCodes(markdown: string): Map<number, string> {
 
   let match: RegExpExecArray | null;
   while ((match = rowPattern.exec(markdown)) !== null) {
-    codes.set(Number(match[1]), match[2].trim());
+    codes.set(Number(match[1]!), match[2]!.trim());
   }
 
   return codes;
