@@ -4,9 +4,7 @@ on:
   issue_comment:
     types: [created]
 
-permissions:
-  contents: read
-  issues: write
+permissions: {}
 
 jobs:
   guidance:
@@ -14,6 +12,9 @@ jobs:
     if: github.event.issue.pull_request == null
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Explain the official assignment process
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
