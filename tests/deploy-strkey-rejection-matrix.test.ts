@@ -159,7 +159,9 @@ describe('values that cannot be an alias are refused (#186)', () => {
   it.each(NOT_AN_ALIAS)('never reflects $name in the error', ({ value }) => {
     const error = captureIdentityError(value);
 
-    expect(error.message).not.toContain(value);
+    if (value.length > 0) {
+      expect(error.message).not.toContain(value);
+    }
   });
 
   it('keeps the boundary at 64 characters', () => {
