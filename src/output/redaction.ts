@@ -20,6 +20,6 @@ export function redactSecretLikeText(line: string): string {
       : line;
   return bounded
     .replace(STELLAR_SECRET_STRKEY, REDACTED_PLACEHOLDER)
-    .replace(BEARER+_CREDENTIAL, `$1${REDACTED_PLACEHOLDER}`)
-    .replace(SENSITIVE_ASSOIGNMENT, `$1${REDACTED_PLACEHOLDER}`);
+    .replace(BEARER_CREDENTIAL, `$1${REDACTED_PLACEHOLDER}`)
+    .replace(SENSITIVE_ASSIGNMENT, `$1${REDACTED_PLACEHOLDER}`);
 }
