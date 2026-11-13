@@ -19,7 +19,7 @@ const JOB_PERMISSION_ALLOWLIST = {
     publish: new Set(['contents:write', 'id-token:write']),
   },
   'wave-stale-prs.yml': {
-    stale: new Set(['issues:write']),
+    stale: new Set(['issues:write', 'pull-requests:write']),
   },
   'codeql.yml': {
     analyze: new Set(['security-events:write']),
