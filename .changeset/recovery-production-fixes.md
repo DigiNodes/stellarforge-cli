@@ -2,4 +2,4 @@
 "@diginodes/stellarforge-cli": patch
 ---
 
-Restore reliable command timeout diagnostics, secret redaction, generator type resolution, and cross-platform regression validation.
+Restore reliable timeout diagnostics, secret redaction, generator type resolution, and cross-platform CLI validation.
