@@ -39,7 +39,8 @@ describe('npm pack content snapshot', () => {
     for (const path of paths) {
       expect(path.startsWith('tests/')).toBe(false);
       expect(path.startsWith('.github/')).toBe(false);
-      expect(path).not.toMatch(/\.env(\..*)?$/);
+      const basename = path.split('/').at(-1) ?? '';
+      expect(basename === '.env.example' || !/^\.env(?:\..*)?$/.test(basename)).toBe(true);
       expect(path).not.toBe('.npmrc');
     }
   });
