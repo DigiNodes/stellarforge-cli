@@ -14,19 +14,21 @@ function runVersion(output: string) {
 
 describe('Stellar CLI semantic-version grammar', () => {
   it.each([
-    '27.1.0',
-    'v27.1.0',
-    '27.1.0-rc.1',
-    '27.1.0+build.42',
-    '27.1.0-rc.1+sha.abcdef',
-    '28.0.0-preview.3',
-    '27.1.0-0',
-    '27.1.0+001',
-  ])('accepts valid SemVer output %s', (output) => {
+    ['27.1.0', '27.1.0'],
+    ['v27.1.0', '27.1.0'],
+    ['27.1.0-rc.1', '27.1.0'],
+    ['27.1.0+build.42', '27.1.0'],
+    ['27.1.0-rc.1+sha.abcdef', '27.1.0'],
+    ['28.0.0-preview.3', '28.0.0'],
+    ['27.1.0-0', '27.1.0'],
+    ['27.1.0+001', '27.1.0'],
+  ])('accepts valid SemVer output %s', (output, expectedVersion) => {
     const diagnostic = runVersion(output);
 
     expect(diagnostic.status).toBe('pass');
-    expect(diagnostic.message).toBe('Supported version 27.1.0 detected.');
+    expect(diagnostic.message).toBe(
+      `Supported version ${expectedVersion} detected.`,
+    );
   });
 
   it.each([
