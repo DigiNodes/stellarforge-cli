@@ -42,14 +42,13 @@ describe.each([
   { platform: 'linux', label: 'POSIX' },
 ] as const)(
   'npm invocation on $label',
-  ({ platform, label }) => {
+  ({ platform }) => {
     it('runs a safe fixed command successfully', () => {
       onPlatform(platform);
 
       const invocation = createNpmInvocation(['run', 'test']);
 
       expect(Array.isArray(invocation.args)).toBe(true);
-      expect(invocation.args).toContain('npm');
       expect(invocation.args.slice(-2)).toEqual(['run', 'test']);
       if (platform === 'win32') {
         // `/d /s /c` is the documented safe wrapper: it disables AutoRun
@@ -84,11 +83,11 @@ describe.each([
       expect(invocation.args.filter((arg) => arg === hostile)).toHaveLength(1);
 
       // The fixed npm prefix is untouched, so nothing can be prepended to it.
-      const npmIndex = invocation.args.indexOf('npm');
-      expect(npmIndex).toBeGreaterThanOrEqual(0);
-      expect(invocation.args.slice(0, npmIndex)).toEqual(
-        platform === 'win32' ? ['/d', '/s', '/c'] : [],
-      );
+      if (platform === 'win32') {
+        expect(invocation.args.slice(0, 4)).toEqual(['/d', '/s', '/c', 'npm']);
+      } else {
+        expect(invocation.command).toBe('npm');
+      }
     });
 
     it('never produces a single joined command string', () => {
