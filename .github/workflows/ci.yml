@@ -34,6 +34,9 @@ jobs:
       - name: Install from committed lockfile
         run: npm ci --ignore-scripts --no-audit --no-fund
 
+      - name: Validate GitHub Actions workflows with actionlint
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+
       - name: Audit workflow least-privilege permissions
         run: npm run audit:workflow-permissions
 
