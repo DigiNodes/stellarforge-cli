@@ -14,11 +14,15 @@ function runPackDryRun() {
     encoding: 'utf8',
     shell: false,
   });
+  if (result.status !== 0) {
+    throw new Error(`npm pack --dry-run failed: ${result.stderr || result.stdout}`);
+  }
   const [entry] = JSON.parse(result.stdout) as Array<{
     name: string;
     version: string;
     files: Array<{ path: string }>;
   }>;
+  if (!entry) throw new Error('npm pack --dry-run returned no package entry.');
   return entry;
 }
 
