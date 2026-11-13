@@ -19,9 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
-    - name: Audit workflow least-privilege permissions
-        run: npm run audit:workflow-permissions
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -36,6 +33,9 @@ jobs:
 
       - name: Install from committed lockfile
         run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Audit workflow least-privilege permissions
+        run: npm run audit:workflow-permissions
 
       - name: Typecheck
         run: npm run typecheck
