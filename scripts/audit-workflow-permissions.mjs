@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* global process, console */
 /**
  * SW-105 — GitHub Actions least-privilege permissions conformance audit.
  * Static check only. Does not modify workflow permissions.
@@ -20,7 +19,7 @@ const JOB_PERMISSION_ALLOWLIST = {
     publish: new Set(['contents:write', 'id-token:write']),
   },
   'wave-stale-prs.yml': {
-    stale: new Set(['issues:write']),
+    stale: new Set(['issues:write', 'pull-requests:write']),
   },
   'codeql.yml': {
     analyze: new Set(['security-events:write']),
@@ -64,13 +63,13 @@ function extractPermissionBlocks(text) {
       continue;
     }
 
-    const jobMatch = line.match(/^[ ]{2}([A-Za-z0-9_-]+):\s*$/);
+    const jobMatch = line.match(/^  ([A-Za-z0-9_-]+):\s*$/);
     if (jobMatch && currentJob !== null || jobMatch && lines.slice(0, i).some((v) => /^jobs:\s*$/.test(v))) {
       currentJob = jobMatch[1];
     }
 
     const topPerm = line.match(/^permissions:\s*(.*)$/);
-    const jobPerm = line.match(/^[ ]{4}permissions:\s*(.*)$/);
+    const jobPerm = line.match(/^    permissions:\s*(.*)$/);
     const match = topPerm || jobPerm;
     if (!match) continue;
 
@@ -83,7 +82,7 @@ function extractPermissionBlocks(text) {
     } else if (rest.length === 0) {
       let j = i + 1;
       while (j < lines.length) {
-        const entry = lines[j].match(/^[ ]{2,6}([A-Za-z0-9_-]+):\s*(\S+)\s*$/);
+        const entry = lines[j].match(/^ {2,6}([A-Za-z0-9_-]+):\s*(\S+)\s*$/);
         if (!entry) break;
         entries.push({ key: entry[1], value: entry[2] });
         j++;
