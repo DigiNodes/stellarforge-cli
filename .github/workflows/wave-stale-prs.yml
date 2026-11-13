@@ -32,6 +32,23 @@ jobs:
             const ESCALATE_AFTER = 4 * DAY;
             const WARNING_MARKER = '<!-- stellarforge-wave-stale-warning -->';
             const ESCALATION_MARKER = '<!-- stellarforge-wave-stale-escalation -->';
+
+            function isPermissionDenied(error) {
+              return error?.status === 403 ||
+                /Resource not accessible by integration/i.test(error?.message || '');
+            }
+
+            async function writeSafely(description, operation) {
+              try {
+                await operation();
+                return true;
+              } catch (error) {
+                if (!isPermissionDenied(error)) throw error;
+                console.warn(`::warning::GitHub token cannot ${description}; repository or organization Actions policy may restrict write access. No permission was broadened.`);
+                return false;
+              }
+            }
+
             const pulls = await github.paginate(github.rest.pulls.list, {
               owner, repo, state: 'open', per_page: 100,
             });
@@ -102,30 +119,38 @@ jobs:
                       owner, repo, issue_number: pr.number, name: 'status: stale',
                     });
                   } catch (error) {
-                    if (error.status !== 404) throw error;
+                    if (error.status === 404) continue;
+                    if (!isPermissionDenied(error)) throw error;
+                    console.warn('::warning::GitHub token cannot remove status: stale; repository or organization Actions policy may restrict write access.');
                   }
                 }
                 continue;
               }
 
               if (!labels.has('status: stale')) {
-                await github.rest.issues.addLabels({
-                  owner, repo, issue_number: pr.number, labels: ['status: stale'],
-                });
+                await writeSafely(`add status: stale to PR #${pr.number}`, () =>
+                  github.rest.issues.addLabels({
+                    owner, repo, issue_number: pr.number, labels: ['status: stale'],
+                  }),
+                );
               }
 
               if (inactiveFor >= ESCALATE_AFTER && !escalatedSinceActivity) {
-                await github.rest.issues.createComment({
-                  owner, repo, issue_number: pr.number,
-                  body: ESCALATION_MARKER + '\nThis Stellar Wave PR has no contributor commit or progress comment for 4 days. A maintainer should now review whether to retain or release the assignment. The automation does not close the PR or change the Drips assignment.',
-                });
+                await writeSafely(`post the stale-PR escalation comment on PR #${pr.number}`, () =>
+                  github.rest.issues.createComment({
+                    owner, repo, issue_number: pr.number,
+                    body: ESCALATION_MARKER + '\nThis Stellar Wave PR has no contributor commit or progress comment for 4 days. A maintainer should now review whether to retain or release the assignment. The automation does not close the PR or change the Drips assignment.',
+                  }),
+                );
                 continue;
               }
 
               if (!warnedSinceActivity) {
-                await github.rest.issues.createComment({
-                  owner, repo, issue_number: pr.number,
-                  body: WARNING_MARKER + '\nThis Stellar Wave PR has no contributor commit or progress comment for 48 hours. Please post a concise update, push current progress, or tell the maintainer if the issue should be released.',
-                });
+                await writeSafely(`post the stale-PR warning comment on PR #${pr.number}`, () =>
+                  github.rest.issues.createComment({
+                    owner, repo, issue_number: pr.number,
+                    body: WARNING_MARKER + '\nThis Stellar Wave PR has no contributor commit or progress comment for 48 hours. Please post a concise update, push current progress, or tell the maintainer if the issue should be released.',
+                  }),
+                );
               }
             }
