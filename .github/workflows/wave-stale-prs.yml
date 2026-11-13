@@ -5,10 +5,7 @@ on:
     - cron: '17 6 * * *'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  issues: write
-  pull-requests: read
+permissions: {}
 
 concurrency:
   group: wave-stale-review
@@ -19,6 +16,10 @@ jobs:
     name: Review inactive contributor PRs
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
     steps:
       - name: Warn and escalate stale Wave PRs
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
