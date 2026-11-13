@@ -254,8 +254,9 @@ describe('dev supervisor partial-line buffering (#159)', () => {
 
     // No trailing newline: the buffer must still reach the terminal.
     child.stdout.write('done');
+    const ended = new Promise<void>((resolve) => child.stdout.once('end', resolve));
     child.stdout.end();
-    await Promise.resolve();
+    await ended;
     expect(captured.stdoutText()).toContain('[api] done');
 
     child.emitExit(0, null);
