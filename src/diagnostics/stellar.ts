@@ -15,8 +15,13 @@ const STELLAR_CLI_INSTALL_URL =
 
 function parseStellarVersion(output: string): string | null {
   const value = output.trim();
+  // Accept an optional `v` prefix for compatibility, but require the version
+  // itself to follow SemVer 2.0.0 identifier rules. In particular, suffix
+  // identifiers must be non-empty and numeric prerelease identifiers cannot
+  // contain leading zeroes. This prevents malformed CLI output from passing
+  // merely because its numeric core is above the supported baseline.
   const match =
-    /^v?(\d+\.\d+\.\d+)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.exec(value);
+    /^v?(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$/.exec(value);
   return match?.[1] ?? null;
 }
 
