@@ -2,14 +2,16 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
+import { createNpmInvocation } from '../src/process/npm.js';
 
 const root = join(import.meta.dirname, '..');
 const packageJson = JSON.parse(
   readFileSync(join(root, 'package.json'), 'utf8'),
 ) as { name: string; version: string };
 
-function runPackDryRun(command = 'npm', args = ['pack', '--dry-run', '--json']) {
-  const result = spawnSync(command, args, {
+function runPackDryRun(command?: string, args?: readonly string[]) {
+  const invocation = createNpmInvocation(args ?? ['pack', '--dry-run', '--json']);
+  const result = spawnSync(command ?? invocation.command, command ? (args ?? []) : invocation.args, {
     cwd: root,
     encoding: 'utf8',
     shell: false,
