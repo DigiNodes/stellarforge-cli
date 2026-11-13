@@ -56,8 +56,14 @@ const CANONICAL_SEED = `S${strkeyBody(55)}`;
 const CANONICAL_STRKEYS = [
   { name: 'G account address', value: CANONICAL_ACCOUNT },
   { name: 'S secret seed', value: CANONICAL_SEED },
-  { name: 'G address over the full base32 alphabet', value: `G${BASE32.repeat(2).slice(0, 55)}` },
-  { name: 'S seed over the full base32 alphabet', value: `S${BASE32.repeat(2).slice(0, 55)}` },
+  {
+    name: 'G address over the full base32 alphabet',
+    value: `G${BASE32.repeat(2).slice(0, 55)}`,
+  },
+  {
+    name: 'S seed over the full base32 alphabet',
+    value: `S${BASE32.repeat(2).slice(0, 55)}`,
+  },
   { name: 'G address with digits 2-7', value: `G${'2'.repeat(55)}` },
 ] as const;
 
@@ -70,7 +76,10 @@ const NOT_AN_ALIAS = [
   { name: 'G-shaped value with an equals sign', value: `G${strkeyBody(54)}=` },
   { name: 'G-shaped value with a tab', value: `G${strkeyBody(54)}\t` },
   { name: 'G-shaped value with a slash', value: `G${strkeyBody(54)}/x` },
-  { name: '65 characters, one past the alias limit', value: `G${strkeyBody(64)}` },
+  {
+    name: '65 characters, one past the alias limit',
+    value: `G${strkeyBody(64)}`,
+  },
   { name: 'leading digit', value: `1${strkeyBody(55)}` },
   { name: 'leading hyphen', value: `-${strkeyBody(55)}` },
   { name: 'leading dot', value: `.${strkeyBody(55)}` },
@@ -129,13 +138,16 @@ describe('canonical raw StrKeys are refused (#186)', () => {
     expect(error.message).toContain(IDENTITY_REJECTION);
   });
 
-  it.each(CANONICAL_STRKEYS)('never reflects a $name in the error', ({ value }) => {
-    const error = captureIdentityError(value);
+  it.each(CANONICAL_STRKEYS)(
+    'never reflects a $name in the error',
+    ({ value }) => {
+      const error = captureIdentityError(value);
 
-    // The message is fixed text; nothing interpolates the rejected value.
-    expect(error.message).not.toContain(value);
-    expect(error.message).not.toContain(value.slice(1, 12));
-  });
+      // The message is fixed text; nothing interpolates the rejected value.
+      expect(error.message).not.toContain(value);
+      expect(error.message).not.toContain(value.slice(1, 12));
+    },
+  );
 
   it('rejects a 56-character value on length alone, whatever the prefix', () => {
     // Any G/S-prefixed 56-character uppercase base32 string hits the rule; the
@@ -159,12 +171,16 @@ describe('values that cannot be an alias are refused (#186)', () => {
   it.each(NOT_AN_ALIAS)('never reflects $name in the error', ({ value }) => {
     const error = captureIdentityError(value);
 
-    expect(error.message).not.toContain(value);
+    if (value.length > 0) {
+      expect(error.message).not.toContain(value);
+    }
   });
 
   it('keeps the boundary at 64 characters', () => {
     // 64 is the alias limit and is accepted; 65 is one past it and is not.
-    expect(validateIdentityAlias(`A${'a'.repeat(63)}`)).toBe(`A${'a'.repeat(63)}`);
+    expect(validateIdentityAlias(`A${'a'.repeat(63)}`)).toBe(
+      `A${'a'.repeat(63)}`,
+    );
     expect(() => validateIdentityAlias(`A${'a'.repeat(64)}`)).toThrow(
       IDENTITY_REJECTION,
     );
@@ -172,12 +188,15 @@ describe('values that cannot be an alias are refused (#186)', () => {
 });
 
 describe('the StrKey rule boundary is explicit (#186)', () => {
-  it.each(NEAR_MISS_STRKEYS)('accepts a $name as a plain alias', ({ value }) => {
-    // None of these is a valid Stellar key, so nothing secret is exposed. They
-    // are forwarded as an identity name and the Stellar CLI fails to resolve
-    // them. Pinned so a widened rule fails loudly instead of by accident.
-    expect(validateIdentityAlias(value)).toBe(value);
-  });
+  it.each(NEAR_MISS_STRKEYS)(
+    'accepts a $name as a plain alias',
+    ({ value }) => {
+      // None of these is a valid Stellar key, so nothing secret is exposed. They
+      // are forwarded as an identity name and the Stellar CLI fails to resolve
+      // them. Pinned so a widened rule fails loudly instead of by accident.
+      expect(validateIdentityAlias(value)).toBe(value);
+    },
+  );
 });
 
 describe('named aliases keep working (#186)', () => {
@@ -192,7 +211,11 @@ describe('deploy refuses a raw StrKey before spawning (#186)', () => {
     ({ value }) =>
       withTempDirectory((root: string) => {
         // A valid workspace, so only the source can be the reason for failure.
-        writeFileSync(join(root, 'Cargo.toml'), '[workspace]\nmembers = []\n', 'utf8');
+        writeFileSync(
+          join(root, 'Cargo.toml'),
+          '[workspace]\nmembers = []\n',
+          'utf8',
+        );
 
         expect(() =>
           resolveTestnetDeploymentPlan({
@@ -208,7 +231,11 @@ describe('deploy refuses a raw StrKey before spawning (#186)', () => {
     'rejects $name before any subprocess is planned',
     ({ value }) =>
       withTempDirectory((root: string) => {
-        writeFileSync(join(root, 'Cargo.toml'), '[workspace]\nmembers = []\n', 'utf8');
+        writeFileSync(
+          join(root, 'Cargo.toml'),
+          '[workspace]\nmembers = []\n',
+          'utf8',
+        );
 
         expect(() =>
           resolveTestnetDeploymentPlan({
@@ -222,7 +249,11 @@ describe('deploy refuses a raw StrKey before spawning (#186)', () => {
 
   it('plans a deployment for a named alias in a generated workspace', () =>
     withTempDirectory((root: string) => {
-      writeFileSync(join(root, 'Cargo.toml'), '[workspace]\nmembers = []\n', 'utf8');
+      writeFileSync(
+        join(root, 'Cargo.toml'),
+        '[workspace]\nmembers = []\n',
+        'utf8',
+      );
 
       const plan = resolveTestnetDeploymentPlan({
         cwd: root,

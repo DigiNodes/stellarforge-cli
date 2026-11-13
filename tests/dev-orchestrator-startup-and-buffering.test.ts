@@ -33,8 +33,7 @@ class FakeChild implements ManagedChildProcess {
   readonly killedSignals: NodeJS.Signals[] = [];
   #errorListener: ((error: Error) => void) | undefined;
   #exitListener:
-    | ((code: number | null, signal: NodeJS.Signals | null) => void)
-    | undefined;
+    ((code: number | null, signal: NodeJS.Signals | null) => void) | undefined;
 
   once(event: 'error', listener: (error: Error) => void): this;
   once(
@@ -148,7 +147,7 @@ describe('dev supervisor startup order (#158)', () => {
 
     const child = new FakeChild();
     const running = superviseDevProcesses([spec('api')], {
-      spawnProcess(planned, _environment) {
+      spawnProcess(planned) {
         seen.push({ command: planned.command, args: planned.args });
         return child;
       },
@@ -254,8 +253,11 @@ describe('dev supervisor partial-line buffering (#159)', () => {
 
     // No trailing newline: the buffer must still reach the terminal.
     child.stdout.write('done');
+    const ended = new Promise<void>((resolve) =>
+      child.stdout.once('end', resolve),
+    );
     child.stdout.end();
-    await Promise.resolve();
+    await ended;
     expect(captured.stdoutText()).toContain('[api] done');
 
     child.emitExit(0, null);

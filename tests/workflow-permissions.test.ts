@@ -20,7 +20,8 @@ describe('GHA least-privilege permissions audit (SW-105)', () => {
     const all = auditWorkflowDirectory(fixtures);
     expect(
       all.some(
-        (v) => v.file === 'pr-ci-bad-write-all.yml' && /write-all/.test(v.message),
+        (v) =>
+          v.file === 'pr-ci-bad-write-all.yml' && /write-all/.test(v.message),
       ),
     ).toBe(true);
   });
@@ -38,10 +39,8 @@ describe('GHA least-privilege permissions audit (SW-105)', () => {
 
   it('allows release job allowlisted writes', () => {
     const all = auditWorkflowDirectory(fixtures);
-    // release-ok.yml uses job ids version/publish — may still flag if allowlist key is release.yml only
-    // For fixtures, basename is release-ok.yml so elevated jobs are not allowlisted by filename;
-    // document that production allowlist keys real release.yml.
-    // Here we assert bad OIDC job fails:
+    // The fixture deliberately uses an unallowlisted workflow basename and
+    // must not inherit production release exceptions.
     expect(
       all.some(
         (v) =>

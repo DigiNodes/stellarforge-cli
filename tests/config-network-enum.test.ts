@@ -48,9 +48,9 @@ describe('configuration network enum', () => {
   it.each(unsupportedNetworks)(
     'rejects unsupported network %j with an actionable message',
     (network) => {
-      expect(() =>
-        validateStellarForgeConfig({ version: 1, network }),
-      ).toThrow(ENUM_MESSAGE);
+      expect(() => validateStellarForgeConfig({ version: 1, network })).toThrow(
+        ENUM_MESSAGE,
+      );
     },
   );
 

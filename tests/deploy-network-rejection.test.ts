@@ -47,7 +47,8 @@ describe('Stellar deploy network rejection matrix', () => {
       writeCargoWorkspace(root);
 
       expectNetworkRejection(network, root);
-    }));
+    }),
+  );
 
   it('accepts only the explicit Testnet target', () =>
     withTempDirectory((root) => {

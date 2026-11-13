@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 const root = join(import.meta.dirname, '..');
 
 function releaseJobBlock(workflow: string, name: string): string {
-  const lines = workflow.split('\n');
+  const lines = workflow.split('\n').map((line) => line.replace(/\r$/, ''));
   const start = lines.indexOf(`  ${name}:`);
   if (start === -1) throw new Error(`Release workflow job not found: ${name}`);
 

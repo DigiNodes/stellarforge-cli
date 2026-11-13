@@ -40,73 +40,69 @@ afterEach(() => {
 describe.each([
   { platform: 'win32', label: 'Windows' },
   { platform: 'linux', label: 'POSIX' },
-] as const)(
-  'npm invocation on $label',
-  ({ platform, label }) => {
-    it('runs a safe fixed command successfully', () => {
-      onPlatform(platform);
+] as const)('npm invocation on $label', ({ platform }) => {
+  it('runs a safe fixed command successfully', () => {
+    onPlatform(platform);
 
-      const invocation = createNpmInvocation(['run', 'test']);
+    const invocation = createNpmInvocation(['run', 'test']);
 
-      expect(Array.isArray(invocation.args)).toBe(true);
-      expect(invocation.args).toContain('npm');
-      expect(invocation.args.slice(-2)).toEqual(['run', 'test']);
-      if (platform === 'win32') {
-        // `/d /s /c` is the documented safe wrapper: it disables AutoRun
-        // autorestart and treats the remainder as a single command.
-        expect(invocation.command).toBe('cmd.exe');
-        expect(invocation.args.slice(0, 3)).toEqual(['/d', '/s', '/c']);
-      } else {
-        expect(invocation.command).toBe('npm');
-      }
-    });
+    expect(Array.isArray(invocation.args)).toBe(true);
+    expect(invocation.args.slice(-2)).toEqual(['run', 'test']);
+    if (platform === 'win32') {
+      // `/d /s /c` is the documented safe wrapper: it disables AutoRun
+      // autorestart and treats the remainder as a single command.
+      expect(invocation.command).toBe('cmd.exe');
+      expect(invocation.args.slice(0, 3)).toEqual(['/d', '/s', '/c']);
+    } else {
+      expect(invocation.command).toBe('npm');
+    }
+  });
 
-    it.each([
-      'value & calc.exe',
-      'value | more',
-      'value; del important.txt',
-      '$(whoami)',
-      '`id`',
-      'value > C:/Windows/System32/out.txt',
-      'value && echo pwned',
-      'a"b',
-      "a'b",
-      'value\nsecond',
-    ])('keeps %j a single, inert argv element', (hostile) => {
-      onPlatform(platform);
+  it.each([
+    'value & calc.exe',
+    'value | more',
+    'value; del important.txt',
+    '$(whoami)',
+    '`id`',
+    'value > C:/Windows/System32/out.txt',
+    'value && echo pwned',
+    'a"b',
+    "a'b",
+    'value\nsecond',
+  ])('keeps %j a single, inert argv element', (hostile) => {
+    onPlatform(platform);
 
-      const invocation = createNpmInvocation(['run', 'test', '--', hostile]);
-      const forwarded = invocation.args[invocation.args.length - 1];
+    const invocation = createNpmInvocation(['run', 'test', '--', hostile]);
+    const forwarded = invocation.args[invocation.args.length - 1];
 
-      // Present exactly once, byte-for-byte: never split, quoted or concatenated
-      // into the command line.
-      expect(forwarded).toBe(hostile);
-      expect(invocation.args.filter((arg) => arg === hostile)).toHaveLength(1);
+    // Present exactly once, byte-for-byte: never split, quoted or concatenated
+    // into the command line.
+    expect(forwarded).toBe(hostile);
+    expect(invocation.args.filter((arg) => arg === hostile)).toHaveLength(1);
 
-      // The fixed npm prefix is untouched, so nothing can be prepended to it.
-      const npmIndex = invocation.args.indexOf('npm');
-      expect(npmIndex).toBeGreaterThanOrEqual(0);
-      expect(invocation.args.slice(0, npmIndex)).toEqual(
-        platform === 'win32' ? ['/d', '/s', '/c'] : [],
-      );
-    });
+    // The fixed npm prefix is untouched, so nothing can be prepended to it.
+    if (platform === 'win32') {
+      expect(invocation.args.slice(0, 4)).toEqual(['/d', '/s', '/c', 'npm']);
+    } else {
+      expect(invocation.command).toBe('npm');
+    }
+  });
 
-    it('never produces a single joined command string', () => {
-      onPlatform(platform);
+  it('never produces a single joined command string', () => {
+    onPlatform(platform);
 
-      const invocation = createNpmInvocation(['run', 'test', '--', 'a && b']);
+    const invocation = createNpmInvocation(['run', 'test', '--', 'a && b']);
 
-      // The whole defence is that `command` and `args` stay separate so the
-      // spawner can pass `shell: false`.
-      expect(typeof invocation.command).toBe('string');
-      expect(Array.isArray(invocation.args)).toBe(true);
-      for (const arg of invocation.args) {
-        expect(typeof arg).toBe('string');
-      }
-      expect(invocation.args.join(' ')).toContain('a && b');
-    });
-  },
-);
+    // The whole defence is that `command` and `args` stay separate so the
+    // spawner can pass `shell: false`.
+    expect(typeof invocation.command).toBe('string');
+    expect(Array.isArray(invocation.args)).toBe(true);
+    for (const arg of invocation.args) {
+      expect(typeof arg).toBe('string');
+    }
+    expect(invocation.args.join(' ')).toContain('a && b');
+  });
+});
 
 describe('npm invocation argument handling', () => {
   it('keeps the fixed prefix when no arguments are supplied', () => {

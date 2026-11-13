@@ -14,7 +14,7 @@ const configurationReference = readFileSync(
   'utf8',
 );
 
-const JSON_BLOCK = /```json\n([\s\S]*?)```/g;
+const JSON_BLOCK = /```json\r?\n([\s\S]*?)```/g;
 const jsonMatches = [...configurationReference.matchAll(JSON_BLOCK)];
 const jsonBlocks = jsonMatches.map((match) => (match[1] ?? '').trim());
 

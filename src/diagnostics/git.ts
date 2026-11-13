@@ -20,7 +20,7 @@ export function createGitDiagnostic(
       const result = execute('git', ['--version']);
       const outcome = classifyCommandResult(result);
 
-      if (outcome === 'timeout') {
+      if (outcome === 'timed-out') {
         return {
           id: 'git',
           label: 'Git',
@@ -48,7 +48,7 @@ export function createGitDiagnostic(
           id: 'git',
           label: 'Git',
           status: 'fail',
-          message: 'Git returned an unecognized version.',
+          message: 'Git returned an unrecognized version.',
           remediation:
             'Verify `git --version` works and reinstall Git if necessary.',
         };

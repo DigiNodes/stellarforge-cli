@@ -15,7 +15,8 @@ const STELLAR_CLI_INSTALL_URL =
 
 function parseStellarVersion(output: string): string | null {
   const value = output.trim();
-  const match = /^v?(\d+\.\d+\.\d+)(?:[-+][0-9A-Za-z.-]+)?$/.exec(value);
+  const match =
+    /^v?(\d+\.\d+\.\d+)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.exec(value);
   return match?.[1] ?? null;
 }
 
@@ -36,8 +37,7 @@ export function createStellarDiagnostic(
           label: 'Stellar CLI',
           status: 'fail',
           message: 'Stellar CLI is unavailable or could not be executed.',
-          remediation:
-            `Install or update the official Stellar CLI (${STELLAR_CLI_INSTALL_URL}), then ensure \`stellar\` is on PATH and \`stellar version --only-version\` reports a version.`,
+          remediation: `Install or update the official Stellar CLI (${STELLAR_CLI_INSTALL_URL}), then ensure \`stellar\` is on PATH and \`stellar version --only-version\` reports a version.`,
         };
       }
 
@@ -50,8 +50,7 @@ export function createStellarDiagnostic(
           label: 'Stellar CLI',
           status: 'fail',
           message: 'Stellar CLI returned an unrecognized version.',
-          remediation:
-            `Run \`stellar version --only-version\`; if it does not report a semantic version, reinstall or update the official Stellar CLI (${STELLAR_CLI_INSTALL_URL}).`,
+          remediation: `Run \`stellar version --only-version\`; if it does not report a semantic version, reinstall or update the official Stellar CLI (${STELLAR_CLI_INSTALL_URL}).`,
         };
       }
 
@@ -61,8 +60,7 @@ export function createStellarDiagnostic(
           label: 'Stellar CLI',
           status: 'fail',
           message: `Unsupported Stellar CLI version ${version}.`,
-          remediation:
-            `Update the official Stellar CLI to >=27.1.0 (${STELLAR_CLI_INSTALL_URL}), then verify \`stellar version --only-version\` reports a supported version.`,
+          remediation: `Update the official Stellar CLI to >=27.1.0 (${STELLAR_CLI_INSTALL_URL}), then verify \`stellar version --only-version\` reports a supported version.`,
         };
       }
 

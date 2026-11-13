@@ -52,8 +52,7 @@ class FakeChild implements ManagedChildProcess {
   readonly stderr = new PassThrough();
   readonly killedSignals: NodeJS.Signals[] = [];
   #exitListener:
-    | ((code: number | null, signal: NodeJS.Signals | null) => void)
-    | undefined;
+    ((code: number | null, signal: NodeJS.Signals | null) => void) | undefined;
 
   once(event: 'error', listener: (error: Error) => void): this;
   once(
@@ -134,29 +133,30 @@ describe('Cargo test exit-code propagation (#168)', () => {
     { code: 1, reason: 'test assertion failed' },
     { code: 101, reason: 'cargo test harness panic' },
     { code: 127, reason: 'cargo not executable' },
-  ])('maps a non-zero Cargo exit ($code) to a subprocess failure', async ({
-    code,
-  }) => {
-    const child = new FakeChild();
+  ])(
+    'maps a non-zero Cargo exit ($code) to a subprocess failure',
+    async ({ code }) => {
+      const child = new FakeChild();
 
-    const running = superviseDevProcesses([cargoSpec()], {
-      spawnProcess: () => child,
-      signalSource: new FakeSignalSource(),
-    });
+      const running = superviseDevProcesses([cargoSpec()], {
+        spawnProcess: () => child,
+        signalSource: new FakeSignalSource(),
+      });
 
-    child.emitExit(code, null);
+      child.emitExit(code, null);
 
-    const error = await running.then(
-      () => undefined,
-      (reason: unknown) => reason,
-    );
+      const error = await running.then(
+        () => undefined,
+        (reason: unknown) => reason,
+      );
 
-    expect(error).toBeInstanceOf(SubprocessCliError);
-    expect((error as SubprocessCliError).userMessage).toContain(
-      `with code ${code}`,
-    );
-    expect((error as SubprocessCliError).userMessage).toContain('cargo:test');
-  });
+      expect(error).toBeInstanceOf(SubprocessCliError);
+      expect((error as SubprocessCliError).userMessage).toContain(
+        `with code ${code}`,
+      );
+      expect((error as SubprocessCliError).userMessage).toContain('cargo:test');
+    },
+  );
 
   it('invokes Cargo with an argument array, never a joined shell string', () => {
     const spec = cargoSpec();
@@ -181,12 +181,7 @@ describe('resolved plan matches the platform (#170)', () => {
 
       expect(plan?.command).toBe('cmd.exe');
       // Fixed wrapper flags first, then `npm run test` as separate argv entries.
-      expect(plan?.args.slice(0, 4)).toEqual([
-        '/d',
-        '/s',
-        '/c',
-        'npm',
-      ]);
+      expect(plan?.args.slice(0, 4)).toEqual(['/d', '/s', '/c', 'npm']);
       expect(plan?.args.slice(-2)).toEqual(['run', 'test']);
     });
   });
@@ -242,7 +237,9 @@ describe('resolved plan matches the platform (#170)', () => {
         const [plan] = resolveTestProcessPlan(root);
 
         expect(plan?.label).toBe('cargo:test');
-        expect(plan?.command).toBe(platform === 'win32' ? 'cargo.exe' : 'cargo');
+        expect(plan?.command).toBe(
+          platform === 'win32' ? 'cargo.exe' : 'cargo',
+        );
         expect(plan?.args).toEqual(['test']);
       }
     });

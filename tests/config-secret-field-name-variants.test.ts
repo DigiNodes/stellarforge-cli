@@ -243,18 +243,15 @@ describe('legitimate schema fields remain accepted (#181)', () => {
     },
   );
 
-  it.each([
-    'deployer',
-    'team-deployer',
-    'team_deployer',
-    'Alice',
-    'a1',
-  ])('accepts the named identity alias %j', (identity) => {
-    expect(validateStellarForgeConfig({ version: 1, identity })).toEqual({
-      version: 1,
-      identity,
-    });
-  });
+  it.each(['deployer', 'team-deployer', 'team_deployer', 'Alice', 'a1'])(
+    'accepts the named identity alias %j',
+    (identity) => {
+      expect(validateStellarForgeConfig({ version: 1, identity })).toEqual({
+        version: 1,
+        identity,
+      });
+    },
+  );
 
   it('accepts a fully populated valid config', () => {
     expect(

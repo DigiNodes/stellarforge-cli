@@ -389,12 +389,13 @@ describe('critical path: end-to-end generation and E2E wiring', () => {
   it('keeps the repository E2E smoke path offline, mocked, and secret-free', () => {
     const e2e = readRepositoryFile('scripts', 'e2e-smoke.mjs');
 
-    expect(e2e).toContain("process.platform === 'win32'");
-    expect(e2e).toContain('stellarforge.cmd');
+    expect(e2e).toContain("import process from 'node:process'");
+    expect(e2e).toContain('process.execPath');
+    expect(e2e).toContain('dist');
     expect(e2e).toContain('shell: false');
     expect(e2e).toContain('fakeStellar');
     expect(e2e).toContain('CFAKECONTRACTID');
-    expect(e2e).toContain('SECRET_');
+    expect(e2e).toContain('SECRET|TOKEN|PRIVATE KEY');
     expect(e2e).toContain('doesNotMatch');
     expect(e2e).not.toMatch(/mainnet|api\.stellar\.org|horizon/iu);
   });

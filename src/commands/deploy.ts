@@ -1,4 +1,3 @@
-
 import { Command } from 'commander';
 import {
   resolveProjectConfig,
@@ -44,9 +43,7 @@ export function createDeployCommand(
   } = options;
 
   return new Command('deploy')
-    .description(
-      'Deploy a supported StellarForge project to Stellar Testnet.',
-    )
+    .description('Deploy a supported StellarForge project to Stellar Testnet.')
     .option(
       '--network <network>',
       'Deployment network. CLI value overrides stellarforge.config.json.',
@@ -59,12 +56,8 @@ export function createDeployCommand(
       const projectRoot = cwd();
 
       const overrides: ProjectConfigOverrides = {
-        ...(flags.network === undefined
-          ? {}
-          : { network: flags.network }),
-        ...(flags.source === undefined
-          ? {}
-          : { identity: flags.source }),
+        ...(flags.network === undefined ? {} : { network: flags.network }),
+        ...(flags.source === undefined ? {} : { identity: flags.source }),
       };
 
       const configuration = resolveConfig(projectRoot, overrides);

@@ -76,7 +76,7 @@ describe('Quick Start documentation', () => {
     }));
 
   it('uses a configuration example that matches the schema', () => {
-    const block = /```json\n([\s\S]*?)```/.exec(quickStart);
+    const block = /```json\r?\n([\s\S]*?)```/.exec(quickStart);
     expect(block).not.toBeNull();
 
     const json = (block?.[1] ?? '').trim();
