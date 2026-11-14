@@ -1,8 +1,8 @@
 # StellarForge CLI — Stellar Wave Backlog Plan
 
-**Active backlog target:** exactly 100 open GitHub issues per repository, with each contributor-facing issue independently actionable and evidence-backed.
+**New-issue creation target:** 100 newly created, contributor-facing Stellar Wave issues for this backlog-generation effort. This is a cumulative creation target, not a cap on the repository's total open-issue count. Historical open issues remain separate and must not be deleted, closed, or counted toward the 100-new-issue target. As of 2026-11-14, 84 new issues (SW-121–SW-204; GitHub issues #302–#385) have been created, leaving 16 additional new issues to reach the target. The expected open-issue total may therefore exceed 100 when historical open issues are included.
 
-The original SW-001–SW-120 catalogue is a candidate inventory, not a quota. Count only currently open issues toward the 100-issue target; exclude pull requests and closed issues. Reconcile every candidate against current `main`, open and merged pull requests, and existing contributor assignments before creating or counting it. Exclude maintainer-only and release-administration tasks from contributor backlog totals. Do not create duplicate, artificial, or already-completed work. Stellar Wave activation and Drips point allocation remain suspended until explicitly authorized.
+Count only distinct, newly created issues toward the 100-new-issue target; exclude pull requests, closed issues, historical issues, maintainer-only/release-administration tasks, duplicates, artificial tasks, and work already completed on current `main`. Reconcile every candidate against current `main`, open and merged pull requests, existing contributor assignments, and the sibling `DigiNodes/StellarForge` repository before creation. Preserve all existing historical issues. Stellar Wave activation and Drips point allocation remain suspended until explicitly authorized.
 
 This plan defines the dependency graph and contributor taxonomy before GitHub issue creation. It is designed to maximize parallel contribution while preserving the frozen architecture in `docs/contributing/wave-architecture.md`.
 
