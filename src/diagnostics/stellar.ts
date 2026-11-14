@@ -15,9 +15,9 @@ const STELLAR_CLI_INSTALL_URL =
 
 function parseStellarVersion(output: string): string | null {
   const value = output.trim();
-  const match =
-    /^v?(\d+\.\d+\.\d+)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.exec(value);
-  return match?.[1] ?? null;
+  // prettier-ignore
+  const match = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.exec(value);
+  return match ? match[1] + '.' + match[2] + '.' + match[3] : null;
 }
 
 export function createStellarDiagnostic(
