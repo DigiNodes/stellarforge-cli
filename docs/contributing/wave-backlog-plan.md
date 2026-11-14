@@ -1,6 +1,8 @@
 # StellarForge CLI — Stellar Wave Backlog Plan
 
-**Backlog target:** 120 contributor issues
+**Active backlog target:** exactly 100 open GitHub issues per repository, with each contributor-facing issue independently actionable and evidence-backed.
+
+The original SW-001–SW-120 catalogue is a candidate inventory, not a quota. Count only currently open issues toward the 100-issue target; exclude pull requests and closed issues. Reconcile every candidate against current `main`, open and merged pull requests, and existing contributor assignments before creating or counting it. Exclude maintainer-only and release-administration tasks from contributor backlog totals. Do not create duplicate, artificial, or already-completed work. Stellar Wave activation and Drips point allocation remain suspended until explicitly authorized.
 
 This plan defines the dependency graph and contributor taxonomy before GitHub issue creation. It is designed to maximize parallel contribution while preserving the frozen architecture in `docs/contributing/wave-architecture.md`.
 
