@@ -65,6 +65,12 @@ export function classifyCommandResult(result: CommandResult): CommandOutcome {
     return 'missing-executable';
   }
 
+  if (
+    (result.error as NodeJS.ErrnoException | undefined)?.code === 'ETIMEDOUT'
+  ) {
+    return 'timed-out';
+  }
+
   if (result.error !== undefined || result.status !== 0) {
     return 'failed';
   }
