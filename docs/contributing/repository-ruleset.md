@@ -113,3 +113,15 @@ Before considering the ruleset complete, verify:
 Whenever workflow names, job names, CODEOWNERS boundaries, or security policy change, review this document and the actual GitHub ruleset together.
 
 A renamed required job can block all merges if the ruleset still points to the old status-check name. Ruleset changes therefore require the same care as CI/security workflow changes.
+
+
+## Automated Dependency Pull Requests
+
+Dependabot is exempt only from the contributor-specific Stellar Wave issue/Drips assignment requirements, and only for two narrowly defined update classes:
+
+- npm updates that modify exactly \`package.json\` and \`package-lock.json\`, changing existing dependency version ranges only;
+- GitHub Actions updates that modify workflow YAML files and change only immutable, 40-character-SHA \`uses:\` references.
+
+The Contributor PR Guard validates this allowlist and continues to run protected-file overlap detection. It rejects source, migration, release, permission, script, unrelated workflow, and other out-of-scope changes from the bot.
+
+This exception does **not** grant merge permission. Normal CI/security checks, branch protection, CODEOWNERS review, stale-approval dismissal, and conversation resolution remain mandatory. Dependabot PRs must never receive write-token or auto-merge privileges through this exception.
