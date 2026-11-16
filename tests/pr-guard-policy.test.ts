@@ -224,9 +224,7 @@ describe('Dependabot PR guard policy', () => {
       login,
       title: actionTitle,
       baseRef,
-      files: [
-        { filename: '.github/workflows/ci.yml', status: 'modified' },
-      ],
+      files: [{ filename: '.github/workflows/ci.yml', status: 'modified' }],
     });
     const unrelated = classifyDependabotPR({
       login,
