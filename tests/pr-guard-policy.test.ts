@@ -119,6 +119,21 @@ describe('Dependabot PR guard policy', () => {
     expect(result).toMatchObject({ allowed: true, kind: 'github-actions', changedFiles: 1 });
   });
 
+  it('rejects replacing an action identity even when both references are pinned', () => {
+    const replacementPatch = [
+      '@@ -10,1 +10,1 @@',
+      '-        uses: actions/checkout@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # v7.0.1',
+      '+        uses: attacker/unknown-action@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb # v1.0.0',
+    ].join('\n');
+    const result = classifyDependabotPR({
+      login,
+      title: actionTitle,
+      files: [{ filename: '.github/workflows/ci.yml', status: 'modified', patch: replacementPatch }],
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/may not replace the action identity/);
+  });
+
   it('rejects workflow logic, permission, or unpinned-reference changes', () => {
     const mixedPatch = [
       '@@ -10,1 +10,2 @@',
