@@ -219,6 +219,29 @@ describe('Dependabot PR guard policy', () => {
     expect(unpinned.allowed).toBe(false);
   });
 
+  it('rejects oversized dependency ranges without catastrophic regex work', () => {
+    const changed = {
+      ...headPackage,
+      dependencies: {
+        commander: '9.9.9|| 9.9.9||'.repeat(1000),
+      },
+    };
+    const result = classifyDependabotPR({
+      login,
+      title: npmTitle,
+      baseRef,
+      files: [
+        { filename: 'package.json', status: 'modified' },
+        { filename: 'package-lock.json', status: 'modified' },
+      ],
+      basePackage,
+      headPackage: changed,
+    });
+
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/non-semver|non-string/);
+  });
+
   it('fails closed for invalid authors, titles, branches, and files', () => {
     const missingPatch = classifyDependabotPR({
       login,
