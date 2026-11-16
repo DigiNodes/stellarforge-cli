@@ -6,8 +6,17 @@ const WORKFLOW_PATH =
   /^\.github\/workflows\/(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0-9_.-]+\.ya?ml$/;
 const ACTION_REFERENCE_CHANGE =
   /^[+-]\s*uses:\s*([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})(?:\s+#.*)?$/i;
-const VERSION_RANGE =
-  /^(?:[~^=]|>=?|<=?)?\s*\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\s*\|\|\s*(?:[~^=]|>=?|<=?)?\s*\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)*$/;
+const VERSION_RANGE_CLAUSE =
+  /^(?:[~^=]|>=?|<=?)?\s*\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
+
+function isVersionRange(value) {
+  if (typeof value !== 'string' || value.length > 128) return false;
+  const clauses = value.split('||');
+  return (
+    clauses.length <= 8 &&
+    clauses.every((clause) => VERSION_RANGE_CLAUSE.test(clause.trim()))
+  );
+}
 
 function deny(reason) {
   return { allowed: false, reason };
@@ -70,8 +79,7 @@ function validatePackageManifest(basePackage, headPackage) {
       if (before[name] === after[name]) continue;
       if (
         typeof before[name] !== 'string' ||
-        typeof after[name] !== 'string' ||
-        !VERSION_RANGE.test(after[name])
+        !isVersionRange(after[name])
       ) {
         return deny(
           'dependency "' + name + '" changed to a non-semver or non-string specification',
