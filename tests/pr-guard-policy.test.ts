@@ -43,6 +43,8 @@ const headPackage = {
   dependencies: { commander: '15.1.0' },
   devDependencies: { vitest: '5.0.2' },
 };
+const actionLine = (sign: string, action: string, sha: string, version: string) =>
+  `${sign}        uses: ${action}@${sha} # ${version}`;
 
 describe('Dependabot PR guard policy', () => {
   it('allows npm updates limited to dependency ranges and the lockfile', () => {
@@ -135,8 +137,8 @@ describe('Dependabot PR guard policy', () => {
   it('allows pinned action SHA updates', () => {
     const patch = [
       '@@ -10,1 +10,1 @@',
-      '-        uses: github/codeql-action/init@' + 'a'.repeat(40) + ' # v4.38.2',
-      '+        uses: github/codeql-action/init@' + 'b'.repeat(40) + ' # v4.39.0',
+      actionLine('-', 'github/codeql-action/init', 'a'.repeat(40), 'v4.38.2'),
+      actionLine('+', 'github/codeql-action/init', 'b'.repeat(40), 'v4.39.0'),
     ].join('\n');
     const result = classifyDependabotPR({
       login,
@@ -156,8 +158,8 @@ describe('Dependabot PR guard policy', () => {
   it('rejects replacing a pinned action identity', () => {
     const patch = [
       '@@ -10,1 +10,1 @@',
-      '-        uses: actions/checkout@' + 'a'.repeat(40) + ' # v7.0.1',
-      '+        uses: attacker/unknown-action@' + 'b'.repeat(40) + ' # v1.0.0',
+      actionLine('-', 'actions/checkout', 'a'.repeat(40), 'v7.0.1'),
+      actionLine('+', 'attacker/unknown-action', 'b'.repeat(40), 'v1.0.0'),
     ].join('\n');
     const result = classifyDependabotPR({
       login,
@@ -174,8 +176,8 @@ describe('Dependabot PR guard policy', () => {
   it('rejects workflow logic, permissions, and unpinned refs', () => {
     const mixedPatch = [
       '@@ -10,1 +10,2 @@',
-      '-        uses: github/codeql-action/init@' + 'a'.repeat(40) + ' # v4.38.2',
-      '+        uses: github/codeql-action/init@' + 'b'.repeat(40) + ' # v4.39.0',
+      actionLine('-', 'github/codeql-action/init', 'a'.repeat(40), 'v4.38.2'),
+      actionLine('+', 'github/codeql-action/init', 'b'.repeat(40), 'v4.39.0'),
       '+        permissions: contents: write',
     ].join('\n');
     const unpinnedPatch = [
