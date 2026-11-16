@@ -3,8 +3,7 @@
 const DEPENDABOT_LOGIN = 'dependabot[bot]';
 const DEPENDENCY_TITLE = /^(?:build|chore)\(deps(?:-dev)?\):\s+/i;
 const WORKFLOW_PATH = /^\.github\/workflows\/(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0-9_.-]+\.ya?ml$/;
-const ACTION_REFERENCE_CHANGE = /^[+-]\s*uses:\s*[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+@[a-f0-9]{40}(?:\s+#.*)?$/i;
-const VERSION_RANGE = /^(?:[~^=]|>=?|<=?)?\s*\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\s*\|\|\s*(?:[~^=]|>=?|<=?)?\s*\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)*$/;
+const ACTION_REFERENCE_CHANGE = /^[+-]\\s*uses:\\s*([A-Za-z0-9_.-]+(?:\\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})(?:\\s+#.*)?$/i;\nconst VERSION_RANGE = /^(?:[~^=]|>=?|<=?)?\s*\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\s*\|\|\s*(?:[~^=]|>=?|<=?)?\s*\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)*$/;
 
 function deny(reason) {
   return { allowed: false, reason };
@@ -70,6 +69,9 @@ function validatePackageManifest(basePackage, headPackage) {
 }
 
 function validateWorkflowPatches(files) {
+  const removed = [];
+  const added = [];
+
   for (const file of files) {
     if (!WORKFLOW_PATH.test(file.filename) || file.status !== 'modified') {
       return deny('only modified workflow YAML files are allowed for GitHub Actions updates');
@@ -80,13 +82,40 @@ function validateWorkflowPatches(files) {
     const changedLines = file.patch
       .split(/\r?\n/)
       .filter((line) => /^[+-]/.test(line) && !line.startsWith('+++') && !line.startsWith('---'));
-    if (changedLines.length === 0 || changedLines.some((line) => !ACTION_REFERENCE_CHANGE.test(line))) {
-      return deny('workflow updates may change only pinned 40-character uses: action references');
+    if (changedLines.length === 0) {
+      return deny('workflow patch contains no action-reference changes');
+    }
+    for (const line of changedLines) {
+      const match = line.match(ACTION_REFERENCE_CHANGE);
+      if (!match) {
+        return deny('workflow updates may change only pinned 40-character uses: action references');
+      }
+      const reference = { name: match[1], sha: match[2].toLowerCase() };
+      if (line.startsWith('-')) removed.push(reference);
+      else added.push(reference);
     }
   }
+
+  if (removed.length === 0 || removed.length !== added.length) {
+    return deny('workflow updates must replace existing action references, not add or remove steps');
+  }
+  const oldNames = removed.map((reference) => reference.name).sort();
+  const newNames = added.map((reference) => reference.name).sort();
+  if (!sameJson(oldNames, newNames)) {
+    return deny('workflow updates may change an action SHA but may not replace the action identity');
+  }
+
+  const names = [...new Set(oldNames)];
+  for (const name of names) {
+    const oldShas = removed.filter((reference) => reference.name === name).map((reference) => reference.sha).sort();
+    const newShas = added.filter((reference) => reference.name === name).map((reference) => reference.sha).sort();
+    if (sameJson(oldShas, newShas)) {
+      return deny('workflow action ' + name + ' has no pinned SHA update');
+    }
+  }
+
   return { allowed: true, kind: 'github-actions', changedFiles: files.length };
 }
-
 function classifyDependabotPR({ login, title, files, basePackage, headPackage }) {
   if (login !== DEPENDABOT_LOGIN) {
     return deny('only the exact dependabot[bot] account is eligible');
@@ -113,4 +142,5 @@ function classifyDependabotPR({ login, title, files, basePackage, headPackage })
   return deny('allowed Dependabot scope is exactly package.json + package-lock.json, or workflow YAML action-reference lines only');
 }
 
+/* global module */
 module.exports = { classifyDependabotPR };
