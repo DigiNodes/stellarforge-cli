@@ -135,8 +135,8 @@ describe('Dependabot PR guard policy', () => {
   it('allows pinned action SHA updates', () => {
     const patch = [
       '@@ -10,1 +10,1 @@',
-      '-        uses: github/codeql-action/init@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # v4.38.2',
-      '+        uses: github/codeql-action/init@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb # v4.39.0',
+      '-        uses: github/codeql-action/init@' + 'a'.repeat(40) + ' # v4.38.2',
+      '+        uses: github/codeql-action/init@' + 'b'.repeat(40) + ' # v4.39.0',
     ].join('\n');
     const result = classifyDependabotPR({
       login,
@@ -156,8 +156,8 @@ describe('Dependabot PR guard policy', () => {
   it('rejects replacing a pinned action identity', () => {
     const patch = [
       '@@ -10,1 +10,1 @@',
-      '-        uses: actions/checkout@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # v7.0.1',
-      '+        uses: attacker/unknown-action@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb # v1.0.0',
+      '-        uses: actions/checkout@' + 'a'.repeat(40) + ' # v7.0.1',
+      '+        uses: attacker/unknown-action@' + 'b'.repeat(40) + ' # v1.0.0',
     ].join('\n');
     const result = classifyDependabotPR({
       login,
@@ -174,8 +174,8 @@ describe('Dependabot PR guard policy', () => {
   it('rejects workflow logic, permissions, and unpinned refs', () => {
     const mixedPatch = [
       '@@ -10,1 +10,2 @@',
-      '-        uses: github/codeql-action/init@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # v4.38.2',
-      '+        uses: github/codeql-action/init@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb # v4.39.0',
+      '-        uses: github/codeql-action/init@' + 'a'.repeat(40) + ' # v4.38.2',
+      '+        uses: github/codeql-action/init@' + 'b'.repeat(40) + ' # v4.39.0',
       '+        permissions: contents: write',
     ].join('\n');
     const unpinnedPatch = [
