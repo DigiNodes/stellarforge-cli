@@ -194,6 +194,6 @@ describe('Dependabot PR guard policy', () => {
     expect(missingPatch.allowed).toBe(false);
     expect(unrelated.allowed).toBe(false);
     expect(wrongAuthor.allowed).toBe(false);
-    expect(wrongTitle.allowed).toBe(false);
+    expect(wrongTitle.allowed).toBe(false);\n\n    const wrongBase = classifyDependabotPR({\n      login,\n      title: npmTitle,\n      baseRef: 'release',\n      files: [\n        { filename: 'package.json', status: 'modified' },\n        { filename: 'package-lock.json', status: 'modified' },\n      ],\n      basePackage,\n      headPackage,\n    });\n    expect(wrongBase.allowed).toBe(false);
   });
 });
