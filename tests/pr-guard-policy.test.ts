@@ -43,8 +43,14 @@ const headPackage = {
   dependencies: { commander: '15.1.0' },
   devDependencies: { vitest: '5.0.2' },
 };
-const actionLine = (sign: string, action: string, sha: string, version: string) =>
-  `${sign}        uses: ${action}@${sha} # ${version}`;
+function actionLine(
+  sign: string,
+  action: string,
+  sha: string,
+  version: string,
+): string {
+  return `${sign}        uses: ${action}@${sha} # ${version}`;
+}
 
 describe('Dependabot PR guard policy', () => {
   it('allows npm updates limited to dependency ranges and the lockfile', () => {
