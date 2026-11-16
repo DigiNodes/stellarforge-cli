@@ -132,7 +132,9 @@ describe('Dependabot PR guard policy', () => {
     expect(sourceChange.allowed).toBe(false);
   });
 
-  it('allows pinned action SHA updates without changing the action identity', () => {
+  it(
+    'allows pinned action SHA updates without changing the action identity',
+    () => {
     const patch = [
       '@@ -10,1 +10,1 @@',
       '-        uses: github/codeql-action/init@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # v4.38.2',
@@ -153,7 +155,9 @@ describe('Dependabot PR guard policy', () => {
     });
   });
 
-  it('rejects replacing an action identity even when both references are pinned', () => {
+  it(
+    'rejects replacing an action identity even when both references are pinned',
+    () => {
     const patch = [
       '@@ -10,1 +10,1 @@',
       '-        uses: actions/checkout@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # v7.0.1',
@@ -171,7 +175,9 @@ describe('Dependabot PR guard policy', () => {
     expect(result.reason).toMatch(/may not move or replace/);
   });
 
-  it('rejects workflow logic, permission, or unpinned-reference changes', () => {
+  it(
+    'rejects workflow logic, permission, or unpinned-reference changes',
+    () => {
     const mixedPatch = [
       '@@ -10,1 +10,2 @@',
       '-        uses: github/codeql-action/init@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # v4.38.2',
@@ -188,7 +194,11 @@ describe('Dependabot PR guard policy', () => {
       title: actionTitle,
       baseRef,
       files: [
-        { filename: '.github/workflows/ci.yml', status: 'modified', patch: mixedPatch },
+        {
+          filename: '.github/workflows/ci.yml',
+          status: 'modified',
+          patch: mixedPatch,
+        },
       ],
     });
     const unpinned = classifyDependabotPR({
@@ -196,14 +206,20 @@ describe('Dependabot PR guard policy', () => {
       title: actionTitle,
       baseRef,
       files: [
-        { filename: '.github/workflows/ci.yml', status: 'modified', patch: unpinnedPatch },
+        {
+          filename: '.github/workflows/ci.yml',
+          status: 'modified',
+          patch: unpinnedPatch,
+        },
       ],
     });
     expect(mixed.allowed).toBe(false);
     expect(unpinned.allowed).toBe(false);
   });
 
-  it('fails closed for missing patches, unrelated files, non-bot authors, titles, and branches', () => {
+  it(
+    'fails closed for missing patches, unrelated files, non-bot authors, titles, and branches',
+    () => {
     const missingPatch = classifyDependabotPR({
       login,
       title: actionTitle,
