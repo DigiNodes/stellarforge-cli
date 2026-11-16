@@ -91,7 +91,7 @@ function validateWorkflowPatches(files) {
       if (!match) {
         return deny('workflow updates may change only pinned 40-character uses: action references');
       }
-      const reference = { name: match[1], sha: match[2].toLowerCase() };
+      const reference = { filename: file.filename, name: match[1], sha: match[2].toLowerCase() };
       if (line.startsWith('-')) removed.push(reference);
       else added.push(reference);
     }
@@ -117,11 +117,11 @@ function validateWorkflowPatches(files) {
 
   return { allowed: true, kind: 'github-actions', changedFiles: files.length };
 }
-function classifyDependabotPR({ login, title, files, basePackage, headPackage }) {
+function classifyDependabotPR({ login, title, baseRef, files, basePackage, headPackage }) {
   if (login !== DEPENDABOT_LOGIN) {
     return deny('only the exact dependabot[bot] account is eligible');
   }
-  if (typeof title !== 'string' || !DEPENDENCY_TITLE.test(title)) {
+  if (baseRef !== 'main') {\n    return deny('Dependabot updates are allowed only when targeting main');\n  }\n  if (typeof title !== 'string' || !DEPENDENCY_TITLE.test(title)) {
     return deny('PR title must use the standard build(deps): or chore(deps): prefix');
   }
   if (!Array.isArray(files) || files.length === 0 || files.some((file) => file.status !== 'modified')) {
