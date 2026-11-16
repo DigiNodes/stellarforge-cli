@@ -62,6 +62,7 @@ jobs:
               const decision = classifyDependabotPR({
                 login: pr.user.login,
                 title: pr.title,
+                baseRef: pr.base.ref,
                 files,
                 basePackage,
                 headPackage,
