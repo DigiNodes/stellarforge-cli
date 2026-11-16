@@ -132,9 +132,7 @@ describe('Dependabot PR guard policy', () => {
     expect(sourceChange.allowed).toBe(false);
   });
 
-  it(
-    'allows pinned action SHA updates without changing the action identity',
-    () => {
+  it('allows pinned action SHA updates', () => {
     const patch = [
       '@@ -10,1 +10,1 @@',
       '-        uses: github/codeql-action/init@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # v4.38.2',
@@ -155,9 +153,7 @@ describe('Dependabot PR guard policy', () => {
     });
   });
 
-  it(
-    'rejects replacing an action identity even when both references are pinned',
-    () => {
+  it('rejects replacing a pinned action identity', () => {
     const patch = [
       '@@ -10,1 +10,1 @@',
       '-        uses: actions/checkout@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # v7.0.1',
@@ -175,9 +171,7 @@ describe('Dependabot PR guard policy', () => {
     expect(result.reason).toMatch(/may not move or replace/);
   });
 
-  it(
-    'rejects workflow logic, permission, or unpinned-reference changes',
-    () => {
+  it('rejects workflow logic, permissions, and unpinned refs', () => {
     const mixedPatch = [
       '@@ -10,1 +10,2 @@',
       '-        uses: github/codeql-action/init@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # v4.38.2',
@@ -217,9 +211,7 @@ describe('Dependabot PR guard policy', () => {
     expect(unpinned.allowed).toBe(false);
   });
 
-  it(
-    'fails closed for missing patches, unrelated files, non-bot authors, titles, and branches',
-    () => {
+  it('fails closed for invalid authors, titles, branches, and files', () => {
     const missingPatch = classifyDependabotPR({
       login,
       title: actionTitle,
