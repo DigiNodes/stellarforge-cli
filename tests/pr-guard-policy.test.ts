@@ -184,7 +184,7 @@ describe('Dependabot PR guard policy', () => {
       '@@ -10,1 +10,1 @@',
       '-      - uses: actions/checkout@' + 'a'.repeat(40),
       '+      - uses: actions/checkout@' + 'b'.repeat(40),
-    ].join('\\n');
+    ].join('\n');
     const result = classifyDependabotPR({
       login,
       title: actionTitle,
@@ -207,7 +207,7 @@ describe('Dependabot PR guard policy', () => {
       '-      - uses: actions/setup-node@' + 'b'.repeat(40),
       '+      - uses: actions/setup-node@' + 'c'.repeat(40),
       '+      - uses: actions/checkout@' + 'd'.repeat(40),
-    ].join('\\n');
+    ].join('\n');
     const result = classifyDependabotPR({
       login,
       title: actionTitle,
