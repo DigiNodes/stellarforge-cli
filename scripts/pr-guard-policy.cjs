@@ -151,7 +151,7 @@ function validateWorkflowPatches(files) {
       // GitHub Actions commonly renders YAML sequence entries as
       // "- uses: owner/action@<sha>". Also accept a direct "uses:" key.
       const match = line.match(
-        /^[+-]\\s*(?:-\\s*)?uses:\\s*([A-Za-z0-9_.-]+(?:\\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})(?:\\s+#.*)?$/i,
+        /^[+-]\s*(?:-\s*)?uses:\s*([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})(?:\s+#.*)?$/i,
       );
       if (!match) {
         return deny(
