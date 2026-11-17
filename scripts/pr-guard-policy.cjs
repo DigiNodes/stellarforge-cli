@@ -4,8 +4,6 @@ const DEPENDABOT_LOGIN = 'dependabot[bot]';
 const DEPENDENCY_TITLE = /^(?:build|chore)\(deps(?:-dev)?\):\s+/i;
 const WORKFLOW_PATH =
   /^\.github\/workflows\/(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0-9_.-]+\.ya?ml$/;
-const ACTION_REFERENCE_CHANGE =
-  /^[+-]\s*uses:\s*([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})(?:\s+#.*)?$/i;
 const VERSION_RANGE_CLAUSE =
   /^(?:[~^=]|>=?|<=?)?\s*\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 
