@@ -96,8 +96,7 @@ function validatePackageManifest(basePackage, headPackage) {
 }
 
 function validateWorkflowPatches(files) {
-  const removed = [];
-  const added = [];
+  let changedReferences = 0;
 
   for (const file of files) {
     if (!WORKFLOW_PATH.test(file.filename) || file.status !== 'modified') {
@@ -109,74 +108,71 @@ function validateWorkflowPatches(files) {
       );
     }
 
-    const changedLines = file.patch
-      .split(/\r?\n/)
-      .filter(
-        (line) =>
-          /^[+-]/.test(line) &&
-          !line.startsWith('+++') &&
-          !line.startsWith('---'),
-      );
-    if (changedLines.length === 0) {
-      return deny('workflow patch contains no action-reference changes');
-    }
+    // Pair removed/added references inside each diff hunk, not across the
+    // whole file. This prevents two actions from being swapped between steps
+    // while their aggregate identities still appear unchanged.
+    let hunkRemoved = [];
+    let hunkAdded = [];
+    let sawChangedLine = false;
 
-    for (const line of changedLines) {
-      const match = line.match(ACTION_REFERENCE_CHANGE);
+    const validateHunk = () => {
+      if (hunkRemoved.length === 0 && hunkAdded.length === 0) return true;
+      if (hunkRemoved.length === 0 || hunkRemoved.length !== hunkAdded.length) {
+        return false;
+      }
+      for (let index = 0; index < hunkRemoved.length; index += 1) {
+        if (hunkRemoved[index].name !== hunkAdded[index].name) return false;
+        if (hunkRemoved[index].sha === hunkAdded[index].sha) return false;
+        changedReferences += 1;
+      }
+      hunkRemoved = [];
+      hunkAdded = [];
+      return true;
+    };
+
+    for (const line of file.patch.split(/\r?\n/)) {
+      if (line.startsWith('@@')) {
+        if (!validateHunk()) {
+          return deny(
+            'workflow updates may change an action SHA only at the same step; action identities cannot be swapped, moved, or replaced',
+          );
+        }
+        continue;
+      }
+      if (
+        !/^[+-]/.test(line) ||
+        line.startsWith('+++') ||
+        line.startsWith('---')
+      ) {
+        continue;
+      }
+
+      sawChangedLine = true;
+      // GitHub Actions commonly renders YAML sequence entries as
+      // "- uses: owner/action@<sha>". Also accept a direct "uses:" key.
+      const match = line.match(
+        /^[+-]\\s*(?:-\\s*)?uses:\\s*([A-Za-z0-9_.-]+(?:\\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})(?:\\s+#.*)?$/i,
+      );
       if (!match) {
         return deny(
           'workflow updates may change only pinned 40-character uses: action references',
         );
       }
-      const reference = {
-        filename: file.filename,
-        name: match[1],
-        sha: match[2].toLowerCase(),
-      };
-      if (line.startsWith('-')) removed.push(reference);
-      else added.push(reference);
+      const reference = { name: match[1], sha: match[2].toLowerCase() };
+      if (line.startsWith('-')) hunkRemoved.push(reference);
+      else hunkAdded.push(reference);
+    }
+
+    if (!sawChangedLine || !validateHunk()) {
+      return deny(
+        'workflow updates must replace pinned action SHAs in-place without adding, removing, moving, or swapping steps',
+      );
     }
   }
 
-  if (removed.length === 0 || removed.length !== added.length) {
-    return deny(
-      'workflow updates must replace existing action references, not add or remove steps',
-    );
+  if (changedReferences === 0) {
+    return deny('workflow patch contains no action-reference changes');
   }
-
-  const oldIdentities = removed
-    .map((reference) => reference.filename + '|' + reference.name)
-    .sort();
-  const newIdentities = added
-    .map((reference) => reference.filename + '|' + reference.name)
-    .sort();
-  if (!sameJson(oldIdentities, newIdentities)) {
-    return deny(
-      'workflow updates may change an action SHA but may not move or replace the action identity',
-    );
-  }
-
-  const identities = [...new Set(oldIdentities)];
-  for (const identity of identities) {
-    const oldShas = removed
-      .filter(
-        (reference) =>
-          reference.filename + '|' + reference.name === identity,
-      )
-      .map((reference) => reference.sha)
-      .sort();
-    const newShas = added
-      .filter(
-        (reference) =>
-          reference.filename + '|' + reference.name === identity,
-      )
-      .map((reference) => reference.sha)
-      .sort();
-    if (sameJson(oldShas, newShas)) {
-      return deny('workflow action ' + identity + ' has no pinned SHA update');
-    }
-  }
-
   return { allowed: true, kind: 'github-actions', changedFiles: files.length };
 }
 
