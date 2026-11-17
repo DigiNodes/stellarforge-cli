@@ -176,7 +176,9 @@ describe('Dependabot PR guard policy', () => {
       ],
     });
     expect(result.allowed).toBe(false);
-    expect(result.reason).toMatch(/workflow updates must replace pinned action SHAs/);
+    expect(result.reason).toMatch(
+      /workflow updates must replace pinned action SHAs/,
+    );
   });
 
   it('allows pinned SHA updates on standard YAML sequence action steps', () => {
