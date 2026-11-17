@@ -179,6 +179,47 @@ describe('Dependabot PR guard policy', () => {
     expect(result.reason).toMatch(/may not move or replace/);
   });
 
+  it('allows pinned SHA updates on standard YAML sequence action steps', () => {
+    const patch = [
+      '@@ -10,1 +10,1 @@',
+      '-      - uses: actions/checkout@' + 'a'.repeat(40),
+      '+      - uses: actions/checkout@' + 'b'.repeat(40),
+    ].join('\\n');
+    const result = classifyDependabotPR({
+      login,
+      title: actionTitle,
+      baseRef,
+      files: [
+        { filename: '.github/workflows/ci.yml', status: 'modified', patch },
+      ],
+    });
+    expect(result).toMatchObject({
+      allowed: true,
+      kind: 'github-actions',
+      changedFiles: 1,
+    });
+  });
+
+  it('rejects swapping action identities between workflow steps', () => {
+    const patch = [
+      '@@ -10,2 +10,2 @@',
+      '-      - uses: actions/checkout@' + 'a'.repeat(40),
+      '-      - uses: actions/setup-node@' + 'b'.repeat(40),
+      '+      - uses: actions/setup-node@' + 'c'.repeat(40),
+      '+      - uses: actions/checkout@' + 'd'.repeat(40),
+    ].join('\\n');
+    const result = classifyDependabotPR({
+      login,
+      title: actionTitle,
+      baseRef,
+      files: [
+        { filename: '.github/workflows/ci.yml', status: 'modified', patch },
+      ],
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/identities cannot be swapped/);
+  });
+
   it('rejects workflow logic, permissions, and unpinned refs', () => {
     const mixedPatch = [
       '@@ -10,1 +10,2 @@',
