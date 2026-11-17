@@ -176,7 +176,7 @@ describe('Dependabot PR guard policy', () => {
       ],
     });
     expect(result.allowed).toBe(false);
-    expect(result.reason).toMatch(/may not move or replace/);
+    expect(result.reason).toMatch(/workflow updates must replace pinned action SHAs/);
   });
 
   it('allows pinned SHA updates on standard YAML sequence action steps', () => {
@@ -217,7 +217,7 @@ describe('Dependabot PR guard policy', () => {
       ],
     });
     expect(result.allowed).toBe(false);
-    expect(result.reason).toMatch(/identities cannot be swapped/);
+    expect(result.reason).toMatch(/workflow updates must replace pinned action SHAs/);
   });
 
   it('rejects workflow logic, permissions, and unpinned refs', () => {
