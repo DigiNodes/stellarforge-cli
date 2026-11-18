@@ -196,7 +196,12 @@ function resolveLockDependency(fromPath, dependencyName, packages) {
 }
 
 function packageNameFromLockPath(packagePath) {
-  const segments = packagePath.split('/node_modules/').pop().split('/');
+  const withoutNodeModules = packagePath.includes('/node_modules/')
+    ? packagePath.split('/node_modules/').pop()
+    : packagePath.startsWith('node_modules/')
+      ? packagePath.slice('node_modules/'.length)
+      : packagePath;
+  const segments = withoutNodeModules.split('/');
   return segments[0].startsWith('@')
     ? segments[0] + '/' + (segments[1] || '')
     : segments[0];
@@ -464,27 +469,8 @@ function validatePackageLock(
   return { allowed: true };
 }
 
-function hasClosingQuote(line, quote, startIndex) {
-  for (let index = startIndex; index < line.length; index += 1) {
-    if (quote === '"' && line[index] === '\\') {
-      index += 1;
-      continue;
-    }
-    if (
-      quote === "'" &&
-      line[index] === "'" &&
-      line[index + 1] === "'"
-    ) {
-      index += 1;
-      continue;
-    }
-    if (line[index] === quote) return true;
-  }
-  return false;
-}
-
 function normalizeWorkflowSource(source) {
-  const { parseDocument, isMap, isSeq, isScalar } = require('yaml');
+  const { parseDocument, isMap, isSeq, isScalar } = module.require('yaml');
   const document = parseDocument(source, { uniqueKeys: true });
   if (document.errors.length || !isMap(document.contents)) {
     return { normalized: null, references: [] };
