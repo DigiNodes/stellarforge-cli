@@ -95,101 +95,123 @@ function validatePackageManifest(basePackage, headPackage) {
   return { allowed: true, kind: 'npm-dependencies', changedVersions };
 }
 
-function validateWorkflowPatches(files) {
+function collectWorkflowUses(value, path = [], references = {}) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) =>
+      collectWorkflowUses(item, [...path, String(index)], references),
+    );
+    return references;
+  }
+  if (!isObject(value)) return references;
+
+  if (Object.hasOwn(value, 'uses')) {
+    if (typeof value.uses !== 'string') {
+      throw new Error('workflow uses fields must be strings');
+    }
+    references[JSON.stringify([...path, 'uses'])] = value.uses;
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    collectWorkflowUses(child, [...path, key], references);
+  }
+  return references;
+}
+
+function normalizeWorkflowUses(value) {
+  if (Array.isArray(value)) return value.map(normalizeWorkflowUses);
+  if (!isObject(value)) return value;
+  return Object.fromEntries(
+    Object.keys(value)
+      .sort()
+      .map((key) => [
+        key,
+        key === 'uses' ? '__PINNED_ACTION_REFERENCE__' : normalizeWorkflowUses(value[key]),
+      ]),
+  );
+}
+
+function validateWorkflowPatches(files, workflowContents) {
+  const YAML = require('yaml');
   let changedReferences = 0;
 
   for (const file of files) {
     if (!WORKFLOW_PATH.test(file.filename) || file.status !== 'modified') {
       return deny('only modified workflow YAML files are allowed for GitHub Actions updates');
     }
-    if (typeof file.patch !== 'string' || file.patch.length === 0) {
+    const revisions = workflowContents?.[file.filename];
+    if (
+      !revisions ||
+      typeof revisions.base !== 'string' ||
+      typeof revisions.head !== 'string'
+    ) {
       return deny(
-        'workflow patch is unavailable; failing closed because changed lines cannot be verified',
+        'workflow source is unavailable at base or head; failing closed because YAML structure cannot be verified',
       );
     }
 
-    // Pair removed/added references inside each diff hunk, not across the
-    // whole file. This prevents two actions from being swapped between steps
-    // while their aggregate identities still appear unchanged.
-    let hunkRemoved = [];
-    let hunkAdded = [];
-    let sawChangedLine = false;
-    let inHunk = false;
+    let baseWorkflow;
+    let headWorkflow;
+    try {
+      baseWorkflow = YAML.parse(revisions.base);
+      headWorkflow = YAML.parse(revisions.head);
+    } catch {
+      return deny('workflow YAML must parse successfully at both base and head revisions');
+    }
+    if (!isObject(baseWorkflow) || !isObject(headWorkflow)) {
+      return deny('workflow documents must remain YAML mappings');
+    }
 
-    const validateHunk = () => {
-      if (hunkRemoved.length === 0 && hunkAdded.length === 0) return true;
-      if (hunkRemoved.length === 0 || hunkRemoved.length !== hunkAdded.length) {
-        return false;
-      }
-      for (let index = 0; index < hunkRemoved.length; index += 1) {
-        if (hunkRemoved[index].name !== hunkAdded[index].name) return false;
-        if (hunkRemoved[index].sha === hunkAdded[index].sha) return false;
-        if (hunkRemoved[index].normalizedLine !== hunkAdded[index].normalizedLine) {
-          return false;
-        }
-        changedReferences += 1;
-      }
-      hunkRemoved = [];
-      hunkAdded = [];
-      return true;
-    };
+    let baseReferences;
+    let headReferences;
+    try {
+      baseReferences = collectWorkflowUses(baseWorkflow);
+      headReferences = collectWorkflowUses(headWorkflow);
+    } catch (error) {
+      return deny(error.message);
+    }
 
-    for (const line of file.patch.split(/\r?\n/)) {
-      if (line.startsWith('@@')) {
-        if (!validateHunk()) {
-          return deny(
-            'workflow updates may change an action SHA only at the same step; action identities cannot be swapped, moved, or replaced',
-          );
-        }
-        inHunk = true;
-        continue;
-      }
-      if (!inHunk) continue;
-      if (line.startsWith(' ')) {
-        if (!validateHunk()) {
-          return deny(
-            'workflow updates may change an action SHA only at the same step; action identities cannot be swapped, moved, or replaced',
-          );
-        }
-        continue;
-      }
-      if (line.startsWith('\\')) continue;
-      if (!/^[+-]/.test(line)) {
-        return deny('workflow patch contains an unsupported diff line');
-      }
+    const baseLocations = Object.keys(baseReferences).sort();
+    const headLocations = Object.keys(headReferences).sort();
+    if (!sameJson(baseLocations, headLocations)) {
+      return deny('workflow updates may not add, remove, or move action uses fields');
+    }
 
-      sawChangedLine = true;
-      // GitHub Actions commonly renders YAML sequence entries as
-      // "- uses: owner/action@<sha>". Also accept a direct "uses:" key.
-      const match = line.match(
-        /^[+-]\s*(?:-\s*)?uses:\s*([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})(?:\s+#.*)?$/i,
+    for (const location of baseLocations) {
+      const before = baseReferences[location];
+      const after = headReferences[location];
+      if (before === after) continue;
+
+      const beforeMatch = before.match(
+        /^([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})$/i,
       );
-      if (!match) {
+      const afterMatch = after.match(
+        /^([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})$/i,
+      );
+      if (
+        !beforeMatch ||
+        !afterMatch ||
+        beforeMatch[1] !== afterMatch[1] ||
+        beforeMatch[2].toLowerCase() === afterMatch[2].toLowerCase()
+      ) {
         return deny(
-          'workflow updates may change only pinned 40-character uses: action references',
+          'workflow updates may change only the pinned SHA of an existing action at the same YAML location',
         );
       }
-      const normalizedLine = line
-        .slice(1)
-        .replace(/@[a-f0-9]{40}/i, '@<SHA>');
-      const reference = {
-        name: match[1],
-        sha: match[2].toLowerCase(),
-        normalizedLine,
-      };
-      if (line.startsWith('-')) hunkRemoved.push(reference);
-      else hunkAdded.push(reference);
+      changedReferences += 1;
     }
 
-    if (!sawChangedLine || !validateHunk()) {
-      return deny(
-        'workflow updates must replace pinned action SHAs in-place without adding, removing, moving, or swapping steps',
-      );
+    if (
+      !sameJson(
+        normalizeWorkflowUses(baseWorkflow),
+        normalizeWorkflowUses(headWorkflow),
+      )
+    ) {
+      return deny('workflow updates may not change YAML content outside pinned action SHAs');
     }
   }
 
   if (changedReferences === 0) {
-    return deny('workflow patch contains no action-reference changes');
+    return deny('workflow YAML contains no action-reference SHA changes');
   }
   return { allowed: true, kind: 'github-actions', changedFiles: files.length };
 }
@@ -201,6 +223,7 @@ function classifyDependabotPR({
   files,
   basePackage,
   headPackage,
+  workflowContents,
 }) {
   if (login !== DEPENDABOT_LOGIN) {
     return deny('only the exact dependabot[bot] account is eligible');
@@ -228,7 +251,7 @@ function classifyDependabotPR({
   }
 
   if (files.every((file) => WORKFLOW_PATH.test(file.filename))) {
-    return validateWorkflowPatches(files);
+    return validateWorkflowPatches(files, workflowContents);
   }
 
   return deny(
