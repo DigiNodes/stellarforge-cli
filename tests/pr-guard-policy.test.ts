@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest';
 type FileChange = {
   filename: string;
   status: string;
-  patch?: string;
 };
 type PackageManifest = Record<string, unknown>;
 type Decision = {
@@ -24,6 +23,7 @@ const { classifyDependabotPR } = require('../scripts/pr-guard-policy.cjs') as {
     files: FileChange[];
     basePackage?: PackageManifest;
     headPackage?: PackageManifest;
+    workflowContents?: Record<string, { base: string; head: string }>;
   }): Decision;
 };
 
@@ -43,13 +43,12 @@ const headPackage = {
   dependencies: { commander: '15.1.0' },
   devDependencies: { vitest: '5.0.2' },
 };
-function actionLine(
-  sign: string,
-  action: string,
-  sha: string,
-  version: string,
-): string {
-  return `${sign}        uses: ${action}@${sha} # ${version}`;
+const workflowFile = '.github/workflows/ci.yml';
+function workflowSource(steps: string, extra = ''): string {
+  return `name: CI\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n${steps}${extra}`;
+}
+function workflowRevisions(base: string, head: string) {
+  return { [workflowFile]: { base, head } };
 }
 
 describe('Dependabot PR guard policy', () => {
@@ -183,18 +182,15 @@ describe('Dependabot PR guard policy', () => {
   });
 
   it('allows pinned action SHA updates', () => {
-    const patch = [
-      '@@ -10,1 +10,1 @@',
-      actionLine('-', 'github/codeql-action/init', 'a'.repeat(40), 'v4.38.2'),
-      actionLine('+', 'github/codeql-action/init', 'b'.repeat(40), 'v4.39.0'),
-    ].join('\n');
     const result = classifyDependabotPR({
       login,
       title: actionTitle,
       baseRef,
-      files: [
-        { filename: '.github/workflows/ci.yml', status: 'modified', patch },
-      ],
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(
+        workflowSource(`      - uses: github/codeql-action/init@${'a'.repeat(40)}\n`),
+        workflowSource(`      - uses: github/codeql-action/init@${'b'.repeat(40)}\n`),
+      ),
     });
     expect(result).toMatchObject({
       allowed: true,
@@ -204,18 +200,15 @@ describe('Dependabot PR guard policy', () => {
   });
 
   it('rejects replacing a pinned action identity', () => {
-    const patch = [
-      '@@ -10,1 +10,1 @@',
-      actionLine('-', 'actions/checkout', 'a'.repeat(40), 'v7.0.1'),
-      actionLine('+', 'attacker/unknown-action', 'b'.repeat(40), 'v1.0.0'),
-    ].join('\n');
     const result = classifyDependabotPR({
       login,
       title: actionTitle,
       baseRef,
-      files: [
-        { filename: '.github/workflows/ci.yml', status: 'modified', patch },
-      ],
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(
+        workflowSource(`      - uses: actions/checkout@${'a'.repeat(40)}\n`),
+        workflowSource(`      - uses: attacker/unknown-action@${'b'.repeat(40)}\n`),
+      ),
     });
     expect(result.allowed).toBe(false);
     expect(result.reason).toMatch(
@@ -224,18 +217,15 @@ describe('Dependabot PR guard policy', () => {
   });
 
   it('allows pinned SHA updates on standard YAML sequence action steps', () => {
-    const patch = [
-      '@@ -10,1 +10,1 @@',
-      '-      - uses: actions/checkout@' + 'a'.repeat(40),
-      '+      - uses: actions/checkout@' + 'b'.repeat(40),
-    ].join('\n');
     const result = classifyDependabotPR({
       login,
       title: actionTitle,
       baseRef,
-      files: [
-        { filename: '.github/workflows/ci.yml', status: 'modified', patch },
-      ],
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(
+        workflowSource(`      - name: Checkout\n        uses: actions/checkout@${'a'.repeat(40)}\n`),
+        workflowSource(`      - name: Checkout\n        uses: actions/checkout@${'b'.repeat(40)}\n`),
+      ),
     });
     expect(result).toMatchObject({
       allowed: true,
@@ -245,20 +235,19 @@ describe('Dependabot PR guard policy', () => {
   });
 
   it('rejects swapping action identities between workflow steps', () => {
-    const patch = [
-      '@@ -10,2 +10,2 @@',
-      '-      - uses: actions/checkout@' + 'a'.repeat(40),
-      '-      - uses: actions/setup-node@' + 'b'.repeat(40),
-      '+      - uses: actions/setup-node@' + 'c'.repeat(40),
-      '+      - uses: actions/checkout@' + 'd'.repeat(40),
-    ].join('\n');
     const result = classifyDependabotPR({
       login,
       title: actionTitle,
       baseRef,
-      files: [
-        { filename: '.github/workflows/ci.yml', status: 'modified', patch },
-      ],
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(
+        workflowSource(
+          `      - uses: actions/checkout@${'a'.repeat(40)}\n      - uses: actions/setup-node@${'b'.repeat(40)}\n`,
+        ),
+        workflowSource(
+          `      - uses: actions/setup-node@${'c'.repeat(40)}\n      - uses: actions/checkout@${'d'.repeat(40)}\n`,
+        ),
+      ),
     });
     expect(result.allowed).toBe(false);
     expect(result.reason).toMatch(
@@ -266,41 +255,51 @@ describe('Dependabot PR guard policy', () => {
     );
   });
 
+  it('rejects changes that imitate action references inside run block scalars', () => {
+    const shaA = 'a'.repeat(40);
+    const shaB = 'b'.repeat(40);
+    const base = workflowSource(
+      `      - run: |\n          uses: actions/checkout@${shaA}\n`,
+    );
+    const head = workflowSource(
+      `      - run: |\n          uses: actions/checkout@${shaB}\n`,
+    );
+    const result = classifyDependabotPR({
+      login,
+      title: actionTitle,
+      baseRef,
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(base, head),
+    });
+    expect(result.allowed).toBe(false);
+  });
+
   it('rejects workflow logic, permissions, and unpinned refs', () => {
-    const mixedPatch = [
-      '@@ -10,1 +10,2 @@',
-      actionLine('-', 'github/codeql-action/init', 'a'.repeat(40), 'v4.38.2'),
-      actionLine('+', 'github/codeql-action/init', 'b'.repeat(40), 'v4.39.0'),
-      '+        permissions: contents: write',
-    ].join('\n');
-    const unpinnedPatch = [
-      '@@ -10,1 +10,1 @@',
-      '-        uses: github/codeql-action/init@v4.38.2',
-      '+        uses: github/codeql-action/init@v4.39.0',
-    ].join('\n');
+    const base = workflowSource(
+      `      - uses: github/codeql-action/init@${'a'.repeat(40)}\n`,
+    );
     const mixed = classifyDependabotPR({
       login,
       title: actionTitle,
       baseRef,
-      files: [
-        {
-          filename: '.github/workflows/ci.yml',
-          status: 'modified',
-          patch: mixedPatch,
-        },
-      ],
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(
+        base,
+        workflowSource(
+          `      - uses: github/codeql-action/init@${'b'.repeat(40)}\n`,
+          'permissions:\n  contents: write\n',
+        ),
+      ),
     });
     const unpinned = classifyDependabotPR({
       login,
       title: actionTitle,
       baseRef,
-      files: [
-        {
-          filename: '.github/workflows/ci.yml',
-          status: 'modified',
-          patch: unpinnedPatch,
-        },
-      ],
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(
+        base,
+        workflowSource('      - uses: github/codeql-action/init@v4.39.0\n'),
+      ),
     });
     expect(mixed.allowed).toBe(false);
     expect(unpinned.allowed).toBe(false);
@@ -330,11 +329,11 @@ describe('Dependabot PR guard policy', () => {
   });
 
   it('fails closed for invalid authors, titles, branches, and files', () => {
-    const missingPatch = classifyDependabotPR({
+    const missingWorkflow = classifyDependabotPR({
       login,
       title: actionTitle,
       baseRef,
-      files: [{ filename: '.github/workflows/ci.yml', status: 'modified' }],
+      files: [{ filename: workflowFile, status: 'modified' }],
     });
     const unrelated = classifyDependabotPR({
       login,
@@ -376,7 +375,7 @@ describe('Dependabot PR guard policy', () => {
       headPackage,
     });
 
-    expect(missingPatch.allowed).toBe(false);
+    expect(missingWorkflow.allowed).toBe(false);
     expect(unrelated.allowed).toBe(false);
     expect(wrongAuthor.allowed).toBe(false);
     expect(wrongTitle.allowed).toBe(false);
