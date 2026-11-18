@@ -80,10 +80,7 @@ function validatePackageManifest(basePackage, headPackage) {
 
     for (const name of beforeNames) {
       if (before[name] === after[name]) continue;
-      if (
-        typeof before[name] !== 'string' ||
-        !isVersionRange(after[name])
-      ) {
+      if (!isVersionRange(before[name]) || !isVersionRange(after[name])) {
         return deny(
           'dependency "' + name + '" changed to a non-semver or non-string specification',
         );
@@ -117,6 +114,7 @@ function validateWorkflowPatches(files) {
     let hunkRemoved = [];
     let hunkAdded = [];
     let sawChangedLine = false;
+    let inHunk = false;
 
     const validateHunk = () => {
       if (hunkRemoved.length === 0 && hunkAdded.length === 0) return true;
@@ -126,6 +124,9 @@ function validateWorkflowPatches(files) {
       for (let index = 0; index < hunkRemoved.length; index += 1) {
         if (hunkRemoved[index].name !== hunkAdded[index].name) return false;
         if (hunkRemoved[index].sha === hunkAdded[index].sha) return false;
+        if (hunkRemoved[index].normalizedLine !== hunkAdded[index].normalizedLine) {
+          return false;
+        }
         changedReferences += 1;
       }
       hunkRemoved = [];
@@ -140,14 +141,21 @@ function validateWorkflowPatches(files) {
             'workflow updates may change an action SHA only at the same step; action identities cannot be swapped, moved, or replaced',
           );
         }
+        inHunk = true;
         continue;
       }
-      if (
-        !/^[+-]/.test(line) ||
-        line.startsWith('+++') ||
-        line.startsWith('---')
-      ) {
+      if (!inHunk) continue;
+      if (line.startsWith(' ')) {
+        if (!validateHunk()) {
+          return deny(
+            'workflow updates may change an action SHA only at the same step; action identities cannot be swapped, moved, or replaced',
+          );
+        }
         continue;
+      }
+      if (line.startsWith('\\')) continue;
+      if (!/^[+-]/.test(line)) {
+        return deny('workflow patch contains an unsupported diff line');
       }
 
       sawChangedLine = true;
@@ -161,7 +169,14 @@ function validateWorkflowPatches(files) {
           'workflow updates may change only pinned 40-character uses: action references',
         );
       }
-      const reference = { name: match[1], sha: match[2].toLowerCase() };
+      const normalizedLine = line
+        .slice(1)
+        .replace(/@[a-f0-9]{40}/i, '@<SHA>');
+      const reference = {
+        name: match[1],
+        sha: match[2].toLowerCase(),
+        normalizedLine,
+      };
       if (line.startsWith('-')) hunkRemoved.push(reference);
       else hunkAdded.push(reference);
     }
