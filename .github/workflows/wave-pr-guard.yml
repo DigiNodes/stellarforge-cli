@@ -36,9 +36,22 @@ jobs:
             }
 
             const isDependabot = pr.user.login === 'dependabot[bot]';
-            const files = await github.paginate(github.rest.pulls.listFiles, {
-              owner, repo, pull_number: pr.number, per_page: 100,
+            // Pin the comparison to the event's immutable head SHA. The merge
+            // base, file list, and file contents must describe the same diff.
+            const comparison = await github.rest.repos.compareCommitsWithBasehead({
+              owner,
+              repo,
+              basehead: pr.base.ref + '...' + pr.head.sha,
             });
+            if (comparison.data.head.sha !== pr.head.sha || !comparison.data.merge_base_commit?.sha) {
+              throw new Error('Could not establish an immutable PR merge-base comparison');
+            }
+            const mergeBaseSha = comparison.data.merge_base_commit.sha;
+            const files = comparison.data.files || [];
+            if (comparison.data.total_commits > 0 && files.length === 300) {
+              throw new Error('PR file comparison reached GitHub’s 300-file limit; failing closed');
+            }
+            const changedPaths = (file) => [file.previous_filename, file.filename].filter(Boolean);
             let labels = new Set();
             let linkedIssueNumber = null;
 
@@ -58,9 +71,9 @@ jobs:
                   }
                   return JSON.parse(Buffer.from(data.content, 'base64').toString('utf8'));
                 };
-                basePackage = await readJsonAtRef('package.json', pr.base.sha);
+                basePackage = await readJsonAtRef('package.json', mergeBaseSha);
                 headPackage = await readJsonAtRef('package.json', pr.head.sha);
-                baseLock = await readJsonAtRef('package-lock.json', pr.base.sha);
+                baseLock = await readJsonAtRef('package-lock.json', mergeBaseSha);
                 headLock = await readJsonAtRef('package-lock.json', pr.head.sha);
               }
               const workflowContents = {};
@@ -75,7 +88,7 @@ jobs:
                   return Buffer.from(data.content, 'base64').toString('utf8');
                 };
                 workflowContents[file.filename] = {
-                  base: await readWorkflowAtRef(pr.base.sha),
+                  base: await readWorkflowAtRef(mergeBaseSha),
                   head: await readWorkflowAtRef(pr.head.sha),
                 };
               }
@@ -156,10 +169,10 @@ jobs:
               /^src\/dev\/(?:orchestrator|environment)\.ts$/,
               /^(?:package|package-lock)\.json$/, /^SECURITY\.md$/,
             ];
-            const protectedFiles = files.map((f) => f.filename)
+            const protectedFiles = [...new Set(files.flatMap(changedPaths))]
               .filter((name) => protectedPatterns.some((pattern) => pattern.test(name)));
 
-            const currentNames = new Set(files.map((file) => file.filename));
+            const currentNames = new Set(files.flatMap(changedPaths));
             const openPulls = await github.paginate(github.rest.pulls.list, {
               owner, repo, state: 'open', per_page: 100,
             });
@@ -170,7 +183,7 @@ jobs:
                 owner, repo, pull_number: other.number, per_page: 100,
               });
               const overlap = otherFiles
-                .map((file) => file.filename)
+                .flatMap(changedPaths)
                 .filter((name) => currentNames.has(name))
                 .filter((name) =>
                   protectedPatterns.some((pattern) => pattern.test(name)) ||
