@@ -15,7 +15,7 @@ type Decision = {
 };
 
 const require = createRequire(import.meta.url);
-const { classifyDependabotPR } = require('../scripts/pr-guard-policy.cjs') as {
+const { classifyDependabotPR: classifyDependabotPRInternal } = require('../scripts/pr-guard-policy.cjs') as {
   classifyDependabotPR(input: {
     login: string;
     title: string;
@@ -25,9 +25,28 @@ const { classifyDependabotPR } = require('../scripts/pr-guard-policy.cjs') as {
     headPackage?: PackageManifest;
     baseLock?: Record<string, unknown>;
     headLock?: Record<string, unknown>;
+    registryMetadata?: Record<string, { resolved: string; integrity: string }>;
     workflowContents?: Record<string, { base: string; head: string }>;
   }): Decision;
 };
+const defaultRegistryMetadata = {
+  'commander@15.1.0': {
+    resolved: 'https://registry.npmjs.org/commander/-/commander-15.1.0.tgz',
+    integrity: 'sha512-commander',
+  },
+  'vitest@5.0.2': {
+    resolved: 'https://registry.npmjs.org/vitest/-/vitest-5.0.2.tgz',
+    integrity: 'sha512-vitest',
+  },
+};
+function classifyDependabotPR(
+  input: Parameters<typeof classifyDependabotPRInternal>[0],
+): Decision {
+  return classifyDependabotPRInternal({
+    ...input,
+    registryMetadata: input.registryMetadata ?? defaultRegistryMetadata,
+  });
+}
 
 const login = 'dependabot[bot]';
 const baseRef = 'main';
@@ -299,19 +318,15 @@ describe('Dependabot PR guard policy', () => {
     );
   });
 
-  it('allows pinned SHA updates on standard YAML sequence action steps', () => {
+  it('allows pinned SHA updates on unnamed YAML sequence action steps', () => {
     const result = classifyDependabotPR({
       login,
       title: actionTitle,
       baseRef,
       files: [{ filename: workflowFile, status: 'modified' }],
       workflowContents: workflowRevisions(
-        workflowSource(
-          `      - name: Checkout\n        uses: actions/checkout@${'a'.repeat(40)}\n`,
-        ),
-        workflowSource(
-          `      - name: Checkout\n        uses: actions/checkout@${'b'.repeat(40)}\n`,
-        ),
+        workflowSource(`      - uses: actions/checkout@${'a'.repeat(40)}\\n`),
+        workflowSource(`      - uses: actions/checkout@${'b'.repeat(40)}\\n`),
       ),
     });
     expect(result).toMatchObject({
@@ -363,6 +378,52 @@ describe('Dependabot PR guard policy', () => {
       expect(result.allowed).toBe(false);
     },
   );
+
+  it('allows only the canonical version comment to change with an action SHA', () => {
+    const result = classifyDependabotPR({
+      login,
+      title: actionTitle,
+      baseRef,
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(
+        workflowSource(`      - uses: actions/checkout@${'a'.repeat(40)} # v7.0.1\\n`),
+        workflowSource(`      - uses: actions/checkout@${'b'.repeat(40)} # v7.0.2\\n`),
+      ),
+    });
+    expect(result.allowed).toBe(true);
+  });
+
+  it('does not mask uses-like values outside eligible YAML action paths', () => {
+    const result = classifyDependabotPR({
+      login,
+      title: actionTitle,
+      baseRef,
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(
+        workflowSource(
+          `      - run: echo safe\\n        env:\\n          uses: actions/checkout@${'a'.repeat(40)}\\n`,
+        ),
+        workflowSource(
+          `      - run: echo safe\\n        env:\\n          uses: actions/checkout@${'b'.repeat(40)}\\n`,
+        ),
+      ),
+    });
+    expect(result.allowed).toBe(false);
+  });
+
+  it('allows a pinned reusable workflow SHA update at the jobs path', () => {
+    const result = classifyDependabotPR({
+      login,
+      title: actionTitle,
+      baseRef,
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(
+        `name: CI\\njobs:\\n  build:\\n    uses: org/workflows/.github/workflows/build.yml@${'a'.repeat(40)}\\n`,
+        `name: CI\\njobs:\\n  build:\\n    uses: org/workflows/.github/workflows/build.yml@${'b'.repeat(40)}\\n`,
+      ),
+    });
+    expect(result.allowed).toBe(true);
+  });
 
   it('rejects changing workflow comments alongside action SHAs', () => {
     const result = classifyDependabotPR({
