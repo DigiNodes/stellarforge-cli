@@ -291,6 +291,10 @@ function validatePackageLock(
     }
     if (after) {
       if (
+        typeof after.version !== 'string' ||
+        !/^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$/.test(
+          after.version,
+        ) ||
         typeof after.resolved !== 'string' ||
         !after.resolved.startsWith('https://registry.npmjs.org/') ||
         typeof after.integrity !== 'string' ||
