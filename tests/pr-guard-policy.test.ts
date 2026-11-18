@@ -92,6 +92,33 @@ describe('Dependabot PR guard policy', () => {
     expect(result.reason).toMatch(/outside dependency version sections/);
   });
 
+  it('rejects dependency section presence and shape changes', () => {
+    const withNullSection = {
+      ...headPackage,
+      peerDependencies: null,
+    };
+    const withAddedSection = {
+      ...headPackage,
+      peerDependencies: { 'new-peer': '1.0.0' },
+    };
+    const classify = (head: PackageManifest) =>
+      classifyDependabotPR({
+        login,
+        title: npmTitle,
+        baseRef,
+        files: [
+          { filename: 'package.json', status: 'modified' },
+          { filename: 'package-lock.json', status: 'modified' },
+        ],
+        basePackage,
+        headPackage: head,
+      });
+    expect(classify(withNullSection).allowed).toBe(false);
+    expect(classify(withNullSection).reason).toMatch(/present dependency sections/);
+    expect(classify(withAddedSection).allowed).toBe(false);
+    expect(classify(withAddedSection).reason).toMatch(/retain their original presence/);
+  });
+
   it('rejects adding or removing dependency names', () => {
     const changed = {
       ...headPackage,
