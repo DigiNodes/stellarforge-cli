@@ -19,7 +19,7 @@ function isVersionRange(value) {
 function parseSemver(version) {
   if (typeof version !== 'string') return null;
   const match = version.match(
-    /^(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?(?:\\+[0-9A-Za-z.-]+)?$/,
+    /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/,
   );
   if (!match) return null;
   return {
@@ -47,8 +47,8 @@ function compareSemver(left, right) {
     if (x === undefined) return -1;
     if (y === undefined) return 1;
     if (x === y) continue;
-    const xn = /^\\d+$/.test(x);
-    const yn = /^\\d+$/.test(y);
+    const xn = /^\d+$/.test(x);
+    const yn = /^\d+$/.test(y);
     if (xn && yn) return Number(x) < Number(y) ? -1 : 1;
     if (xn !== yn) return xn ? -1 : 1;
     return x < y ? -1 : 1;
@@ -60,7 +60,7 @@ function satisfiesVersionRange(version, range) {
   if (!parseSemver(version) || !isVersionRange(range)) return false;
   return range.split('||').some((rawClause) => {
     const match = rawClause.trim().match(
-      /^(\\^|~|>=|>|<=|<|=)?\\s*(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)$/,
+      /^(\^|~|>=|>|<=|<|=)?\s*(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/,
     );
     if (!match) return false;
     const operator = match[1] || '=';
@@ -416,7 +416,7 @@ function validatePackageLock(
       const trusted = registryMetadata?.[packageName + '@' + after.version];
       if (
         typeof after.version !== 'string' ||
-        !/^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$/.test(
+        !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(
           after.version,
         ) ||
         typeof after.resolved !== 'string' ||
