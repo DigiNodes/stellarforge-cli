@@ -391,6 +391,17 @@ function validatePackageLock(
       continue;
     }
 
+    if (after) {
+      const expectedDev =
+        developmentReachable.reachable.has(packagePath) &&
+        !productionReachable.reachable.has(packagePath);
+      if ((after.dev === true) !== expectedDev) {
+        return deny(
+          'package-lock dev flag does not match the updated dependency graph',
+        );
+      }
+    }
+
     if (before && after && before.version === after.version) {
       const beforeWithoutDev = { ...before };
       const afterWithoutDev = { ...after };
@@ -399,14 +410,6 @@ function validatePackageLock(
       if (!sameJson(beforeWithoutDev, afterWithoutDev)) {
         return deny(
           'package-lock entries may not change artifact metadata without changing the package version',
-        );
-      }
-      const expectedDev =
-        developmentReachable.reachable.has(packagePath) &&
-        !productionReachable.reachable.has(packagePath);
-      if ((after.dev === true) !== expectedDev) {
-        return deny(
-          'package-lock dev flag does not match the updated dependency graph',
         );
       }
       continue;
