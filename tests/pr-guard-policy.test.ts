@@ -325,8 +325,8 @@ describe('Dependabot PR guard policy', () => {
       baseRef,
       files: [{ filename: workflowFile, status: 'modified' }],
       workflowContents: workflowRevisions(
-        workflowSource(`      - uses: actions/checkout@${'a'.repeat(40)}\\n`),
-        workflowSource(`      - uses: actions/checkout@${'b'.repeat(40)}\\n`),
+        workflowSource(`      - uses: actions/checkout@${'a'.repeat(40)}\n`),
+        workflowSource(`      - uses: actions/checkout@${'b'.repeat(40)}\n`),
       ),
     });
     expect(result).toMatchObject({
@@ -386,8 +386,8 @@ describe('Dependabot PR guard policy', () => {
       baseRef,
       files: [{ filename: workflowFile, status: 'modified' }],
       workflowContents: workflowRevisions(
-        workflowSource(`      - uses: actions/checkout@${'a'.repeat(40)} # v7.0.1\\n`),
-        workflowSource(`      - uses: actions/checkout@${'b'.repeat(40)} # v7.0.2\\n`),
+        workflowSource(`      - uses: actions/checkout@${'a'.repeat(40)} # v7.0.1\n`),
+        workflowSource(`      - uses: actions/checkout@${'b'.repeat(40)} # v7.0.2\n`),
       ),
     });
     expect(result.allowed).toBe(true);
@@ -401,10 +401,10 @@ describe('Dependabot PR guard policy', () => {
       files: [{ filename: workflowFile, status: 'modified' }],
       workflowContents: workflowRevisions(
         workflowSource(
-          `      - run: echo safe\\n        env:\\n          uses: actions/checkout@${'a'.repeat(40)}\\n`,
+          `      - run: echo safe\n        env:\n          uses: actions/checkout@${'a'.repeat(40)}\n`,
         ),
         workflowSource(
-          `      - run: echo safe\\n        env:\\n          uses: actions/checkout@${'b'.repeat(40)}\\n`,
+          `      - run: echo safe\n        env:\n          uses: actions/checkout@${'b'.repeat(40)}\n`,
         ),
       ),
     });
@@ -418,8 +418,8 @@ describe('Dependabot PR guard policy', () => {
       baseRef,
       files: [{ filename: workflowFile, status: 'modified' }],
       workflowContents: workflowRevisions(
-        `name: CI\\njobs:\\n  build:\\n    uses: org/workflows/.github/workflows/build.yml@${'a'.repeat(40)}\\n`,
-        `name: CI\\njobs:\\n  build:\\n    uses: org/workflows/.github/workflows/build.yml@${'b'.repeat(40)}\\n`,
+        `name: CI\njobs:\n  build:\n    uses: org/workflows/.github/workflows/build.yml@${'a'.repeat(40)}\n`,
+        `name: CI\njobs:\n  build:\n    uses: org/workflows/.github/workflows/build.yml@${'b'.repeat(40)}\n`,
       ),
     });
     expect(result.allowed).toBe(true);
