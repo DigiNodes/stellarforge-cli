@@ -135,7 +135,9 @@ describe('Dependabot PR guard policy', () => {
     expect(result.reason).toMatch(/outside dependency version sections/);
   });
 
-  it('rejects replacing a non-semver dependency source with a version range', () => {
+  it(
+    'rejects replacing a non-semver dependency source with a version range',
+    () => {
     const result = classifyDependabotPR({
       login,
       title: npmTitle,
@@ -146,12 +148,16 @@ describe('Dependabot PR guard policy', () => {
       ],
       basePackage: {
         ...basePackage,
-        dependencies: { commander: 'git+https://example.invalid/commander.git' },
+        dependencies: {
+          commander: 'git+https://example.invalid/commander.git',
+        },
       },
       headPackage,
       baseLock: lockFor({
         ...basePackage,
-        dependencies: { commander: 'git+https://example.invalid/commander.git' },
+        dependencies: {
+          commander: 'git+https://example.invalid/commander.git',
+        },
       }),
       headLock: lockFor(headPackage),
     });
@@ -258,8 +264,12 @@ describe('Dependabot PR guard policy', () => {
       baseRef,
       files: [{ filename: workflowFile, status: 'modified' }],
       workflowContents: workflowRevisions(
-        workflowSource(`      - uses: github/codeql-action/init@${'a'.repeat(40)}\n`),
-        workflowSource(`      - uses: github/codeql-action/init@${'b'.repeat(40)}\n`),
+        workflowSource(
+          `      - uses: github/codeql-action/init@${'a'.repeat(40)}\n`,
+        ),
+        workflowSource(
+          `      - uses: github/codeql-action/init@${'b'.repeat(40)}\n`,
+        ),
       ),
     });
     expect(result).toMatchObject({
@@ -277,7 +287,9 @@ describe('Dependabot PR guard policy', () => {
       files: [{ filename: workflowFile, status: 'modified' }],
       workflowContents: workflowRevisions(
         workflowSource(`      - uses: actions/checkout@${'a'.repeat(40)}\n`),
-        workflowSource(`      - uses: attacker/unknown-action@${'b'.repeat(40)}\n`),
+        workflowSource(
+          `      - uses: attacker/unknown-action@${'b'.repeat(40)}\n`,
+        ),
       ),
     });
     expect(result.allowed).toBe(false);
@@ -293,8 +305,12 @@ describe('Dependabot PR guard policy', () => {
       baseRef,
       files: [{ filename: workflowFile, status: 'modified' }],
       workflowContents: workflowRevisions(
-        workflowSource(`      - name: Checkout\n        uses: actions/checkout@${'a'.repeat(40)}\n`),
-        workflowSource(`      - name: Checkout\n        uses: actions/checkout@${'b'.repeat(40)}\n`),
+        workflowSource(
+          `      - name: Checkout\n        uses: actions/checkout@${'a'.repeat(40)}\n`,
+        ),
+        workflowSource(
+          `      - name: Checkout\n        uses: actions/checkout@${'b'.repeat(40)}\n`,
+        ),
       ),
     });
     expect(result).toMatchObject({
@@ -325,7 +341,9 @@ describe('Dependabot PR guard policy', () => {
     );
   });
 
-  it('rejects changes that imitate action references inside run block scalars', () => {
+  it(
+    'rejects changes that imitate action references inside run block scalars',
+    () => {
     const shaA = 'a'.repeat(40);
     const shaB = 'b'.repeat(40);
     const base = workflowSource(
@@ -362,7 +380,9 @@ describe('Dependabot PR guard policy', () => {
     expect(result.allowed).toBe(false);
   });
 
-  it('rejects changes that imitate action references inside quoted YAML scalars', () => {
+  it(
+    'rejects changes that imitate action references inside quoted YAML scalars',
+    () => {
     const base = workflowSource(
       `      - run: "script body\n          uses: actions/checkout@${'a'.repeat(40)}"\n`,
     );
@@ -410,7 +430,9 @@ describe('Dependabot PR guard policy', () => {
     expect(unpinned.allowed).toBe(false);
   });
 
-  it('rejects changed lockfile packages resolved outside the npm registry', () => {
+  it(
+    'rejects changed lockfile packages resolved outside the npm registry',
+    () => {
     const headLock = lockFor(headPackage);
     headLock.packages['node_modules/commander']!.resolved =
       'https://attacker.example/commander.tgz';
@@ -475,7 +497,9 @@ describe('Dependabot PR guard policy', () => {
     );
   });
 
-  it('rejects oversized dependency ranges without catastrophic regex work', () => {
+  it(
+    'rejects oversized dependency ranges without catastrophic regex work',
+    () => {
     const changed = {
       ...headPackage,
       dependencies: {
