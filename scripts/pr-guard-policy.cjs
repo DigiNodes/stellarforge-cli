@@ -231,11 +231,37 @@ function validatePackageLock(
     ...Object.keys(headLock.packages),
   ]);
   for (const packagePath of paths) {
-    if (packagePath === '' || allowedPaths.has(packagePath)) continue;
-    if (!sameJson(baseLock.packages[packagePath], headLock.packages[packagePath])) {
-      return deny(
-        'package-lock.json changes package entries outside the updated direct-dependency closure',
-      );
+    if (packagePath === '') continue;
+    const before = baseLock.packages[packagePath];
+    const after = headLock.packages[packagePath];
+    if (!allowedPaths.has(packagePath)) {
+      if (!sameJson(before, after)) {
+        return deny(
+          'package-lock.json changes package entries outside the updated direct-dependency closure',
+        );
+      }
+      continue;
+    }
+
+    if (before && after && before.version === after.version) {
+      if (!sameJson(before, after)) {
+        return deny(
+          'package-lock entries may not change metadata without changing the package version',
+        );
+      }
+      continue;
+    }
+    if (after) {
+      if (
+        typeof after.resolved !== 'string' ||
+        !after.resolved.startsWith('https://registry.npmjs.org/') ||
+        typeof after.integrity !== 'string' ||
+        after.integrity.length === 0
+      ) {
+        return deny(
+          'new or updated lockfile packages must use the npm registry and include integrity metadata',
+        );
+      }
     }
   }
 
