@@ -323,6 +323,9 @@ function validatePackageLock(
     const requirements = headPackage[section] || {};
     for (const [name, range] of Object.entries(requirements)) {
       const packagePath = resolveLockDependency('', name, headLock.packages);
+      if (!packagePath && ['optionalDependencies', 'peerDependencies'].includes(section)) {
+        continue;
+      }
       const resolvedVersion = packagePath
         ? headLock.packages[packagePath]?.version
         : null;
@@ -361,11 +364,15 @@ function validatePackageLock(
     ...headClosure.reachable,
   ]);
 
-  const productionReachable = collectLockDependencyClosure(headLock, [
+  const productionRoots = [
     ...Object.keys(headPackage.dependencies || {}),
     ...Object.keys(headPackage.optionalDependencies || {}),
     ...Object.keys(headPackage.peerDependencies || {}),
-  ]);
+  ].filter((name) => resolveLockDependency('', name, headLock.packages));
+  const productionReachable = collectLockDependencyClosure(
+    headLock,
+    productionRoots,
+  );
   const developmentReachable = collectLockDependencyClosure(
     headLock,
     Object.keys(headPackage.devDependencies || {}),
