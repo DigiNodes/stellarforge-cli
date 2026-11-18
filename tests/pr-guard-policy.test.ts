@@ -15,20 +15,24 @@ type Decision = {
 };
 
 const require = createRequire(import.meta.url);
-const { classifyDependabotPR: classifyDependabotPRInternal } = require('../scripts/pr-guard-policy.cjs') as {
-  classifyDependabotPR(input: {
-    login: string;
-    title: string;
-    baseRef: string;
-    files: FileChange[];
-    basePackage?: PackageManifest;
-    headPackage?: PackageManifest;
-    baseLock?: Record<string, unknown>;
-    headLock?: Record<string, unknown>;
-    registryMetadata?: Record<string, { resolved: string; integrity: string }>;
-    workflowContents?: Record<string, { base: string; head: string }>;
-  }): Decision;
-};
+const { classifyDependabotPR: classifyDependabotPRInternal } =
+  require('../scripts/pr-guard-policy.cjs') as {
+    classifyDependabotPR(input: {
+      login: string;
+      title: string;
+      baseRef: string;
+      files: FileChange[];
+      basePackage?: PackageManifest;
+      headPackage?: PackageManifest;
+      baseLock?: Record<string, unknown>;
+      headLock?: Record<string, unknown>;
+      registryMetadata?: Record<
+        string,
+        { resolved: string; integrity: string }
+      >;
+      workflowContents?: Record<string, { base: string; head: string }>;
+    }): Decision;
+  };
 const defaultRegistryMetadata = {
   'commander@15.1.0': {
     resolved: 'https://registry.npmjs.org/commander/-/commander-15.1.0.tgz',
@@ -91,12 +95,18 @@ function lockFor(manifest: PackageManifest): {
       },
       'node_modules/commander': {
         version: (dependencies as Record<string, string>).commander,
-        resolved: 'https://registry.npmjs.org/commander/-/commander-' + (dependencies as Record<string, string>).commander + '.tgz',
+        resolved:
+          'https://registry.npmjs.org/commander/-/commander-' +
+          (dependencies as Record<string, string>).commander +
+          '.tgz',
         integrity: 'sha512-commander',
       },
       'node_modules/vitest': {
         version: (devDependencies as Record<string, string>).vitest,
-        resolved: 'https://registry.npmjs.org/vitest/-/vitest-' + (devDependencies as Record<string, string>).vitest + '.tgz',
+        resolved:
+          'https://registry.npmjs.org/vitest/-/vitest-' +
+          (devDependencies as Record<string, string>).vitest +
+          '.tgz',
         integrity: 'sha512-vitest',
         dev: true,
       },
@@ -155,36 +165,33 @@ describe('Dependabot PR guard policy', () => {
     expect(result.reason).toMatch(/outside dependency version sections/);
   });
 
-  it(
-    'rejects replacing a non-semver dependency source with a version range',
-    () => {
-      const result = classifyDependabotPR({
-        login,
-        title: npmTitle,
-        baseRef,
-        files: [
-          { filename: 'package.json', status: 'modified' },
-          { filename: 'package-lock.json', status: 'modified' },
-        ],
-        basePackage: {
-          ...basePackage,
-          dependencies: {
-            commander: 'git+https://example.invalid/commander.git',
-          },
+  it('rejects replacing a non-semver dependency source with a version range', () => {
+    const result = classifyDependabotPR({
+      login,
+      title: npmTitle,
+      baseRef,
+      files: [
+        { filename: 'package.json', status: 'modified' },
+        { filename: 'package-lock.json', status: 'modified' },
+      ],
+      basePackage: {
+        ...basePackage,
+        dependencies: {
+          commander: 'git+https://example.invalid/commander.git',
         },
-        headPackage,
-        baseLock: lockFor({
-          ...basePackage,
-          dependencies: {
-            commander: 'git+https://example.invalid/commander.git',
-          },
-        }),
-        headLock: lockFor(headPackage),
-      });
-      expect(result.allowed).toBe(false);
-      expect(result.reason).toMatch(/non-semver/);
-    },
-  );
+      },
+      headPackage,
+      baseLock: lockFor({
+        ...basePackage,
+        dependencies: {
+          commander: 'git+https://example.invalid/commander.git',
+        },
+      }),
+      headLock: lockFor(headPackage),
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/non-semver/);
+  });
 
   it('rejects dependency section presence and shape changes', () => {
     const withNullSection = {
@@ -216,12 +223,10 @@ describe('Dependabot PR guard policy', () => {
       ...basePackage,
       peerDependencies: {},
     };
-    expect(
-      classify(withNullSection, baseWithPeerDependencies).allowed,
-    ).toBe(false);
-    expect(
-      classify(withNullSection, baseWithPeerDependencies).reason,
-    ).toMatch(
+    expect(classify(withNullSection, baseWithPeerDependencies).allowed).toBe(
+      false,
+    );
+    expect(classify(withNullSection, baseWithPeerDependencies).reason).toMatch(
       /present dependency sections must remain JSON objects/,
     );
     expect(classify(withAddedSection).allowed).toBe(false);
@@ -358,27 +363,24 @@ describe('Dependabot PR guard policy', () => {
     );
   });
 
-  it(
-    'rejects changes that imitate action references inside run block scalars',
-    () => {
-      const shaA = 'a'.repeat(40);
-      const shaB = 'b'.repeat(40);
-      const base = workflowSource(
-        `      - run: |\n          uses: actions/checkout@${shaA}\n`,
-      );
-      const head = workflowSource(
-        `      - run: |\n          uses: actions/checkout@${shaB}\n`,
-      );
-      const result = classifyDependabotPR({
-        login,
-        title: actionTitle,
-        baseRef,
-        files: [{ filename: workflowFile, status: 'modified' }],
-        workflowContents: workflowRevisions(base, head),
-      });
-      expect(result.allowed).toBe(false);
-    },
-  );
+  it('rejects changes that imitate action references inside run block scalars', () => {
+    const shaA = 'a'.repeat(40);
+    const shaB = 'b'.repeat(40);
+    const base = workflowSource(
+      `      - run: |\n          uses: actions/checkout@${shaA}\n`,
+    );
+    const head = workflowSource(
+      `      - run: |\n          uses: actions/checkout@${shaB}\n`,
+    );
+    const result = classifyDependabotPR({
+      login,
+      title: actionTitle,
+      baseRef,
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(base, head),
+    });
+    expect(result.allowed).toBe(false);
+  });
 
   it('allows only the canonical version comment to change with an action SHA', () => {
     const result = classifyDependabotPR({
@@ -387,8 +389,12 @@ describe('Dependabot PR guard policy', () => {
       baseRef,
       files: [{ filename: workflowFile, status: 'modified' }],
       workflowContents: workflowRevisions(
-        workflowSource(`      - uses: actions/checkout@${'a'.repeat(40)} # v7.0.1\n`),
-        workflowSource(`      - uses: actions/checkout@${'b'.repeat(40)} # v7.0.2\n`),
+        workflowSource(
+          `      - uses: actions/checkout@${'a'.repeat(40)} # v7.0.1\n`,
+        ),
+        workflowSource(
+          `      - uses: actions/checkout@${'b'.repeat(40)} # v7.0.2\n`,
+        ),
       ),
     });
     expect(result.allowed).toBe(true);
@@ -444,25 +450,22 @@ describe('Dependabot PR guard policy', () => {
     expect(result.allowed).toBe(false);
   });
 
-  it(
-    'rejects changes that imitate action references inside quoted YAML scalars',
-    () => {
-      const base = workflowSource(
-        `      - run: "script body\n          uses: actions/checkout@${'a'.repeat(40)}"\n`,
-      );
-      const head = workflowSource(
-        `      - run: "script body\n          uses: actions/checkout@${'b'.repeat(40)}"\n`,
-      );
-      const result = classifyDependabotPR({
-        login,
-        title: actionTitle,
-        baseRef,
-        files: [{ filename: workflowFile, status: 'modified' }],
-        workflowContents: workflowRevisions(base, head),
-      });
-      expect(result.allowed).toBe(false);
-    },
-  );
+  it('rejects changes that imitate action references inside quoted YAML scalars', () => {
+    const base = workflowSource(
+      `      - run: "script body\n          uses: actions/checkout@${'a'.repeat(40)}"\n`,
+    );
+    const head = workflowSource(
+      `      - run: "script body\n          uses: actions/checkout@${'b'.repeat(40)}"\n`,
+    );
+    const result = classifyDependabotPR({
+      login,
+      title: actionTitle,
+      baseRef,
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(base, head),
+    });
+    expect(result.allowed).toBe(false);
+  });
 
   it('rejects workflow logic, permissions, and unpinned refs', () => {
     const base = workflowSource(
@@ -495,29 +498,26 @@ describe('Dependabot PR guard policy', () => {
     expect(unpinned.allowed).toBe(false);
   });
 
-  it(
-    'rejects changed lockfile packages resolved outside the npm registry',
-    () => {
-      const headLock = lockFor(headPackage);
-      headLock.packages['node_modules/commander']!.resolved =
-        'https://attacker.example/commander.tgz';
-      const result = classifyDependabotPR({
-        login,
-        title: npmTitle,
-        baseRef,
-        files: [
-          { filename: 'package.json', status: 'modified' },
-          { filename: 'package-lock.json', status: 'modified' },
-        ],
-        basePackage,
-        headPackage,
-        baseLock: lockFor(basePackage),
-        headLock,
-      });
-      expect(result.allowed).toBe(false);
-      expect(result.reason).toMatch(/trusted npm registry metadata/);
-    },
-  );
+  it('rejects changed lockfile packages resolved outside the npm registry', () => {
+    const headLock = lockFor(headPackage);
+    headLock.packages['node_modules/commander']!.resolved =
+      'https://attacker.example/commander.tgz';
+    const result = classifyDependabotPR({
+      login,
+      title: npmTitle,
+      baseRef,
+      files: [
+        { filename: 'package.json', status: 'modified' },
+        { filename: 'package-lock.json', status: 'modified' },
+      ],
+      basePackage,
+      headPackage,
+      baseLock: lockFor(basePackage),
+      headLock,
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/trusted npm registry metadata/);
+  });
 
   it('rejects non-semver package versions in changed lock entries', () => {
     const headLock = lockFor(headPackage);
@@ -650,33 +650,30 @@ describe('Dependabot PR guard policy', () => {
     );
   });
 
-  it(
-    'rejects oversized dependency ranges without catastrophic regex work',
-    () => {
-      const changed = {
-        ...headPackage,
-        dependencies: {
-          commander: '9.9.9|| 9.9.9||'.repeat(1000),
-        },
-      };
-      const result = classifyDependabotPR({
-        login,
-        title: npmTitle,
-        baseRef,
-        files: [
-          { filename: 'package.json', status: 'modified' },
-          { filename: 'package-lock.json', status: 'modified' },
-        ],
-        basePackage,
-        headPackage: changed,
-        baseLock: lockFor(basePackage),
-        headLock: lockFor(changed),
-      });
+  it('rejects oversized dependency ranges without catastrophic regex work', () => {
+    const changed = {
+      ...headPackage,
+      dependencies: {
+        commander: '9.9.9|| 9.9.9||'.repeat(1000),
+      },
+    };
+    const result = classifyDependabotPR({
+      login,
+      title: npmTitle,
+      baseRef,
+      files: [
+        { filename: 'package.json', status: 'modified' },
+        { filename: 'package-lock.json', status: 'modified' },
+      ],
+      basePackage,
+      headPackage: changed,
+      baseLock: lockFor(basePackage),
+      headLock: lockFor(changed),
+    });
 
-      expect(result.allowed).toBe(false);
-      expect(result.reason).toMatch(/non-semver|non-string/);
-    },
-  );
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/non-semver|non-string/);
+  });
 
   it('fails closed for invalid authors, titles, branches, and files', () => {
     const missingWorkflow = classifyDependabotPR({
