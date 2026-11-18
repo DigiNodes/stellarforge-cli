@@ -98,6 +98,7 @@ function lockFor(manifest: PackageManifest): {
         version: (devDependencies as Record<string, string>).vitest,
         resolved: 'https://registry.npmjs.org/vitest/-/vitest.tgz',
         integrity: 'sha512-vitest',
+        dev: true,
       },
     },
   };
