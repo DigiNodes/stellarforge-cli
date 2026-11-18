@@ -182,7 +182,7 @@ function validatePackageLock(
     'optionalDependencies',
     'peerDependencies',
   ];
-  for (const [packagePath, metadata] of Object.entries(baseLock.packages)) {
+  for (const metadata of Object.values(baseLock.packages)) {
     if (!isObject(metadata)) {
       return deny('package-lock package entries must be JSON objects');
     }
@@ -201,7 +201,7 @@ function validatePackageLock(
       }
     }
   }
-  for (const [packagePath, metadata] of Object.entries(headLock.packages)) {
+  for (const metadata of Object.values(headLock.packages)) {
     if (!isObject(metadata)) {
       return deny('package-lock package entries must be JSON objects');
     }
