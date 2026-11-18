@@ -195,6 +195,13 @@ function resolveLockDependency(fromPath, dependencyName, packages) {
   return null;
 }
 
+function packageNameFromLockPath(packagePath) {
+  const segments = packagePath.split('/node_modules/').pop().split('/');
+  return segments[0].startsWith('@')
+    ? segments[0] + '/' + (segments[1] || '')
+    : segments[0];
+}
+
 function collectLockDependencyClosure(lock, dependencyNames) {
   const packages = lock.packages;
   const reachable = new Set();
@@ -234,6 +241,7 @@ function validatePackageLock(
   basePackage,
   headPackage,
   changedDependencies,
+  registryMetadata,
 ) {
   if (
     !isObject(baseLock) ||
@@ -404,18 +412,23 @@ function validatePackageLock(
       continue;
     }
     if (after) {
+      const packageName = packageNameFromLockPath(packagePath);
+      const trusted = registryMetadata?.[packageName + '@' + after.version];
       if (
         typeof after.version !== 'string' ||
-        !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(
+        !/^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$/.test(
           after.version,
         ) ||
         typeof after.resolved !== 'string' ||
         !after.resolved.startsWith('https://registry.npmjs.org/') ||
         typeof after.integrity !== 'string' ||
-        after.integrity.length === 0
+        after.integrity.length === 0 ||
+        !trusted ||
+        trusted.resolved !== after.resolved ||
+        trusted.integrity !== after.integrity
       ) {
         return deny(
-          'new or updated lockfile packages must use the npm registry and include integrity metadata',
+          'new or updated lockfile package tarball and integrity must match trusted npm registry metadata',
         );
       }
     }
@@ -572,6 +585,7 @@ function classifyDependabotPR({
   workflowContents,
   baseLock,
   headLock,
+  registryMetadata,
 }) {
   if (login !== DEPENDABOT_LOGIN) {
     return deny('only the exact dependabot[bot] account is eligible');
@@ -601,6 +615,7 @@ function classifyDependabotPR({
       basePackage,
       headPackage,
       manifest.changedDependencies,
+      registryMetadata,
     );
     if (!lock.allowed) return lock;
     return { ...manifest, kind: 'npm-dependencies' };
