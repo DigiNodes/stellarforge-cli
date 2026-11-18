@@ -480,7 +480,7 @@ function normalizeWorkflowSource(source) {
     return { normalized: null, references: [] };
   }
 
-  let normalized = source;
+  const edits = [];
   const references = [];
   const valueFor = (mapping, key) => {
     if (!isMap(mapping)) return undefined;
@@ -492,7 +492,7 @@ function normalizeWorkflowSource(source) {
   const maskReference = (node, location) => {
     if (!isScalar(node) || typeof node.value !== 'string') return;
     const match = node.value.match(
-      /^([A-Za-z0-9_.-]+(?:\\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})$/i,
+      /^([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})$/i,
     );
     if (!match || !Array.isArray(node.range)) return;
     const [valueStart, valueEnd] = node.range;
@@ -503,27 +503,20 @@ function normalizeWorkflowSource(source) {
 
     const shaStart = valueStart + shaOffset + 1;
     const shaEnd = shaStart + match[2].length;
-    normalized =
-      normalized.slice(0, shaStart) +
-      '<SHA>' +
-      normalized.slice(shaEnd);
+    edits.push({ start: shaStart, end: shaEnd, value: '<SHA>' });
 
     // Dependabot updates the adjacent version annotation with the SHA. Permit
     // only a canonical "# vX.Y.Z[-prerelease]" comment on this exact uses line.
-    const lineEnd = source.indexOf('\\n', valueEnd) < 0
-      ? source.length
-      : source.indexOf('\\n', valueEnd);
+    const nextLine = source.indexOf('\n', valueEnd);
+    const lineEnd = nextLine < 0 ? source.length : nextLine;
     const trailing = source.slice(valueEnd, lineEnd);
     const comment = trailing.match(
-      /^(\\s+#\\s*v)(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)(\\s*)$/,
+      /^(\s+#\s*v)(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)(\s*)$/,
     );
     if (comment) {
       const versionStart = valueEnd + comment[1].length;
       const versionEnd = versionStart + comment[2].length;
-      normalized =
-        normalized.slice(0, versionStart) +
-        '<VERSION>' +
-        normalized.slice(versionEnd);
+      edits.push({ start: versionStart, end: versionEnd, value: '<VERSION>' });
     }
 
     references.push({
@@ -560,6 +553,13 @@ function normalizeWorkflowSource(source) {
     }
   }
 
+  let normalized = source;
+  for (const edit of edits.sort((left, right) => right.start - left.start)) {
+    normalized =
+      normalized.slice(0, edit.start) +
+      edit.value +
+      normalized.slice(edit.end);
+  }
   return { normalized, references };
 }
 
