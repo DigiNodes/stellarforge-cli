@@ -16,6 +16,78 @@ function isVersionRange(value) {
   );
 }
 
+function parseSemver(version) {
+  if (typeof version !== 'string') return null;
+  const match = version.match(
+    /^(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?(?:\\+[0-9A-Za-z.-]+)?$/,
+  );
+  if (!match) return null;
+  return {
+    major: Number(match[1]),
+    minor: Number(match[2]),
+    patch: Number(match[3]),
+    prerelease: match[4] ? match[4].split('.') : null,
+  };
+}
+
+function compareSemver(left, right) {
+  const a = parseSemver(left);
+  const b = parseSemver(right);
+  if (!a || !b) return null;
+  for (const key of ['major', 'minor', 'patch']) {
+    if (a[key] !== b[key]) return a[key] < b[key] ? -1 : 1;
+  }
+  if (a.prerelease === null && b.prerelease === null) return 0;
+  if (a.prerelease === null) return 1;
+  if (b.prerelease === null) return -1;
+  const length = Math.max(a.prerelease.length, b.prerelease.length);
+  for (let index = 0; index < length; index += 1) {
+    const x = a.prerelease[index];
+    const y = b.prerelease[index];
+    if (x === undefined) return -1;
+    if (y === undefined) return 1;
+    if (x === y) continue;
+    const xn = /^\\d+$/.test(x);
+    const yn = /^\\d+$/.test(y);
+    if (xn && yn) return Number(x) < Number(y) ? -1 : 1;
+    if (xn !== yn) return xn ? -1 : 1;
+    return x < y ? -1 : 1;
+  }
+  return 0;
+}
+
+function satisfiesVersionRange(version, range) {
+  if (!parseSemver(version) || !isVersionRange(range)) return false;
+  return range.split('||').some((rawClause) => {
+    const match = rawClause.trim().match(
+      /^(\\^|~|>=|>|<=|<|=)?\\s*(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)$/,
+    );
+    if (!match) return false;
+    const operator = match[1] || '=';
+    const required = match[2];
+    const compared = compareSemver(version, required);
+    if (compared === null) return false;
+    if (operator === '=') return compared === 0;
+    if (operator === '>') return compared > 0;
+    if (operator === '>=') return compared >= 0;
+    if (operator === '<') return compared < 0;
+    if (operator === '<=') return compared <= 0;
+    if (operator === '~') {
+      const parsed = parseSemver(required);
+      const upper = parsed.major + '.' + (parsed.minor + 1) + '.0';
+      return compared >= 0 && compareSemver(version, upper) < 0;
+    }
+    const parsed = parseSemver(required);
+    const upper =
+      parsed.major > 0
+        ? parsed.major + 1 + '.0.0'
+        : parsed.minor > 0
+          ? '0.' + (parsed.minor + 1) + '.0'
+          : '0.0.' + (parsed.patch + 1);
+    return compared >= 0 && compareSemver(version, upper) < 0;
+  });
+}
+
 function deny(reason) {
   return { allowed: false, reason };
 }
@@ -237,6 +309,23 @@ function validatePackageLock(
     }
   }
 
+  // npm may keep a different resolved package version than the manifest
+  // range appears to request. Verify the root's actual install target.
+  for (const section of sections) {
+    const requirements = headPackage[section] || {};
+    for (const [name, range] of Object.entries(requirements)) {
+      const packagePath = resolveLockDependency('', name, headLock.packages);
+      const resolvedVersion = packagePath
+        ? headLock.packages[packagePath]?.version
+        : null;
+      if (!packagePath || !satisfiesVersionRange(resolvedVersion, range)) {
+        return deny(
+          'package-lock resolved version for "' + name + '" does not satisfy package.json ' + section + ' range',
+        );
+      }
+    }
+  }
+
   const baseRoot = { ...baseLock.packages[''] };
   const headRoot = { ...headLock.packages[''] };
   for (const section of sections) {
@@ -264,6 +353,19 @@ function validatePackageLock(
     ...headClosure.reachable,
   ]);
 
+  const productionReachable = collectLockDependencyClosure(headLock, [
+    ...Object.keys(headPackage.dependencies || {}),
+    ...Object.keys(headPackage.optionalDependencies || {}),
+    ...Object.keys(headPackage.peerDependencies || {}),
+  ]);
+  const developmentReachable = collectLockDependencyClosure(
+    headLock,
+    Object.keys(headPackage.devDependencies || {}),
+  );
+  if (!productionReachable.allowed || !developmentReachable.allowed) {
+    return deny('package-lock dependency graph could not be resolved');
+  }
+
   const paths = new Set([
     ...Object.keys(baseLock.packages),
     ...Object.keys(headLock.packages),
@@ -282,9 +384,21 @@ function validatePackageLock(
     }
 
     if (before && after && before.version === after.version) {
-      if (!sameJson(before, after)) {
+      const beforeWithoutDev = { ...before };
+      const afterWithoutDev = { ...after };
+      delete beforeWithoutDev.dev;
+      delete afterWithoutDev.dev;
+      if (!sameJson(beforeWithoutDev, afterWithoutDev)) {
         return deny(
-          'package-lock entries may not change metadata without changing the package version',
+          'package-lock entries may not change artifact metadata without changing the package version',
+        );
+      }
+      const expectedDev =
+        developmentReachable.reachable.has(packagePath) &&
+        !productionReachable.reachable.has(packagePath);
+      if ((after.dev === true) !== expectedDev) {
+        return deny(
+          'package-lock dev flag does not match the updated dependency graph',
         );
       }
       continue;
@@ -302,6 +416,23 @@ function validatePackageLock(
       ) {
         return deny(
           'new or updated lockfile packages must use the npm registry and include integrity metadata',
+        );
+      }
+    }
+  }
+
+  // Every retained package must keep its required dependency edges intact.
+  // Missing optional or peer dependencies can be valid; regular dependencies
+  // cannot be left unresolved by deleting a shared lockfile entry.
+  for (const [packagePath, metadata] of Object.entries(headLock.packages)) {
+    if (!packagePath || metadata.link === true) continue;
+    for (const dependencyName of Object.keys(metadata.dependencies || {})) {
+      if (!resolveLockDependency(packagePath, dependencyName, headLock.packages)) {
+        return deny(
+          'package-lock deletion leaves required dependency "' +
+            dependencyName +
+            '" unresolved for ' +
+            packagePath,
         );
       }
     }
