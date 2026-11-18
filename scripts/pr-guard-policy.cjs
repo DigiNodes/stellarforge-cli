@@ -306,15 +306,40 @@ function validatePackageLock(
   return { allowed: true };
 }
 
+function hasClosingQuote(line, quote, startIndex) {
+  for (let index = startIndex; index < line.length; index += 1) {
+    if (quote === '"' && line[index] === '\\') {
+      index += 1;
+      continue;
+    }
+    if (
+      quote === "'" &&
+      line[index] === "'" &&
+      line[index + 1] === "'"
+    ) {
+      index += 1;
+      continue;
+    }
+    if (line[index] === quote) return true;
+  }
+  return false;
+}
+
 function normalizeWorkflowSource(source) {
   const lines = source.split(/\r?\n/);
   const references = [];
   let blockScalarIndent = null;
+  let quotedScalar = null;
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
     const indentation = line.match(/^ */)[0].length;
     const trimmed = line.trim();
+
+    if (quotedScalar !== null) {
+      if (hasClosingQuote(line, quotedScalar, 0)) quotedScalar = null;
+      continue;
+    }
 
     if (blockScalarIndent !== null) {
       if (trimmed === '' || indentation > blockScalarIndent) continue;
@@ -328,6 +353,18 @@ function normalizeWorkflowSource(source) {
     ) {
       blockScalarIndent = indentation;
       continue;
+    }
+
+    const quotedValue = line.match(
+      /^\s*(?:-\s*)?[A-Za-z0-9_.-]+:\s*(['"])/,
+    );
+    if (quotedValue) {
+      const quote = quotedValue[1];
+      const quoteIndex = line.indexOf(quote, quotedValue[0].length - 1);
+      if (!hasClosingQuote(line, quote, quoteIndex + 1)) {
+        quotedScalar = quote;
+        continue;
+      }
     }
 
     const match = line.match(
