@@ -163,7 +163,8 @@ describe('Dependabot PR guard policy', () => {
       });
       expect(result.allowed).toBe(false);
       expect(result.reason).toMatch(/non-semver/);
-  });
+    },
+  );
 
   it('rejects dependency section presence and shape changes', () => {
     const withNullSection = {
@@ -360,7 +361,8 @@ describe('Dependabot PR guard policy', () => {
         workflowContents: workflowRevisions(base, head),
       });
       expect(result.allowed).toBe(false);
-  });
+    },
+  );
 
   it('rejects changing workflow comments alongside action SHAs', () => {
     const result = classifyDependabotPR({
@@ -397,7 +399,8 @@ describe('Dependabot PR guard policy', () => {
         workflowContents: workflowRevisions(base, head),
       });
       expect(result.allowed).toBe(false);
-  });
+    },
+  );
 
   it('rejects workflow logic, permissions, and unpinned refs', () => {
     const base = workflowSource(
@@ -451,7 +454,8 @@ describe('Dependabot PR guard policy', () => {
       });
       expect(result.allowed).toBe(false);
       expect(result.reason).toMatch(/npm registry/);
-  });
+    },
+  );
 
   it('rejects non-semver package versions in changed lock entries', () => {
     const headLock = lockFor(headPackage);
@@ -519,10 +523,11 @@ describe('Dependabot PR guard policy', () => {
         baseLock: lockFor(basePackage),
         headLock: lockFor(changed),
       });
-  
+
       expect(result.allowed).toBe(false);
       expect(result.reason).toMatch(/non-semver|non-string/);
-  });
+    },
+  );
 
   it('fails closed for invalid authors, titles, branches, and files', () => {
     const missingWorkflow = classifyDependabotPR({
