@@ -395,7 +395,7 @@ describe('Dependabot PR guard policy', () => {
 
   it('rejects changed lockfile packages resolved outside the npm registry', () => {
     const headLock = lockFor(headPackage);
-    headLock.packages['node_modules/commander'].resolved =
+    headLock.packages['node_modules/commander']!.resolved =
       'https://attacker.example/commander.tgz';
     const result = classifyDependabotPR({
       login,
