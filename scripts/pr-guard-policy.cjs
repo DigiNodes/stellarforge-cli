@@ -95,43 +95,46 @@ function validatePackageManifest(basePackage, headPackage) {
   return { allowed: true, kind: 'npm-dependencies', changedVersions };
 }
 
-function collectWorkflowUses(value, path = [], references = {}) {
-  if (Array.isArray(value)) {
-    value.forEach((item, index) =>
-      collectWorkflowUses(item, [...path, String(index)], references),
-    );
-    return references;
-  }
-  if (!isObject(value)) return references;
+function normalizeWorkflowSource(source) {
+  const lines = source.split(/\r?\n/);
+  const references = [];
+  let blockScalarIndent = null;
 
-  if (Object.hasOwn(value, 'uses')) {
-    if (typeof value.uses !== 'string') {
-      throw new Error('workflow uses fields must be strings');
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const indentation = line.match(/^ */)[0].length;
+    const trimmed = line.trim();
+
+    if (blockScalarIndent !== null) {
+      if (trimmed === '' || indentation > blockScalarIndent) continue;
+      blockScalarIndent = null;
     }
-    references[JSON.stringify([...path, 'uses'])] = value.uses;
+
+    if (
+      /^\s*(?:-\s*)?[A-Za-z0-9_.-]+:\s*[|>](?:[+-]?\d?|\d?[+-])?(?:\s+#.*)?$/.test(
+        line,
+      )
+    ) {
+      blockScalarIndent = indentation;
+      continue;
+    }
+
+    const match = line.match(
+      /^(\s*(?:-\s*)?uses:\s*)([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})(\s+#.*)?$/i,
+    );
+    if (!match) continue;
+
+    references.push({
+      name: match[2],
+      sha: match[3].toLowerCase(),
+    });
+    lines[index] = match[1] + match[2] + '@<SHA>' + (match[4] || '');
   }
 
-  for (const [key, child] of Object.entries(value)) {
-    collectWorkflowUses(child, [...path, key], references);
-  }
-  return references;
-}
-
-function normalizeWorkflowUses(value) {
-  if (Array.isArray(value)) return value.map(normalizeWorkflowUses);
-  if (!isObject(value)) return value;
-  return Object.fromEntries(
-    Object.keys(value)
-      .sort()
-      .map((key) => [
-        key,
-        key === 'uses' ? '__PINNED_ACTION_REFERENCE__' : normalizeWorkflowUses(value[key]),
-      ]),
-  );
+  return { normalized: lines.join('\n'), references };
 }
 
 function validateWorkflowPatches(files, workflowContents) {
-  const YAML = require('yaml');
   let changedReferences = 0;
 
   for (const file of files) {
@@ -145,68 +148,28 @@ function validateWorkflowPatches(files, workflowContents) {
       typeof revisions.head !== 'string'
     ) {
       return deny(
-        'workflow source is unavailable at base or head; failing closed because YAML structure cannot be verified',
+        'workflow source is unavailable at base or head; failing closed because changed lines cannot be verified',
       );
     }
 
-    let baseWorkflow;
-    let headWorkflow;
-    try {
-      baseWorkflow = YAML.parse(revisions.base);
-      headWorkflow = YAML.parse(revisions.head);
-    } catch {
-      return deny('workflow YAML must parse successfully at both base and head revisions');
-    }
-    if (!isObject(baseWorkflow) || !isObject(headWorkflow)) {
-      return deny('workflow documents must remain YAML mappings');
-    }
-
-    let baseReferences;
-    let headReferences;
-    try {
-      baseReferences = collectWorkflowUses(baseWorkflow);
-      headReferences = collectWorkflowUses(headWorkflow);
-    } catch (error) {
-      return deny(error.message);
-    }
-
-    const baseLocations = Object.keys(baseReferences).sort();
-    const headLocations = Object.keys(headReferences).sort();
-    if (!sameJson(baseLocations, headLocations)) {
-      return deny('workflow updates may not add, remove, or move action uses fields');
-    }
-
-    for (const location of baseLocations) {
-      const before = baseReferences[location];
-      const after = headReferences[location];
-      if (before === after) continue;
-
-      const beforeMatch = before.match(
-        /^([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})$/i,
+    const before = normalizeWorkflowSource(revisions.base);
+    const after = normalizeWorkflowSource(revisions.head);
+    if (before.normalized !== after.normalized) {
+      return deny(
+        'workflow updates may change only pinned action SHAs outside YAML block-scalar content',
       );
-      const afterMatch = after.match(
-        /^([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})$/i,
-      );
-      if (
-        !beforeMatch ||
-        !afterMatch ||
-        beforeMatch[1] !== afterMatch[1] ||
-        beforeMatch[2].toLowerCase() === afterMatch[2].toLowerCase()
-      ) {
-        return deny(
-          'workflow updates may change only the pinned SHA of an existing action at the same YAML location',
-        );
+    }
+    if (before.references.length !== after.references.length) {
+      return deny('workflow updates may not add or remove action references');
+    }
+
+    for (let index = 0; index < before.references.length; index += 1) {
+      const oldReference = before.references[index];
+      const newReference = after.references[index];
+      if (oldReference.name !== newReference.name) {
+        return deny('workflow updates may not replace or move action identities');
       }
-      changedReferences += 1;
-    }
-
-    if (
-      !sameJson(
-        normalizeWorkflowUses(baseWorkflow),
-        normalizeWorkflowUses(headWorkflow),
-      )
-    ) {
-      return deny('workflow updates may not change YAML content outside pinned action SHAs');
+      if (oldReference.sha !== newReference.sha) changedReferences += 1;
     }
   }
 
