@@ -514,7 +514,7 @@ describe('Dependabot PR guard policy', () => {
         headLock,
       });
       expect(result.allowed).toBe(false);
-      expect(result.reason).toMatch(/npm registry/);
+      expect(result.reason).toMatch(/does not satisfy package.json/);
     },
   );
 
