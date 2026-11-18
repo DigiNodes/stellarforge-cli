@@ -431,6 +431,26 @@ describe('Dependabot PR guard policy', () => {
     expect(result.reason).toMatch(/npm registry/);
   });
 
+  it('rejects non-semver package versions in changed lock entries', () => {
+    const headLock = lockFor(headPackage);
+    headLock.packages['node_modules/commander']!.version = 'not-a-version';
+    const result = classifyDependabotPR({
+      login,
+      title: npmTitle,
+      baseRef,
+      files: [
+        { filename: 'package.json', status: 'modified' },
+        { filename: 'package-lock.json', status: 'modified' },
+      ],
+      basePackage,
+      headPackage,
+      baseLock: lockFor(basePackage),
+      headLock,
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/npm registry/);
+  });
+
   it('rejects lockfile changes outside updated dependency closures', () => {
     const headLock = lockFor(headPackage);
     headLock.packages['node_modules/unrelated-package'] = {
