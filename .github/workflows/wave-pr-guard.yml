@@ -43,7 +43,7 @@ jobs:
               repo,
               basehead: pr.base.ref + '...' + pr.head.sha,
             });
-            if (comparison.data.head.sha !== pr.head.sha || !comparison.data.merge_base_commit?.sha) {
+            if (!comparison.data.merge_base_commit?.sha) {
               throw new Error('Could not establish an immutable PR merge-base comparison');
             }
             const mergeBaseSha = comparison.data.merge_base_commit.sha;
