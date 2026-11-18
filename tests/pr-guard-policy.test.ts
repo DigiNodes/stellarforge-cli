@@ -66,9 +66,13 @@ function lockFor(manifest: PackageManifest) {
       },
       'node_modules/commander': {
         version: (dependencies as Record<string, string>).commander,
+        resolved: 'https://registry.npmjs.org/commander/-/commander.tgz',
+        integrity: 'sha512-commander',
       },
       'node_modules/vitest': {
         version: (devDependencies as Record<string, string>).vitest,
+        resolved: 'https://registry.npmjs.org/vitest/-/vitest.tgz',
+        integrity: 'sha512-vitest',
       },
     },
   };
@@ -381,6 +385,27 @@ describe('Dependabot PR guard policy', () => {
     });
     expect(mixed.allowed).toBe(false);
     expect(unpinned.allowed).toBe(false);
+  });
+
+  it('rejects changed lockfile packages resolved outside the npm registry', () => {
+    const headLock = lockFor(headPackage);
+    headLock.packages['node_modules/commander'].resolved =
+      'https://attacker.example/commander.tgz';
+    const result = classifyDependabotPR({
+      login,
+      title: npmTitle,
+      baseRef,
+      files: [
+        { filename: 'package.json', status: 'modified' },
+        { filename: 'package-lock.json', status: 'modified' },
+      ],
+      basePackage,
+      headPackage,
+      baseLock: lockFor(basePackage),
+      headLock,
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/npm registry/);
   });
 
   it('rejects lockfile changes outside updated dependency closures', () => {
