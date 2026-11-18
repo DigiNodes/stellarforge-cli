@@ -477,6 +477,93 @@ describe('Dependabot PR guard policy', () => {
     expect(result.reason).toMatch(/npm registry/);
   });
 
+  it('rejects a resolved direct dependency version outside its manifest range', () => {
+    const headLock = lockFor(headPackage);
+    headLock.packages['node_modules/commander']!.version = '15.0.0';
+    const result = classifyDependabotPR({
+      login,
+      title: npmTitle,
+      baseRef,
+      files: [
+        { filename: 'package.json', status: 'modified' },
+        { filename: 'package-lock.json', status: 'modified' },
+      ],
+      basePackage,
+      headPackage,
+      baseLock: lockFor(basePackage),
+      headLock,
+    });
+
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/does not satisfy package.json/);
+  });
+
+  it('rejects deleting a lock entry required by a retained package', () => {
+    const headLock = lockFor(headPackage);
+    headLock.packages['node_modules/commander']!.dependencies = {
+      'shared-runtime': '1.0.0',
+    };
+    const result = classifyDependabotPR({
+      login,
+      title: npmTitle,
+      baseRef,
+      files: [
+        { filename: 'package.json', status: 'modified' },
+        { filename: 'package-lock.json', status: 'modified' },
+      ],
+      basePackage,
+      headPackage,
+      baseLock: lockFor(basePackage),
+      headLock,
+    });
+
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/required dependency.*unresolved/);
+  });
+
+  it('allows a dev flag change only when the updated graph requires it', () => {
+    const baseLock = lockFor(basePackage);
+    const headLock = lockFor(headPackage);
+    baseLock.packages['node_modules/vitest']!.dependencies = {
+      shared: '1.0.0',
+    };
+    headLock.packages['node_modules/vitest']!.dependencies = {
+      shared: '1.0.0',
+    };
+    headLock.packages['node_modules/commander']!.dependencies = {
+      shared: '1.0.0',
+    };
+    baseLock.packages['node_modules/shared'] = {
+      version: '1.0.0',
+      resolved: 'https://registry.npmjs.org/shared/-/shared-1.0.0.tgz',
+      integrity: 'sha512-shared',
+      dev: true,
+    };
+    headLock.packages['node_modules/shared'] = {
+      version: '1.0.0',
+      resolved: 'https://registry.npmjs.org/shared/-/shared-1.0.0.tgz',
+      integrity: 'sha512-shared',
+    };
+    baseLock.packages['node_modules/vitest']!.dev = true;
+    headLock.packages['node_modules/vitest']!.dev = true;
+
+    const result = classifyDependabotPR({
+      login,
+      title: npmTitle,
+      baseRef,
+      files: [
+        { filename: 'package.json', status: 'modified' },
+        { filename: 'package-lock.json', status: 'modified' },
+      ],
+      basePackage,
+      headPackage,
+      baseLock,
+      headLock,
+    });
+
+    expect(result.allowed).toBe(true);
+  });
+
   it('rejects lockfile changes outside updated dependency closures', () => {
     const headLock = lockFor(headPackage);
     headLock.packages['node_modules/unrelated-package'] = {
