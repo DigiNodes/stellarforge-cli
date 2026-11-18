@@ -114,7 +114,7 @@ describe('Dependabot PR guard policy', () => {
         headPackage: head,
       });
     expect(classify(withNullSection).allowed).toBe(false);
-    expect(classify(withNullSection).reason).toMatch(/present dependency sections/);
+    expect(classify(withNullSection).reason).toMatch(/retain their original presence/);
     expect(classify(withAddedSection).allowed).toBe(false);
     expect(classify(withAddedSection).reason).toMatch(/retain their original presence/);
   });
