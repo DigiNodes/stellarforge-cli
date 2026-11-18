@@ -61,10 +61,15 @@ function validatePackageManifest(basePackage, headPackage) {
 
   let changedVersions = 0;
   for (const section of sections) {
-    const before = basePackage[section] || {};
-    const after = headPackage[section] || {};
-    if (!isObject(before) || !isObject(after)) {
-      return deny('dependency sections must remain JSON objects');
+    const beforePresent = Object.hasOwn(basePackage, section);
+    const afterPresent = Object.hasOwn(headPackage, section);
+    if (beforePresent !== afterPresent) {
+      return deny('dependency sections must retain their original presence');
+    }
+    const before = beforePresent ? basePackage[section] : {};
+    const after = afterPresent ? headPackage[section] : {};
+    if ((beforePresent && !isObject(before)) || (afterPresent && !isObject(after))) {
+      return deny('present dependency sections must remain JSON objects');
     }
 
     const beforeNames = Object.keys(before).sort();
