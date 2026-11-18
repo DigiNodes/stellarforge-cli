@@ -138,31 +138,31 @@ describe('Dependabot PR guard policy', () => {
   it(
     'rejects replacing a non-semver dependency source with a version range',
     () => {
-    const result = classifyDependabotPR({
-      login,
-      title: npmTitle,
-      baseRef,
-      files: [
-        { filename: 'package.json', status: 'modified' },
-        { filename: 'package-lock.json', status: 'modified' },
-      ],
-      basePackage: {
-        ...basePackage,
-        dependencies: {
-          commander: 'git+https://example.invalid/commander.git',
+      const result = classifyDependabotPR({
+        login,
+        title: npmTitle,
+        baseRef,
+        files: [
+          { filename: 'package.json', status: 'modified' },
+          { filename: 'package-lock.json', status: 'modified' },
+        ],
+        basePackage: {
+          ...basePackage,
+          dependencies: {
+            commander: 'git+https://example.invalid/commander.git',
+          },
         },
-      },
-      headPackage,
-      baseLock: lockFor({
-        ...basePackage,
-        dependencies: {
-          commander: 'git+https://example.invalid/commander.git',
-        },
-      }),
-      headLock: lockFor(headPackage),
-    });
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toMatch(/non-semver/);
+        headPackage,
+        baseLock: lockFor({
+          ...basePackage,
+          dependencies: {
+            commander: 'git+https://example.invalid/commander.git',
+          },
+        }),
+        headLock: lockFor(headPackage),
+      });
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toMatch(/non-semver/);
   });
 
   it('rejects dependency section presence and shape changes', () => {
@@ -344,22 +344,22 @@ describe('Dependabot PR guard policy', () => {
   it(
     'rejects changes that imitate action references inside run block scalars',
     () => {
-    const shaA = 'a'.repeat(40);
-    const shaB = 'b'.repeat(40);
-    const base = workflowSource(
-      `      - run: |\n          uses: actions/checkout@${shaA}\n`,
-    );
-    const head = workflowSource(
-      `      - run: |\n          uses: actions/checkout@${shaB}\n`,
-    );
-    const result = classifyDependabotPR({
-      login,
-      title: actionTitle,
-      baseRef,
-      files: [{ filename: workflowFile, status: 'modified' }],
-      workflowContents: workflowRevisions(base, head),
-    });
-    expect(result.allowed).toBe(false);
+      const shaA = 'a'.repeat(40);
+      const shaB = 'b'.repeat(40);
+      const base = workflowSource(
+        `      - run: |\n          uses: actions/checkout@${shaA}\n`,
+      );
+      const head = workflowSource(
+        `      - run: |\n          uses: actions/checkout@${shaB}\n`,
+      );
+      const result = classifyDependabotPR({
+        login,
+        title: actionTitle,
+        baseRef,
+        files: [{ filename: workflowFile, status: 'modified' }],
+        workflowContents: workflowRevisions(base, head),
+      });
+      expect(result.allowed).toBe(false);
   });
 
   it('rejects changing workflow comments alongside action SHAs', () => {
@@ -383,20 +383,20 @@ describe('Dependabot PR guard policy', () => {
   it(
     'rejects changes that imitate action references inside quoted YAML scalars',
     () => {
-    const base = workflowSource(
-      `      - run: "script body\n          uses: actions/checkout@${'a'.repeat(40)}"\n`,
-    );
-    const head = workflowSource(
-      `      - run: "script body\n          uses: actions/checkout@${'b'.repeat(40)}"\n`,
-    );
-    const result = classifyDependabotPR({
-      login,
-      title: actionTitle,
-      baseRef,
-      files: [{ filename: workflowFile, status: 'modified' }],
-      workflowContents: workflowRevisions(base, head),
-    });
-    expect(result.allowed).toBe(false);
+      const base = workflowSource(
+        `      - run: "script body\n          uses: actions/checkout@${'a'.repeat(40)}"\n`,
+      );
+      const head = workflowSource(
+        `      - run: "script body\n          uses: actions/checkout@${'b'.repeat(40)}"\n`,
+      );
+      const result = classifyDependabotPR({
+        login,
+        title: actionTitle,
+        baseRef,
+        files: [{ filename: workflowFile, status: 'modified' }],
+        workflowContents: workflowRevisions(base, head),
+      });
+      expect(result.allowed).toBe(false);
   });
 
   it('rejects workflow logic, permissions, and unpinned refs', () => {
@@ -433,24 +433,24 @@ describe('Dependabot PR guard policy', () => {
   it(
     'rejects changed lockfile packages resolved outside the npm registry',
     () => {
-    const headLock = lockFor(headPackage);
-    headLock.packages['node_modules/commander']!.resolved =
-      'https://attacker.example/commander.tgz';
-    const result = classifyDependabotPR({
-      login,
-      title: npmTitle,
-      baseRef,
-      files: [
-        { filename: 'package.json', status: 'modified' },
-        { filename: 'package-lock.json', status: 'modified' },
-      ],
-      basePackage,
-      headPackage,
-      baseLock: lockFor(basePackage),
-      headLock,
-    });
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toMatch(/npm registry/);
+      const headLock = lockFor(headPackage);
+      headLock.packages['node_modules/commander']!.resolved =
+        'https://attacker.example/commander.tgz';
+      const result = classifyDependabotPR({
+        login,
+        title: npmTitle,
+        baseRef,
+        files: [
+          { filename: 'package.json', status: 'modified' },
+          { filename: 'package-lock.json', status: 'modified' },
+        ],
+        basePackage,
+        headPackage,
+        baseLock: lockFor(basePackage),
+        headLock,
+      });
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toMatch(/npm registry/);
   });
 
   it('rejects non-semver package versions in changed lock entries', () => {
@@ -500,28 +500,28 @@ describe('Dependabot PR guard policy', () => {
   it(
     'rejects oversized dependency ranges without catastrophic regex work',
     () => {
-    const changed = {
-      ...headPackage,
-      dependencies: {
-        commander: '9.9.9|| 9.9.9||'.repeat(1000),
-      },
-    };
-    const result = classifyDependabotPR({
-      login,
-      title: npmTitle,
-      baseRef,
-      files: [
-        { filename: 'package.json', status: 'modified' },
-        { filename: 'package-lock.json', status: 'modified' },
-      ],
-      basePackage,
-      headPackage: changed,
-      baseLock: lockFor(basePackage),
-      headLock: lockFor(changed),
-    });
-
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toMatch(/non-semver|non-string/);
+      const changed = {
+        ...headPackage,
+        dependencies: {
+          commander: '9.9.9|| 9.9.9||'.repeat(1000),
+        },
+      };
+      const result = classifyDependabotPR({
+        login,
+        title: npmTitle,
+        baseRef,
+        files: [
+          { filename: 'package.json', status: 'modified' },
+          { filename: 'package-lock.json', status: 'modified' },
+        ],
+        basePackage,
+        headPackage: changed,
+        baseLock: lockFor(basePackage),
+        headLock: lockFor(changed),
+      });
+  
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toMatch(/non-semver|non-string/);
   });
 
   it('fails closed for invalid authors, titles, branches, and files', () => {
