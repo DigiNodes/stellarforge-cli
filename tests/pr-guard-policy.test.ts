@@ -120,12 +120,16 @@ describe('Dependabot PR guard policy', () => {
       ...basePackage,
       peerDependencies: {},
     };
-    expect(classify(withNullSection, baseWithPeerDependencies).allowed).toBe(false);
-    expect(classify(withNullSection, baseWithPeerDependencies).reason).toMatch(
-      /present dependency sections must remain JSON objects/,
-    );
+    expect(
+      classify(withNullSection, baseWithPeerDependencies).allowed,
+    ).toBe(false);
+    expect(
+      classify(withNullSection, baseWithPeerDependencies).reason,
+    ).toMatch(/present dependency sections must remain JSON objects/);
     expect(classify(withAddedSection).allowed).toBe(false);
-    expect(classify(withAddedSection).reason).toMatch(/retain their original presence/);
+    expect(classify(withAddedSection).reason).toMatch(
+      /retain their original presence/,
+    );
   });
 
   it('rejects adding or removing dependency names', () => {
