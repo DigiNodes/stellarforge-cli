@@ -31,11 +31,6 @@ jobs:
           node-version: '22.13.0'
           package-manager-cache: false
 
-      - name: TEMP export Prettier-formatted guard test
-        run: |
-          npx prettier tests/pr-guard-policy.test.ts | base64 -w0
-          echo
-
       - name: Install from committed lockfile
         run: npm ci --ignore-scripts --no-audit --no-fund
 
