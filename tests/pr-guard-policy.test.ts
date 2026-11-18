@@ -43,6 +43,34 @@ const headPackage = {
   dependencies: { commander: '15.1.0' },
   devDependencies: { vitest: '5.0.2' },
 };
+function lockFor(manifest: PackageManifest) {
+  const dependencies = manifest.dependencies || {};
+  const devDependencies = manifest.devDependencies || {};
+  const optionalDependencies = manifest.optionalDependencies || {};
+  const peerDependencies = manifest.peerDependencies || {};
+  return {
+    name: manifest.name,
+    version: manifest.version,
+    lockfileVersion: 3,
+    requires: true,
+    packages: {
+      '': {
+        name: manifest.name,
+        version: manifest.version,
+        dependencies,
+        devDependencies,
+        optionalDependencies,
+        peerDependencies,
+      },
+      'node_modules/commander': {
+        version: (dependencies as Record<string, string>).commander,
+      },
+      'node_modules/vitest': {
+        version: (devDependencies as Record<string, string>).vitest,
+      },
+    },
+  };
+}
 const workflowFile = '.github/workflows/ci.yml';
 function workflowSource(steps: string, extra = ''): string {
   return `name: CI\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n${steps}${extra}`;
@@ -63,6 +91,8 @@ describe('Dependabot PR guard policy', () => {
       ],
       basePackage,
       headPackage,
+      baseLock: lockFor(basePackage),
+      headLock: lockFor(headPackage),
     });
     expect(result).toMatchObject({
       allowed: true,
@@ -86,6 +116,8 @@ describe('Dependabot PR guard policy', () => {
       ],
       basePackage,
       headPackage: changed,
+      baseLock: lockFor(basePackage),
+      headLock: lockFor(changed),
     });
     expect(result.allowed).toBe(false);
     expect(result.reason).toMatch(/outside dependency version sections/);
@@ -105,6 +137,11 @@ describe('Dependabot PR guard policy', () => {
         dependencies: { commander: 'git+https://example.invalid/commander.git' },
       },
       headPackage,
+      baseLock: lockFor({
+        ...basePackage,
+        dependencies: { commander: 'git+https://example.invalid/commander.git' },
+      }),
+      headLock: lockFor(headPackage),
     });
     expect(result.allowed).toBe(false);
     expect(result.reason).toMatch(/non-semver/);
@@ -133,6 +170,8 @@ describe('Dependabot PR guard policy', () => {
         ],
         basePackage: base,
         headPackage: head,
+        baseLock: lockFor(base),
+        headLock: lockFor(head),
       });
     const baseWithPeerDependencies = {
       ...basePackage,
@@ -342,6 +381,28 @@ describe('Dependabot PR guard policy', () => {
     expect(unpinned.allowed).toBe(false);
   });
 
+  it('rejects lockfile changes outside updated dependency closures', () => {
+    const headLock = lockFor(headPackage);
+    headLock.packages['node_modules/unrelated-package'] = {
+      version: '1.2.3',
+    };
+    const result = classifyDependabotPR({
+      login,
+      title: npmTitle,
+      baseRef,
+      files: [
+        { filename: 'package.json', status: 'modified' },
+        { filename: 'package-lock.json', status: 'modified' },
+      ],
+      basePackage,
+      headPackage,
+      baseLock: lockFor(basePackage),
+      headLock,
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/outside the updated direct-dependency closure/);
+  });
+
   it('rejects oversized dependency ranges without catastrophic regex work', () => {
     const changed = {
       ...headPackage,
@@ -359,6 +420,8 @@ describe('Dependabot PR guard policy', () => {
       ],
       basePackage,
       headPackage: changed,
+      baseLock: lockFor(basePackage),
+      headLock: lockFor(changed),
     });
 
     expect(result.allowed).toBe(false);
