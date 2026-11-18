@@ -91,12 +91,12 @@ function lockFor(manifest: PackageManifest): {
       },
       'node_modules/commander': {
         version: (dependencies as Record<string, string>).commander,
-        resolved: 'https://registry.npmjs.org/commander/-/commander.tgz',
+        resolved: 'https://registry.npmjs.org/commander/-/commander-' + (dependencies as Record<string, string>).commander + '.tgz',
         integrity: 'sha512-commander',
       },
       'node_modules/vitest': {
         version: (devDependencies as Record<string, string>).vitest,
-        resolved: 'https://registry.npmjs.org/vitest/-/vitest.tgz',
+        resolved: 'https://registry.npmjs.org/vitest/-/vitest-' + (devDependencies as Record<string, string>).vitest + '.tgz',
         integrity: 'sha512-vitest',
         dev: true,
       },
