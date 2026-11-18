@@ -91,6 +91,25 @@ describe('Dependabot PR guard policy', () => {
     expect(result.reason).toMatch(/outside dependency version sections/);
   });
 
+  it('rejects replacing a non-semver dependency source with a version range', () => {
+    const result = classifyDependabotPR({
+      login,
+      title: npmTitle,
+      baseRef,
+      files: [
+        { filename: 'package.json', status: 'modified' },
+        { filename: 'package-lock.json', status: 'modified' },
+      ],
+      basePackage: {
+        ...basePackage,
+        dependencies: { commander: 'git+https://example.invalid/commander.git' },
+      },
+      headPackage,
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/non-semver/);
+  });
+
   it('rejects dependency section presence and shape changes', () => {
     const withNullSection = {
       ...headPackage,
@@ -212,7 +231,7 @@ describe('Dependabot PR guard policy', () => {
     });
     expect(result.allowed).toBe(false);
     expect(result.reason).toMatch(
-      /workflow updates must replace pinned action SHAs/,
+      /workflow updates may change only pinned action SHAs/,
     );
   });
 
@@ -251,7 +270,7 @@ describe('Dependabot PR guard policy', () => {
     });
     expect(result.allowed).toBe(false);
     expect(result.reason).toMatch(
-      /workflow updates must replace pinned action SHAs/,
+      /workflow updates may change only pinned action SHAs/,
     );
   });
 
@@ -270,6 +289,24 @@ describe('Dependabot PR guard policy', () => {
       baseRef,
       files: [{ filename: workflowFile, status: 'modified' }],
       workflowContents: workflowRevisions(base, head),
+    });
+    expect(result.allowed).toBe(false);
+  });
+
+  it('rejects changing workflow comments alongside action SHAs', () => {
+    const result = classifyDependabotPR({
+      login,
+      title: actionTitle,
+      baseRef,
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(
+        workflowSource(
+          `      - uses: actions/checkout@${'a'.repeat(40)} # v7.0.1\n`,
+        ),
+        workflowSource(
+          `      - uses: actions/checkout@${'b'.repeat(40)} # v7.0.2\n`,
+        ),
+      ),
     });
     expect(result.allowed).toBe(false);
   });
