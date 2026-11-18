@@ -76,6 +76,44 @@ jobs:
                 baseLock = await readJsonAtRef('package-lock.json', mergeBaseSha);
                 headLock = await readJsonAtRef('package-lock.json', pr.head.sha);
               }
+              const registryMetadata = {};
+              if (headLock?.packages && baseLock?.packages) {
+                const changedLockEntries = Object.entries(headLock.packages)
+                  .filter(([path, after]) => path && after && (
+                    !baseLock.packages[path] ||
+                    baseLock.packages[path].version !== after.version
+                  ));
+                if (changedLockEntries.length > 200) {
+                  throw new Error('Too many changed lockfile artifacts to verify safely');
+                }
+                for (const [packagePath, entry] of changedLockEntries) {
+                  const segments = packagePath.split('/node_modules/').pop().split('/');
+                  const packageName = segments[0].startsWith('@')
+                    ? segments[0] + '/' + (segments[1] || '')
+                    : segments[0];
+                  const version = entry.version;
+                  if (typeof version !== 'string') {
+                    throw new Error('Changed lockfile package has no resolved version');
+                  }
+                  const registryUrl = 'https://registry.npmjs.org/' +
+                    encodeURIComponent(packageName) + '/' + encodeURIComponent(version);
+                  const response = await fetch(registryUrl, {
+                    headers: { accept: 'application/vnd.npm.install-v1+json' },
+                    signal: AbortSignal.timeout(10000),
+                  });
+                  if (!response.ok) {
+                    throw new Error('Could not verify ' + packageName + '@' + version + ' against npm registry');
+                  }
+                  const metadata = await response.json();
+                  if (metadata.name !== packageName || metadata.version !== version) {
+                    throw new Error('npm registry returned mismatched package identity');
+                  }
+                  registryMetadata[packageName + '@' + version] = {
+                    resolved: metadata.dist?.tarball,
+                    integrity: metadata.dist?.integrity,
+                  };
+                }
+              }
               const workflowContents = {};
               for (const file of files.filter((item) => /^\.github\/workflows\//.test(item.filename))) {
                 const readWorkflowAtRef = async (ref) => {
@@ -102,6 +140,7 @@ jobs:
                 workflowContents,
                 baseLock,
                 headLock,
+                registryMetadata,
               });
               if (!decision.allowed) {
                 core.setFailed('Dependabot PR rejected by narrow bot policy: ' + decision.reason);
