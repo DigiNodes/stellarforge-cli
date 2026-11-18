@@ -101,7 +101,10 @@ describe('Dependabot PR guard policy', () => {
       ...headPackage,
       peerDependencies: { 'new-peer': '1.0.0' },
     };
-    const classify = (head: PackageManifest) =>
+    const classify = (
+      head: PackageManifest,
+      base: PackageManifest = basePackage,
+    ) =>
       classifyDependabotPR({
         login,
         title: npmTitle,
@@ -110,11 +113,17 @@ describe('Dependabot PR guard policy', () => {
           { filename: 'package.json', status: 'modified' },
           { filename: 'package-lock.json', status: 'modified' },
         ],
-        basePackage,
+        basePackage: base,
         headPackage: head,
       });
-    expect(classify(withNullSection).allowed).toBe(false);
-    expect(classify(withNullSection).reason).toMatch(/retain their original presence/);
+    const baseWithPeerDependencies = {
+      ...basePackage,
+      peerDependencies: {},
+    };
+    expect(classify(withNullSection, baseWithPeerDependencies).allowed).toBe(false);
+    expect(classify(withNullSection, baseWithPeerDependencies).reason).toMatch(
+      /present dependency sections must remain JSON objects/,
+    );
     expect(classify(withAddedSection).allowed).toBe(false);
     expect(classify(withAddedSection).reason).toMatch(/retain their original presence/);
   });
