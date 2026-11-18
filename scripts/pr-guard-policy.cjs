@@ -474,60 +474,93 @@ function hasClosingQuote(line, quote, startIndex) {
 }
 
 function normalizeWorkflowSource(source) {
-  const lines = source.split(/\r?\n/);
-  const references = [];
-  let blockScalarIndent = null;
-  let quotedScalar = null;
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    const indentation = line.match(/^ */)[0].length;
-    const trimmed = line.trim();
-
-    if (quotedScalar !== null) {
-      if (hasClosingQuote(line, quotedScalar, 0)) quotedScalar = null;
-      continue;
-    }
-
-    if (blockScalarIndent !== null) {
-      if (trimmed === '' || indentation > blockScalarIndent) continue;
-      blockScalarIndent = null;
-    }
-
-    if (
-      /^\s*(?:-\s*)?[A-Za-z0-9_.-]+:\s*[|>](?:[+-]?\d?|\d?[+-])?(?:\s+#.*)?$/.test(
-        line,
-      )
-    ) {
-      blockScalarIndent = indentation;
-      continue;
-    }
-
-    const quotedValue = line.match(
-      /^\s*(?:-\s*)?[A-Za-z0-9_.-]+:\s*(['"])/,
-    );
-    if (quotedValue) {
-      const quote = quotedValue[1];
-      const quoteIndex = line.indexOf(quote, quotedValue[0].length - 1);
-      if (!hasClosingQuote(line, quote, quoteIndex + 1)) {
-        quotedScalar = quote;
-        continue;
-      }
-    }
-
-    const match = line.match(
-      /^(\s*(?:-\s*)?uses:\s*)([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})(\s+#.*)?$/i,
-    );
-    if (!match) continue;
-
-    references.push({
-      name: match[2],
-      sha: match[3].toLowerCase(),
-    });
-    lines[index] = match[1] + match[2] + '@<SHA>' + (match[4] || '');
+  const { parseDocument, isMap, isSeq, isScalar } = require('yaml');
+  const document = parseDocument(source, { uniqueKeys: true });
+  if (document.errors.length || !isMap(document.contents)) {
+    return { normalized: null, references: [] };
   }
 
-  return { normalized: lines.join('\n'), references };
+  let normalized = source;
+  const references = [];
+  const valueFor = (mapping, key) => {
+    if (!isMap(mapping)) return undefined;
+    const pair = mapping.items.find(
+      (item) => isScalar(item.key) && item.key.value === key,
+    );
+    return pair?.value;
+  };
+  const maskReference = (node, location) => {
+    if (!isScalar(node) || typeof node.value !== 'string') return;
+    const match = node.value.match(
+      /^([A-Za-z0-9_.-]+(?:\\/[A-Za-z0-9_.-]+)+)@([a-f0-9]{40})$/i,
+    );
+    if (!match || !Array.isArray(node.range)) return;
+    const [valueStart, valueEnd] = node.range;
+    const rawValue = source.slice(valueStart, valueEnd);
+    const shaToken = '@' + match[2];
+    const shaOffset = rawValue.lastIndexOf(shaToken);
+    if (shaOffset < 0) return;
+
+    const shaStart = valueStart + shaOffset + 1;
+    const shaEnd = shaStart + match[2].length;
+    normalized =
+      normalized.slice(0, shaStart) +
+      '<SHA>' +
+      normalized.slice(shaEnd);
+
+    // Dependabot updates the adjacent version annotation with the SHA. Permit
+    // only a canonical "# vX.Y.Z[-prerelease]" comment on this exact uses line.
+    const lineEnd = source.indexOf('\\n', valueEnd) < 0
+      ? source.length
+      : source.indexOf('\\n', valueEnd);
+    const trailing = source.slice(valueEnd, lineEnd);
+    const comment = trailing.match(
+      /^(\\s+#\\s*v)(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)(\\s*)$/,
+    );
+    if (comment) {
+      const versionStart = valueEnd + comment[1].length;
+      const versionEnd = versionStart + comment[2].length;
+      normalized =
+        normalized.slice(0, versionStart) +
+        '<VERSION>' +
+        normalized.slice(versionEnd);
+    }
+
+    references.push({
+      location,
+      name: match[1],
+      sha: match[2].toLowerCase(),
+    });
+  };
+
+  const jobs = valueFor(document.contents, 'jobs');
+  if (!isMap(jobs)) return { normalized: null, references: [] };
+
+  for (const jobPair of jobs.items) {
+    if (!isScalar(jobPair.key) || typeof jobPair.key.value !== 'string') {
+      return { normalized: null, references: [] };
+    }
+    const jobName = jobPair.key.value;
+    const job = jobPair.value;
+    if (!isMap(job)) continue;
+
+    // Reusable workflow reference: jobs.<job_id>.uses
+    maskReference(valueFor(job, 'uses'), 'jobs.' + jobName + '.uses');
+
+    // Action step reference: jobs.<job_id>.steps[*].uses
+    const steps = valueFor(job, 'steps');
+    if (!isSeq(steps)) continue;
+    for (let index = 0; index < steps.items.length; index += 1) {
+      const step = steps.items[index];
+      if (!isMap(step)) continue;
+      maskReference(
+        valueFor(step, 'uses'),
+        'jobs.' + jobName + '.steps[' + index + '].uses',
+      );
+    }
+  }
+
+  return { normalized, references };
 }
 
 function validateWorkflowPatches(files, workflowContents) {
@@ -550,9 +583,15 @@ function validateWorkflowPatches(files, workflowContents) {
 
     const before = normalizeWorkflowSource(revisions.base);
     const after = normalizeWorkflowSource(revisions.head);
+    if (
+      before.normalized === null ||
+      after.normalized === null
+    ) {
+      return deny('workflow YAML could not be parsed safely');
+    }
     if (before.normalized !== after.normalized) {
       return deny(
-        'workflow updates may change only pinned action SHAs outside YAML block-scalar content',
+        'workflow updates may change only pinned action SHAs and canonical version comments at eligible YAML action paths',
       );
     }
     if (before.references.length !== after.references.length) {
@@ -562,7 +601,10 @@ function validateWorkflowPatches(files, workflowContents) {
     for (let index = 0; index < before.references.length; index += 1) {
       const oldReference = before.references[index];
       const newReference = after.references[index];
-      if (oldReference.name !== newReference.name) {
+      if (
+        oldReference.location !== newReference.location ||
+        oldReference.name !== newReference.name
+      ) {
         return deny('workflow updates may not replace or move action identities');
       }
       if (oldReference.sha !== newReference.sha) changedReferences += 1;
