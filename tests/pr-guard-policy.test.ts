@@ -362,6 +362,23 @@ describe('Dependabot PR guard policy', () => {
     expect(result.allowed).toBe(false);
   });
 
+  it('rejects changes that imitate action references inside quoted YAML scalars', () => {
+    const base = workflowSource(
+      `      - run: "script body\n          uses: actions/checkout@${'a'.repeat(40)}"\n`,
+    );
+    const head = workflowSource(
+      `      - run: "script body\n          uses: actions/checkout@${'b'.repeat(40)}"\n`,
+    );
+    const result = classifyDependabotPR({
+      login,
+      title: actionTitle,
+      baseRef,
+      files: [{ filename: workflowFile, status: 'modified' }],
+      workflowContents: workflowRevisions(base, head),
+    });
+    expect(result.allowed).toBe(false);
+  });
+
   it('rejects workflow logic, permissions, and unpinned refs', () => {
     const base = workflowSource(
       `      - uses: github/codeql-action/init@${'a'.repeat(40)}\n`,
