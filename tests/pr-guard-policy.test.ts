@@ -434,10 +434,10 @@ describe('Dependabot PR guard policy', () => {
       files: [{ filename: workflowFile, status: 'modified' }],
       workflowContents: workflowRevisions(
         workflowSource(
-          `      - uses: actions/checkout@${'a'.repeat(40)} # v7.0.1\n`,
+          `      - uses: actions/checkout@${'a'.repeat(40)} # release-one\n`,
         ),
         workflowSource(
-          `      - uses: actions/checkout@${'b'.repeat(40)} # v7.0.2\n`,
+          `      - uses: actions/checkout@${'b'.repeat(40)} # release-two\n`,
         ),
       ),
     });
