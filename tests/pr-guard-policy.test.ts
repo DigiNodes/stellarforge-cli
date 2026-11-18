@@ -470,7 +470,9 @@ describe('Dependabot PR guard policy', () => {
       headLock,
     });
     expect(result.allowed).toBe(false);
-    expect(result.reason).toMatch(/outside the updated direct-dependency closure/);
+    expect(result.reason).toMatch(
+      /outside the updated direct-dependency closure/,
+    );
   });
 
   it('rejects oversized dependency ranges without catastrophic regex work', () => {
