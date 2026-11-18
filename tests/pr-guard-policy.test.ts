@@ -23,6 +23,8 @@ const { classifyDependabotPR } = require('../scripts/pr-guard-policy.cjs') as {
     files: FileChange[];
     basePackage?: PackageManifest;
     headPackage?: PackageManifest;
+    baseLock?: Record<string, unknown>;
+    headLock?: Record<string, unknown>;
     workflowContents?: Record<string, { base: string; head: string }>;
   }): Decision;
 };
