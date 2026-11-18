@@ -45,7 +45,13 @@ const headPackage = {
   dependencies: { commander: '15.1.0' },
   devDependencies: { vitest: '5.0.2' },
 };
-function lockFor(manifest: PackageManifest) {
+function lockFor(manifest: PackageManifest): {
+  name: unknown;
+  version: unknown;
+  lockfileVersion: number;
+  requires: boolean;
+  packages: Record<string, Record<string, unknown>>;
+} {
   const dependencies = manifest.dependencies || {};
   const devDependencies = manifest.devDependencies || {};
   const optionalDependencies = manifest.optionalDependencies || {};
