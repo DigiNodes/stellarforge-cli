@@ -60,6 +60,7 @@ function validatePackageManifest(basePackage, headPackage) {
   }
 
   let changedVersions = 0;
+  const changedDependencies = [];
   for (const section of sections) {
     const beforePresent = Object.hasOwn(basePackage, section);
     const afterPresent = Object.hasOwn(headPackage, section);
@@ -86,13 +87,159 @@ function validatePackageManifest(basePackage, headPackage) {
         );
       }
       changedVersions += 1;
+      changedDependencies.push(name);
     }
   }
 
   if (changedVersions === 0) {
     return deny('package.json contains no dependency version changes');
   }
-  return { allowed: true, kind: 'npm-dependencies', changedVersions };
+  return {
+    allowed: true,
+    kind: 'npm-dependencies',
+    changedVersions,
+    changedDependencies,
+  };
+}
+
+function resolveLockDependency(fromPath, dependencyName, packages) {
+  let current = fromPath;
+  while (true) {
+    const candidate = current
+      ? current + '/node_modules/' + dependencyName
+      : 'node_modules/' + dependencyName;
+    if (Object.hasOwn(packages, candidate)) return candidate;
+
+    const marker = '/node_modules/';
+    const markerIndex = current.lastIndexOf(marker);
+    if (markerIndex >= 0) {
+      current = current.slice(0, markerIndex);
+    } else if (current.startsWith('node_modules/')) {
+      current = '';
+    } else {
+      break;
+    }
+  }
+  return null;
+}
+
+function collectLockDependencyClosure(lock, dependencyNames) {
+  const packages = lock.packages;
+  const reachable = new Set();
+  const visit = (packagePath) => {
+    if (reachable.has(packagePath)) return;
+    reachable.add(packagePath);
+    const metadata = packages[packagePath];
+    if (!isObject(metadata)) return;
+
+    const names = new Set([
+      ...Object.keys(metadata.dependencies || {}),
+      ...Object.keys(metadata.optionalDependencies || {}),
+      ...Object.keys(metadata.peerDependencies || {}),
+    ]);
+    for (const name of names) {
+      const resolved = resolveLockDependency(packagePath, name, packages);
+      if (resolved) visit(resolved);
+    }
+  };
+
+  for (const name of dependencyNames) {
+    const resolved = resolveLockDependency('', name, packages);
+    if (!resolved) {
+      return {
+        allowed: false,
+        reason: 'package-lock.json is missing changed direct dependency "' + name + '"',
+      };
+    }
+    visit(resolved);
+  }
+  return { allowed: true, reachable };
+}
+
+function validatePackageLock(
+  baseLock,
+  headLock,
+  basePackage,
+  headPackage,
+  changedDependencies,
+) {
+  if (
+    !isObject(baseLock) ||
+    !isObject(headLock) ||
+    baseLock.lockfileVersion !== 3 ||
+    headLock.lockfileVersion !== 3 ||
+    !isObject(baseLock.packages) ||
+    !isObject(headLock.packages) ||
+    !isObject(baseLock.packages['']) ||
+    !isObject(headLock.packages[''])
+  ) {
+    return deny('package-lock.json must be a valid npm lockfile v3 at base and head');
+  }
+
+  const sections = [
+    'dependencies',
+    'devDependencies',
+    'optionalDependencies',
+    'peerDependencies',
+  ];
+  for (const [lock, manifest] of [
+    [baseLock, basePackage],
+    [headLock, headPackage],
+  ]) {
+    const root = lock.packages[''];
+    if (root.name !== manifest.name || root.version !== manifest.version) {
+      return deny('package-lock root identity must match package.json');
+    }
+    for (const section of sections) {
+      const expected = manifest[section] || {};
+      const actual = root[section] || {};
+      if (!sameJson(expected, actual)) {
+        return deny('package-lock root ' + section + ' must exactly match package.json');
+      }
+    }
+  }
+
+  const baseRoot = { ...baseLock.packages[''] };
+  const headRoot = { ...headLock.packages[''] };
+  for (const section of sections) {
+    delete baseRoot[section];
+    delete headRoot[section];
+  }
+  if (!sameJson(baseRoot, headRoot)) {
+    return deny('package-lock root metadata may not change outside dependency sections');
+  }
+
+  const baseTopLevel = { ...baseLock };
+  const headTopLevel = { ...headLock };
+  delete baseTopLevel.packages;
+  delete headTopLevel.packages;
+  if (!sameJson(baseTopLevel, headTopLevel)) {
+    return deny('package-lock metadata may not change outside the package graph');
+  }
+
+  const baseClosure = collectLockDependencyClosure(baseLock, changedDependencies);
+  if (!baseClosure.allowed) return deny(baseClosure.reason);
+  const headClosure = collectLockDependencyClosure(headLock, changedDependencies);
+  if (!headClosure.allowed) return deny(headClosure.reason);
+  const allowedPaths = new Set([
+    ...baseClosure.reachable,
+    ...headClosure.reachable,
+  ]);
+
+  const paths = new Set([
+    ...Object.keys(baseLock.packages),
+    ...Object.keys(headLock.packages),
+  ]);
+  for (const packagePath of paths) {
+    if (packagePath === '' || allowedPaths.has(packagePath)) continue;
+    if (!sameJson(baseLock.packages[packagePath], headLock.packages[packagePath])) {
+      return deny(
+        'package-lock.json changes package entries outside the updated direct-dependency closure',
+      );
+    }
+  }
+
+  return { allowed: true };
 }
 
 function normalizeWorkflowSource(source) {
@@ -187,6 +334,8 @@ function classifyDependabotPR({
   basePackage,
   headPackage,
   workflowContents,
+  baseLock,
+  headLock,
 }) {
   if (login !== DEPENDABOT_LOGIN) {
     return deny('only the exact dependabot[bot] account is eligible');
@@ -210,6 +359,14 @@ function classifyDependabotPR({
   if (sameJson(names, npmFiles)) {
     const manifest = validatePackageManifest(basePackage, headPackage);
     if (!manifest.allowed) return manifest;
+    const lock = validatePackageLock(
+      baseLock,
+      headLock,
+      basePackage,
+      headPackage,
+      manifest.changedDependencies,
+    );
+    if (!lock.allowed) return lock;
     return { ...manifest, kind: 'npm-dependencies' };
   }
 
