@@ -8,6 +8,7 @@ This reference documents the implemented StellarForge CLI MVP command surface.
 | --------------------------------- | ------------------------------------------------------------ | ----------------------------------- |
 | `stellarforge --help`             | Show root usage and available commands                       | Implemented                         |
 | `stellarforge --version`          | Show the installed CLI package version                       | Implemented                         |
+| `stellarforge completion <shell>` | Print a shell completion script for supported shells         | Implemented                         |
 | `stellarforge new <project-name>` | Generate a supported StellarForge project                    | Implemented                         |
 | `stellarforge doctor`             | Validate the local development toolchain                     | Implemented                         |
 | `stellarforge dev`                | Start a supported generated Node.js project                  | Implemented                         |
@@ -37,6 +38,66 @@ stellarforge --version
 The version comes from installed package metadata. No registry request or subprocess is used.
 
 Unknown commands, unknown options, and missing required positional arguments are usage failures and exit with code `2`.
+
+## `stellarforge completion <shell>`
+
+Prints a shell completion script for the registered CLI command and option inventory to standard output.
+
+### Usage
+
+```bash
+stellarforge completion <shell>
+```
+
+Supported shells are:
+
+- `bash`;
+- `zsh`;
+- `fish`.
+
+Completion output is generated from the existing command tree. The command does not perform network access, does not write to the filesystem, and does not execute shell code or install completion scripts automatically. Generated scripts contain only command and option names — no credentials or local paths.
+
+An unsupported or missing shell name is a usage failure and exits with code `2`, listing the supported shells.
+
+### Manual installation
+
+Completion scripts are printed to stdout; redirect them to the location your shell reads. Installation is manual and optional.
+
+Bash (current session):
+
+```bash
+source <(stellarforge completion bash)
+```
+
+Bash (persistent, user-local):
+
+```bash
+stellarforge completion bash > ~/.local/share/bash-completion/completions/stellarforge
+```
+
+Zsh (persistent, user-local):
+
+```bash
+stellarforge completion zsh > "${fpath[1]}/_stellarforge"
+```
+
+Fish (persistent, user-local):
+
+```bash
+stellarforge completion fish > ~/.config/fish/completions/stellarforge.fish
+```
+
+### Manual removal
+
+Delete the file you created above, for example:
+
+```bash
+rm ~/.local/share/bash-completion/completions/stellarforge
+rm "${fpath[1]}/_stellarforge"
+rm ~/.config/fish/completions/stellarforge.fish
+```
+
+Start a new shell session (or re-source your shell configuration) for the change to take effect.
 
 ## `stellarforge new <project-name>`
 
@@ -220,79 +281,4 @@ stellarforge deploy --source release-deployer
 
 The effective network and identity must both be present after configuration resolution.
 
-The MVP deployment command accepts only the exact network value `testnet`. A project config value of `mainnet` or `futurenet` is valid schema data for future command use, but it is rejected by the deploy command.
-
-The source must be a named Stellar CLI identity. Raw secret keys, seed phrases, account/public StrKeys, and path-like values are rejected.
-
-The invoked external command is equivalent to:
-
-```text
-stellar contract deploy --source-account deployer --network testnet
-```
-
-No shell interpolation is used. Signing material remains under Stellar CLI identity management.
-
-Deployment output is validated against the official Stellar contract identifier format (`C...`, 56 characters Base32). Malformed, truncated, missing, or multiple conflicting contract IDs cannot be mistaken for deployment success.
-
-The local Stellar CLI process has a 10-minute timeout. On timeout, StellarForge sends a termination signal, waits up to 5 seconds, then force-terminates the local process tree and waits up to another 5 seconds for cleanup. A timeout does not confirm whether Testnet accepted the transaction; verify the result manually before deciding whether to submit again. StellarForge never automatically retries a deployment.
-
-### Exit behavior
-
-- `0` — deployment subprocess completes successfully;
-- `2` — configuration, project layout, network, or identity input is invalid;
-- `3` — Stellar CLI fails to start or returns a failure.
-- `3` — the local deployment process times out; the remote submission outcome may be uncertain.
-
-See [Configuration](configuration.md) and the deployment sections of [Troubleshooting](troubleshooting.md#deployment-network-is-required): [network required](troubleshooting.md#deployment-network-is-required), [Mainnet or Futurenet rejection](troubleshooting.md#deployment-rejects-mainnet-or-futurenet), [identity rejected](troubleshooting.md#deployment-identity-is-rejected), and [Stellar CLI deployment fails](troubleshooting.md#stellar-cli-deployment-fails).
-
-## `stellarforge validate`
-
-Checks the current directory against StellarForge's documented local project requirements.
-
-### Usage
-
-```bash
-cd my-project
-stellarforge validate
-```
-
-### Contract
-
-The command reports one finding per check, each with a stable id, category, label, severity, message, and (optionally) a remediation hint. Nothing about the current directory's contents or configuration values is echoed beyond these curated, bounded messages; absolute paths are never printed.
-
-Findings:
-
-| Id | Category | Required | Meaning |
-| --- | --- | --- | --- |
-| `project.manifest-present` | `project` | yes | at least one of `package.json` or `Cargo.toml` exists |
-| `project.package-json.parseable` | `package-manifest` | yes | an existing `package.json` is valid JSON object declaring a `scripts` object |
-| `project.package-json.scripts-test` | `package-manifest` | no | `package.json` declares a non-empty `scripts.test` command (warning only) |
-| `project.cargo-toml.parseable` | `cargo-manifest` | yes | an existing `Cargo.toml` is valid UTF-8 declaring `[package]` or `[workspace]` |
-| `project.configuration.well-formed` | `configuration` | yes | an existing `stellarforge.config.json` passes validation (see [Configuration](configuration.md)) |
-
-Only *required*-check failures set the exit code `5` (diagnostic failure); a `0` exit means the documented required requirements are met. The `scripts.test` finding is informational and never changes the exit code by itself.
-
-### Exit behavior
-
-- `0` — all required local project requirements are met;
-- `5` — one or more required project validation checks failed.
-
-Unsupported or planned behavior remains unchanged: `stellarforge add`, plugin execution, and remote template registries are still not implemented.
-
-See [Troubleshooting](troubleshooting.md#stellarforge-validate-reports-required-project-failures).
-
-## Unsupported or planned behavior
-
-The following are not part of the implemented MVP command surface:
-
-- Mainnet deployment;
-- Futurenet or local-network deployment through `stellarforge deploy`;
-- `stellarforge add`;
-- plugin execution;
-- remote template registries;
-- arbitrary/executable project configuration;
-- raw-key deployment arguments;
-- automatic fallback to Mainnet;
-- arbitrary custom deployment commands.
-
-Do not rely on roadmap items as available behavior until their implementation is merged and documented.
+The MVP deploy
