@@ -98,6 +98,56 @@ describe('deploy command', () => {
     expect(captured.stdoutText()).toContain('[stellar:deploy] CABC123');
   });
 
+  it('rejects non-Testnet deployment targets before running subprocesses', async () => {
+    const command = createDeployCommand({
+      cwd: () => '/workspace',
+      resolveConfig: () => ({
+        network: 'mainnet',
+        identity: 'deployer',
+      }),
+      resolvePlan: () => {
+        throw new Error('plan resolver should not be called');
+      },
+    });
+
+    await expect(
+      command.parseAsync(['node', 'deploy', '--network', 'mainnet', '--source', 'deployer']),
+    ).rejects.toThrow('Testnet-only');
+  });
+
+  it('redacts secret material in child output before printing it', async () => {
+    const child = new DeployChild();
+    const captured = createCapturedTerminalOutput();
+    const command = createDeployCommand({
+      cwd: () => '/workspace',
+      output: captured.output,
+      resolvePlan: () => [
+        {
+          label: 'stellar:deploy',
+          command: 'stellar',
+          args: ['contract', 'deploy', '--source-account', 'deployer', '--network', 'testnet'],
+          cwd: '/workspace',
+        },
+      ],
+      spawnProcess: () => child,
+    });
+
+    const running = command.parseAsync([
+      'node',
+      'deploy',
+      '--network',
+      'testnet',
+      '--source',
+      'deployer',
+    ]);
+    child.stdout.write('private-key=SECRET_DEPLOY_KEY\n');
+    child.exit(0);
+    await running;
+
+    expect(captured.stdoutText()).not.toContain('SECRET_DEPLOY_KEY');
+    expect(captured.stdoutText()).toContain('private-key=[REDACTED]');
+  });
+
   it('preserves a failed Stellar CLI deployment as a subprocess failure', async () => {
     const child = new DeployChild();
     const command = createDeployCommand({
