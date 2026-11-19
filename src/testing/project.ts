@@ -4,6 +4,60 @@ import type { DevProcessSpec } from '../dev/project.js';
 import { ValidationCliError } from '../errors/errors.js';
 import { createNpmInvocation } from '../process/npm.js';
 
+/**
+ * Default bound for a single generated-project test command.
+ *
+ * This is the documented default timeout for `stellarforge test`. It is deliberately
+ * generous so legitimate long test suites are not killed, while still ensuring a hung
+ * child process tree cannot block a developer indefinitely.
+ */
+export const DEFAULT_TEST_TIMEOUT_MS = 300_000;
+
+/**
+ * Grace period between requesting termination and forcing the child process tree
+ * to exit. This is the bounded cleanup window used by the orchestrator.
+ */
+export const TEST_TIMEOUT_GRACE_MS = 2_000;
+
+/**
+ * Dedicated exit code reported when a test workflow is stopped by the timeout
+ * policy. This is distinct from a genuine test failure (exit code 3) and from a
+ * validation failure (exit code 2). It matches the diagnostic failure category
+ * documented in `docs/reference/exit-codes.md`.
+ */
+export const TEST_TIMEOUT_EXIT_CODE = 5;
+
+
+/**
+ * Future-safe internal option boundary for test execution.
+ *
+ * Timeout configuration is only accepted through this explicit interface. It is not
+ * exposed interactively and it does not affect `dev` unless the caller passes it
+ * explicitly there.
+ */
+export interface TestExecutionOptions {
+  /**
+   * Maximum wall-clock time in milliseconds allowed for the test command before the
+   * orchestrator begins bounded cleanup. Defaults on `DEFAULT_TEST_TIMEOUT_MS`.
+   */
+  readonly timeoutMs?: number;
+}
+
+export function resolveTestTimeoutMs(
+  options: TestExecutionOptions = {},
+): number {
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TEST_TIMEOUT_MS;
+
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    throw new ValidationCliError(
+      'Test timeout must be a positive number of milliseconds.',
+    );
+  }
+
+  return Math.floor(timeoutMs);
+}
+
+
 interface ProjectPackage {
   readonly name?: unknown;
   readonly scripts?: unknown;

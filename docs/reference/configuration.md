@@ -52,6 +52,28 @@ stellarforge deploy --source release-deployer
 
 overrides only the identity.
 
+## Test timeout
+
+`stellarforge test` runs the generated project's test command with a bounded execution time so a hung test command cannot block a developer indefinitely.
+
+The default timeout is **300 seconds (5 minutes)**. This default is documented here as the public behavior of `stellarforge test`.
+
+The timeout is configurable only through the approved interface: the `--timeout` command-line option on `stellarforge test`.
+
+```bash
+stellarforge test --timeout 600
+```
+
+The value is expressed in seconds and must be a positive integer. The timeout is not read from `stellarforge.config.json` and is not applied to `stellarforge dev` unless explicitly configured there.
+
+When the timeout is reached, StellarForge:
+
+- stops the child process tree within a bounded grace period;
+- reports a timeout exit code distinct from a test failure;
+- prints a clear message identifying the timeout and the configured limit.
+
+Test failures (non-zero exits from the test command) remain distinguishable from timeouts in both the exit code and the reported output.
+
 ## Loading and validation
 
 The file must:

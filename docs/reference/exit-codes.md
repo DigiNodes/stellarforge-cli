@@ -5,7 +5,7 @@ StellarForge CLI uses predictable process exit codes so humans, scripts, and CI 
 ## Stable Baseline
 
 | Exit code | Category | Meaning |
-|---:|---|---|
+|---:---|---|---|
 | `0` | Success | The requested CLI operation completed successfully. |
 | `1` | Unexpected failure | An unclassified exception reached the top-level CLI boundary. |
 | `2` | Validation / usage failure | User input, command syntax, options, arguments, or other validated input was invalid. |
@@ -15,13 +15,23 @@ StellarForge CLI uses predictable process exit codes so humans, scripts, and CI 
 
 These values are part of the CLI contract and should not be changed casually. New stable categories require deliberate review and documentation.
 
+## Test Timeout Policy
+
+StellarForge bounds the execution of the generated-project test workflow run by `stellarforge test` so a hung test command cannot block a developer indefinitely.
+
+- The default test timeout is **15 minutes** (900,000 ms).
+- The timeout is configurable only through the approved interface: the `test` command's timeout option (and the internal option boundary that the command forwards to the project test runner). There is no interactive timeout prompt.
+- When the timeout elapses, StellarForge stops the child process tree within a bounded grace period (attempting graceful termination before forcing kill).
+- A timeout is reported distinctly from a test failure: the output identifies the timeout and the configured limit, and the exit code is `5` (diagnostic failure) rather than `3` (subprocess failure). This allows scripts to distinguish a hung test run from a genuine test failure.
+- The timeout applies only to `stellarforge test`. It does not affect `stellarforge dev` unless a timeout is explicitly configured there.
+
 ## Troubleshooting by Exit Code
 
 | Exit code | Start here |
-|---:|---|
+|---:---|---|
 | `2` | [Usage](troubleshooting.md#command-or-option-is-not-recognized), [`new`](troubleshooting.md#stellarforge-new-cannot-create-the-project), [project name](troubleshooting.md#project-name-is-rejected), [configuration](troubleshooting.md#configuration-file-is-rejected), [deployment network](troubleshooting.md#deployment-network-is-required), or [deployment identity](troubleshooting.md#deployment-identity-is-rejected) |
 | `3` | [`dev`](troubleshooting.md#stellarforge-dev-says-no-supported-script-exists), [`test`](troubleshooting.md#stellarforge-test-cannot-find-a-workflow), or [Stellar CLI deployment](troubleshooting.md#stellar-cli-deployment-fails) |
-| `5` | [`doctor`](troubleshooting.md#stellarforge-doctor-reports-failures), [`validate`](troubleshooting.md#stellarforge-validate-reports-required-project-failures) |
+| `5` | [`doctor`](troubleshooting.md#stellarforge-doctor-reports-failures), [`validate`](troubleshooting.md#stellarforge-validate-reports-required-project-failures), or [test timeout](troubleshooting.md#stellarforge-test-times-out) |
 | `1` or `4` | [Unexpected or internal failure](troubleshooting.md#unexpected-or-internal-failure) |
 
 The full index is at [Troubleshooting](troubleshooting.md#find-your-problem).
@@ -34,6 +44,7 @@ The full index is at [Troubleshooting](troubleshooting.md#find-your-problem).
 - internal failures render a generic message while preserving the underlying cause internally;
 - unexpected exceptions render a generic message and do not expose the original error message or stack trace by default;
 - diagnostic failures use exit code `5` when the command itself completed but its health assessment contains failed required checks;
+- test timeouts report a timeout-specific message to stderr identifying the configured limit and use exit code `5`, distinguishing them from genuine test failures;
 - Commander parser failures are mapped to exit code `2` without duplicating Commander's existing usage/error rendering;
 - `--help` and `--version` remain successful exits with code `0`.
 
@@ -42,6 +53,7 @@ The full index is at [Troubleshooting](troubleshooting.md#find-your-problem).
 - commands must not return `0` when required work failed;
 - failed subprocesses must not be silently converted to success;
 - test failures must propagate meaningful failure status;
+- test timeouts must be reported distinctly from test failures and must not be silently treated as a normal test failure;
 - deployment failures must never return success;
 - interrupted/cancelled-operation semantics will be documented when cancellation support is implemented;
 - future command-specific errors should use the centralized CLI error boundary or a deliberately documented stable category instead of assigning ad hoc process exit codes.
