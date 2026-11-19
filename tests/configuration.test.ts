@@ -7,7 +7,26 @@ import {
   resolveProjectConfig,
 } from '../src/config/project.js';
 import { ValidationCliError } from '../src/errors/errors.js';
-import { withTempDirectory } from './helpers/index.js';
+import {
+  createTempDirectoryFixture,
+  withTempDirectory,
+} from './helpers/index.js';
+
+// Windows may require privileges or developer mode to create symlinks.
+function canCreateSymlink(): boolean {
+  const fixture = createTempDirectoryFixture();
+  try {
+    writeFileSync(join(fixture.path, 'target'), 'target');
+    symlinkSync(join(fixture.path, 'target'), join(fixture.path, 'link'));
+    return true;
+  } catch {
+    return false;
+  } finally {
+    fixture.cleanup();
+  }
+}
+
+const symlinksSupported = canCreateSymlink();
 
 describe('project configuration', () => {
   it('returns undefined when project configuration is missing', () =>
@@ -172,12 +191,18 @@ describe('project configuration', () => {
     }),
   );
 
-  it('rejects a symlinked project configuration', () =>
-    withTempDirectory((root) => {
-      const target = join(root, 'actual-config.json');
-      writeFileSync(target, JSON.stringify({ version: 1, network: 'testnet' }));
-      symlinkSync(target, join(root, PROJECT_CONFIG_FILENAME));
+  it.skipIf(!symlinksSupported)(
+    'rejects a symlinked project configuration',
+    () =>
+      withTempDirectory((root) => {
+        const target = join(root, 'actual-config.json');
+        writeFileSync(
+          target,
+          JSON.stringify({ version: 1, network: 'testnet' }),
+        );
+        symlinkSync(target, join(root, PROJECT_CONFIG_FILENAME));
 
-      expect(() => loadProjectConfig(root)).toThrow('not a symbolic link');
-    }));
+        expect(() => loadProjectConfig(root)).toThrow('not a symbolic link');
+      }),
+  );
 });

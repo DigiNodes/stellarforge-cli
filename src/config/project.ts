@@ -1,4 +1,13 @@
-import { existsSync, lstatSync, readFileSync, type Stats } from 'node:fs';
+import {
+  closeSync,
+  constants as fsConstants,
+  existsSync,
+  fstatSync,
+  lstatSync,
+  openSync,
+  readFileSync,
+  type Stats,
+} from 'node:fs';
 import { resolve } from 'node:path';
 import { ValidationCliError } from '../errors/errors.js';
 import {
@@ -9,6 +18,108 @@ import {
 
 export const PROJECT_CONFIG_FILENAME = 'stellarforge.config.json';
 const MAX_CONFIG_BYTES = 64 * 1024;
+
+/**
+ * Portable project-config filesystem policy:
+ *
+ * - the only accepted path is `<project root>/stellarforge.config.json`;
+ * - the path must be a regular file; symlinks are rejected rather than
+ *   followed, so a link can never redirect the loader outside the root;
+ * - the opened descriptor is checked before reading, so a path swap between
+ *   inspection and read cannot turn the read into a symlink escape;
+ * - POSIX mode bits and ownership are deliberately not used as trust signals.
+ *   The file is non-secret by design (version, network, identity alias), so
+ *   permissive modes are valid and must not be rejected. Windows also reports
+ *   synthetic POSIX bits, which cannot carry security meaning there;
+ * - unreadable files fail with a content-free validation error;
+ * - the CLI never changes permissions or ownership and never attempts to
+ *   escalate privileges.
+ *
+ * `O_NOFOLLOW` is used where the platform exposes it. Where it does not
+ * (notably Windows), the post-open path check keeps the same explicit symlink
+ * boundary for the read path.
+ */
+const NOFOLLOW_FLAG: number =
+  (fsConstants as { O_NOFOLLOW?: number }).O_NOFOLLOW ?? 0;
+const CONFIG_OPEN_FLAGS = fsConstants.O_RDONLY | NOFOLLOW_FLAG;
+
+function assertRegularConfigFile(metadata: Stats): void {
+  if (metadata.isSymbolicLink()) {
+    throw new ValidationCliError(
+      'stellarforge.config.json must be a regular project file, not a symbolic link.',
+    );
+  }
+
+  if (!metadata.isFile()) {
+    throw new ValidationCliError(
+      'stellarforge.config.json must be a regular project file.',
+    );
+  }
+}
+
+function assertConfigSize(size: number): void {
+  if (size > MAX_CONFIG_BYTES) {
+    throw new ValidationCliError(
+      'stellarforge.config.json is larger than the 64 KiB MVP limit.',
+    );
+  }
+}
+
+function isSymlinkOpenFailure(error: unknown): boolean {
+  return (
+    error instanceof Error && (error as NodeJS.ErrnoException).code === 'ELOOP'
+  );
+}
+
+function readConfigFile(configPath: string): string {
+  let descriptor: number | undefined;
+
+  try {
+    try {
+      descriptor = openSync(configPath, CONFIG_OPEN_FLAGS);
+    } catch (error) {
+      // A link swapped in after the initial lstat() is reported with ELOOP on
+      // platforms that support O_NOFOLLOW. Keep the symlink diagnostic stable.
+      if (isSymlinkOpenFailure(error)) {
+        throw new ValidationCliError(
+          'stellarforge.config.json must be a regular project file, not a symbolic link.',
+        );
+      }
+      throw error;
+    }
+
+    const opened = fstatSync(descriptor);
+    assertRegularConfigFile(opened);
+    assertConfigSize(opened.size);
+
+    // The path is checked again after opening. On platforms without
+    // O_NOFOLLOW this catches a link substituted before open(); the open
+    // descriptor still pins the original file for the bytes read below.
+    assertRegularConfigFile(lstatSync(configPath));
+
+    return readFileSync(descriptor, 'utf8');
+  } catch (error) {
+    if (error instanceof ValidationCliError) {
+      throw error;
+    }
+
+    // Never include the OS error text, path, or file contents in the message.
+    throw new ValidationCliError(
+      'Unable to inspect stellarforge.config.json.',
+      {
+        cause: error,
+      },
+    );
+  } finally {
+    if (descriptor !== undefined) {
+      try {
+        closeSync(descriptor);
+      } catch {
+        // A close failure must not replace an already-produced result.
+      }
+    }
+  }
+}
 
 /**
  * Best-effort JSON scanner that rejects duplicate object keys, including
@@ -308,34 +419,10 @@ export function loadProjectConfig(cwd: string): StellarForgeConfig | undefined {
     );
   }
 
-  if (metadata.isSymbolicLink()) {
-    throw new ValidationCliError(
-      'stellarforge.config.json must be a regular project file, not a symbolic link.',
-    );
-  }
+  assertRegularConfigFile(metadata);
+  assertConfigSize(metadata.size);
 
-  if (!metadata.isFile()) {
-    throw new ValidationCliError(
-      'stellarforge.config.json must be a regular project file.',
-    );
-  }
-
-  if (metadata.size > MAX_CONFIG_BYTES) {
-    throw new ValidationCliError(
-      'stellarforge.config.json is larger than the 64 KiB MVP limit.',
-    );
-  }
-
-  let text: string;
-
-  try {
-    text = readFileSync(configPath, 'utf8');
-  } catch (error) {
-    throw new ValidationCliError(
-      'Unable to inspect stellarforge.config.json.',
-      { cause: error },
-    );
-  }
+  const text = readConfigFile(configPath);
 
   assertNoDuplicateJsonKeys(text);
 

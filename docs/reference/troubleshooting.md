@@ -135,7 +135,9 @@ stellarforge.config.json
 
 and live at the project root.
 
-It must be a regular non-symlink file, no larger than 64 KiB, and contain valid JSON with schema version `1`, and it must not contain duplicate object keys at any nesting level (escaped-equivalent spellings are treated as the same key).
+It must be a regular non-symlink file, no larger than 64 KiB, and contain valid JSON with schema version `1`, and it must not contain duplicate object keys at any nesting level (escaped-equivalent spellings are treated as the same key). Symbolic links are never followed, including links that point back inside the project.
+
+If the file cannot be read, the CLI reports `Unable to inspect stellarforge.config.json.` without echoing the path or the system error. Fix access outside StellarForge: the CLI never changes permissions or ownership. Permissive POSIX modes are accepted because this file contains no secrets, and Windows does not expose meaningful POSIX permission semantics.
 
 Supported fields are only:
 
