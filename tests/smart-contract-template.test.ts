@@ -51,6 +51,13 @@ describe('Smart Contract template', () => {
         expect(
           existsSync(join(projectRoot, 'contracts', 'hello', 'src', 'test.rs')),
         ).toBe(true);
+        // SW-145: gitignore is stored without the leading dot in the template
+        // so npm-packlist includes it. template-generation.ts remaps it to
+        // .gitignore in the generated project.
+        expect(
+          existsSync(join(projectRoot, '.gitignore')),
+          'generated project must contain .gitignore (remapped from template gitignore)',
+        ).toBe(true);
         expect(rootManifest).toContain('soroban-sdk = "26"');
         expect(rootManifest).toContain('[workspace.package]');
         expect(rootManifest).toContain('edition = "2021"');

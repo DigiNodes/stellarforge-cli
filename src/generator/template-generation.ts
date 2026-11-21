@@ -23,12 +23,24 @@ import type {
 
 const SUBSTITUTION_TOKEN = /\{\{([A-Za-z][A-Za-z0-9]*)\}\}/g;
 
+
+// npm-packlist always excludes .gitignore files from published packages,
+// regardless of the package.json files field. Template gitignore files are
+// therefore stored without the leading dot so they survive npm pack. This
+// map restores the intended filename when the file is written to the
+// generated project.
+const DOTFILE_REMAP: Readonly<Record<string, string>> = {
+  gitignore: '.gitignore',
+};
+
+
 /** Maximum number of files a template may contain (25× the largest bundled template). */
 export const MAX_TEMPLATE_FILE_COUNT = 256;
 /** Maximum aggregate bytes of regular files (~55× the largest bundled template). */
 export const MAX_TEMPLATE_TOTAL_BYTES = 1024 * 1024;
 /** Maximum bytes of a single template file (~46× the largest bundled template file). */
 export const MAX_TEMPLATE_FILE_BYTES = 256 * 1024;
+
 
 export interface TemplateGenerationOptions {
   readonly templateRoot: string;
@@ -212,8 +224,11 @@ function visitTemplateTree(
   for (const entry of entries) {
     assertSafeEntryName(entry.name);
 
+    const destinationName = DOTFILE_REMAP[entry.name] ?? entry.name;
     const relativePath = join(relativeDirectory, entry.name);
+    const destinationRelativePath = join(relativeDirectory, destinationName);
     const sourcePath = resolve(templateRoot, relativePath);
+
 
     if (!isWithin(templateRoot, sourcePath)) {
       throw new ValidationCliError(
@@ -250,12 +265,12 @@ function visitTemplateTree(
     const content = readFileSync(sourcePath);
 
     if (isBinary(content)) {
-      visitFile(relativePath, content, []);
+      visitFile(destinationRelativePath, content, []);
       continue;
     }
 
     const rendered = renderText(content.toString('utf8'), variables);
-    visitFile(relativePath, rendered.content, rendered.substitutions);
+    visitFile(destinationRelativePath, rendered.content, rendered.substitutions);
   }
 }
 
