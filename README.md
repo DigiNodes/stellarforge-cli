@@ -19,6 +19,25 @@ The initial MVP command surface and release/security foundation are implemented.
 
 ---
 
+## Installation
+
+Run on demand without modifying global state or `PATH`:
+
+```bash
+npx @diginodes/stellarforge-cli new my-app
+```
+
+Or install globally using npm:
+
+```bash
+npm install -g @diginodes/stellarforge-cli
+stellarforge new my-app
+```
+
+For platform prerequisites, local source checkout setup, and global PATH troubleshooting, see the [Installation Guide](docs/guides/installation.md) and [PATH troubleshooting](docs/guides/installation.md#path-troubleshooting).
+
+---
+
 ## MVP Goal
 
 The v1.0 MVP aims to make the core workflow approachable through commands such as:
@@ -138,16 +157,16 @@ See [SECURITY.md](SECURITY.md), the [threat model](docs/architecture/threat-mode
 
 ## Implemented Commands
 
-| Command | MVP purpose | Status |
-| --- | --- | --- |
-| `stellarforge new` | Create a supported Stellar project | Implemented |
-| `stellarforge doctor` | Validate the development environment | Implemented |
-| `stellarforge dev` | Orchestrate supported local development | Implemented |
-| `stellarforge test` | Run supported project tests | Implemented |
-| `stellarforge deploy` | Deploy through the MVP Testnet workflow | Implemented |
-| `stellarforge validate` | Check local project requirements | Implemented |
-| `stellarforge --help` | Display CLI usage/help | Implemented |
-| `stellarforge --version` | Display CLI version | Implemented |
+| Command                  | MVP purpose                             | Status      |
+| ------------------------ | --------------------------------------- | ----------- |
+| `stellarforge new`       | Create a supported Stellar project      | Implemented |
+| `stellarforge doctor`    | Validate the development environment    | Implemented |
+| `stellarforge dev`       | Orchestrate supported local development | Implemented |
+| `stellarforge test`      | Run supported project tests             | Implemented |
+| `stellarforge deploy`    | Deploy through the MVP Testnet workflow | Implemented |
+| `stellarforge validate`  | Check local project requirements        | Implemented |
+| `stellarforge --help`    | Display CLI usage/help                  | Implemented |
+| `stellarforge --version` | Display CLI version                     | Implemented |
 
 `stellarforge add`, plugin architecture, remote template registries, and Mainnet deployment are **not implemented** and remain post-v1 or separately reviewed candidates.
 

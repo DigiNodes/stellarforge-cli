@@ -14,7 +14,7 @@
   },
   "scripts": {
     "audit:workflow-permissions": "node scripts/audit-workflow-permissions.mjs",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node init && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"eslint.config.js\" \"vitest.config.ts\" \"package.json\" \"tsconfig*.json\" \".prettierrc\"",

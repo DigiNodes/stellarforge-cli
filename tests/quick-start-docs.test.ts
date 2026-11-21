@@ -155,7 +155,7 @@ describe('public documentation link integrity (SW-203)', () => {
 
     for (const raw of headings.split(/\r?\n/)) {
       const match = raw.trimEnd().match(/^(#{1,6})\s+(.*)$/);
-      if (!match) {
+      if (!match || !match[2]) {
         continue;
       }
 
@@ -196,7 +196,9 @@ describe('public documentation link integrity (SW-203)', () => {
     ]) {
       expect(
         publicDocs.some((path) =>
-          path.replace(/\\/g, '/').includes(`templates/${templateId}/README.md`),
+          path
+            .replace(/\\/g, '/')
+            .includes(`templates/${templateId}/README.md`),
         ),
       ).toBe(true);
     }
@@ -224,6 +226,9 @@ describe('public documentation link integrity (SW-203)', () => {
 
       for (const match of scanned.matchAll(LINK_RE)) {
         const rawTarget = match[2];
+        if (!rawTarget) {
+          continue;
+        }
         const index = match.index ?? 0;
         const line = lineNumberOf(scanned, index);
 
@@ -232,7 +237,7 @@ describe('public documentation link integrity (SW-203)', () => {
           continue;
         }
 
-        let target = rawTarget;
+        let target: string;
         try {
           target = decodeURIComponent(rawTarget);
         } catch {
@@ -241,7 +246,7 @@ describe('public documentation link integrity (SW-203)', () => {
           continue;
         }
 
-        const [pathPart, anchor] = target.split('#', 2);
+        const [pathPart = '', anchor] = target.split('#', 2);
 
         if (pathPart === '') {
           if (anchor && !anchorsFor(normalized).has(anchor)) {
@@ -268,5 +273,75 @@ describe('public documentation link integrity (SW-203)', () => {
     }
 
     expect(failures, failures.join('\n')).toEqual([]);
+  });
+});
+
+describe('Clean-room installation and PATH troubleshooting documentation (SW-188)', () => {
+  const installationDoc = readFileSync(
+    join(root, 'docs', 'guides', 'installation.md'),
+    'utf8',
+  );
+  const readmeDoc = readFileSync(join(root, 'README.md'), 'utf8');
+  const packageJson = JSON.parse(
+    readFileSync(join(root, 'package.json'), 'utf8'),
+  );
+
+  it('accurately distinguishes global install, npx on-demand, and local package paths', () => {
+    // Both installation guide and README reference the official package name and bin
+    expect(installationDoc).toContain('@diginodes/stellarforge-cli');
+    expect(installationDoc).toContain('stellarforge');
+    expect(readmeDoc).toContain('@diginodes/stellarforge-cli');
+    expect(readmeDoc).toContain('stellarforge');
+
+    // Global install command
+    expect(installationDoc).toContain(
+      'npm install -g @diginodes/stellarforge-cli',
+    );
+    expect(readmeDoc).toContain('npm install -g @diginodes/stellarforge-cli');
+
+    // On-demand npx invocation
+    expect(installationDoc).toContain('npx @diginodes/stellarforge-cli');
+    expect(readmeDoc).toContain('npx @diginodes/stellarforge-cli');
+
+    // Local project dependency
+    expect(installationDoc).toContain(
+      'npm install --save-dev @diginodes/stellarforge-cli',
+    );
+  });
+
+  it('covers PATH troubleshooting across Windows, macOS, and Linux at a high level', () => {
+    expect(installationDoc).toContain('## PATH troubleshooting');
+    expect(installationDoc).toContain('npm config get prefix');
+
+    // Platform-specific coverage
+    expect(installationDoc).toContain('macOS');
+    expect(installationDoc).toContain('Linux');
+    expect(installationDoc).toContain('Windows');
+
+    // macOS/Linux diagnostics
+    expect(installationDoc).toContain('which stellarforge');
+    expect(installationDoc).toContain('echo "$PATH"');
+
+    // Windows diagnostics
+    expect(installationDoc).toContain('Get-Command stellarforge');
+    expect(installationDoc).toContain('where stellarforge');
+  });
+
+  it('prohibits instructions that blindly edit shell startup files or expose secrets', () => {
+    // Prohibits indiscriminate environment dumping commands
+    expect(installationDoc).not.toContain('printenv');
+    expect(installationDoc).not.toContain('Get-ChildItem env:');
+
+    // Warns against blind edits to shell configuration files
+    expect(installationDoc).toContain(
+      'Do not edit shell configuration files blindly',
+    );
+  });
+
+  it('verifies examples against actual package metadata and supported engines', () => {
+    expect(installationDoc).toContain(packageJson.name);
+    expect(Object.keys(packageJson.bin)).toContain('stellarforge');
+    expect(installationDoc).toContain(packageJson.engines.node);
+    expect(installationDoc).toContain(packageJson.engines.npm);
   });
 });
