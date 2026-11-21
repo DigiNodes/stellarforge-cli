@@ -12,6 +12,10 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import {
+  ScaffoldingCancelledCliError,
+  ValidationCliError,
+} from '../errors/errors.js';
 import { ValidationCliError } from '../errors/errors.js';
 import { resolveCliVersion } from '../version.js';
 import type {
@@ -38,6 +42,7 @@ export interface TemplateGenerationOptions {
    */
   readonly generatorVersion?: string | undefined;
   readonly dryRun?: boolean;
+  readonly isCancelled?: () => boolean;
 }
 
 interface TemplateBudget {
@@ -99,6 +104,10 @@ function isBinary(content: Buffer): boolean {
   return content.includes(0);
 }
 
+function assertNotCancelled(isCancelled?: () => boolean): void {
+  if (isCancelled?.()) {
+    throw new ScaffoldingCancelledCliError();
+  }
 /**
  * Measures the template tree before any file is written. Exceeding a documented
  * limit fails with a safe aggregate message that never embeds local paths or
@@ -199,7 +208,9 @@ function visitTemplateTree(
     substitutions: readonly string[],
   ) => void,
   visitDirectory: (relativePath: string) => void,
+  isCancelled?: () => boolean,
 ): void {
+  assertNotCancelled(isCancelled);
   const sourceDirectory = resolve(templateRoot, relativeDirectory);
   const entries = readdirSync(sourceDirectory, { withFileTypes: true }).sort(
     (a, b) => {
@@ -210,6 +221,7 @@ function visitTemplateTree(
   );
 
   for (const entry of entries) {
+    assertNotCancelled(isCancelled);
     assertSafeEntryName(entry.name);
 
     const relativePath = join(relativeDirectory, entry.name);
@@ -237,6 +249,7 @@ function visitTemplateTree(
         variables,
         visitFile,
         visitDirectory,
+        isCancelled,
       );
       continue;
     }
@@ -376,6 +389,7 @@ export function generateProjectFromTemplate(
         });
       },
       () => undefined,
+      options.isCancelled,
     );
 
     return {
@@ -393,6 +407,7 @@ export function generateProjectFromTemplate(
   let removedExistingDestination = false;
 
   try {
+    assertNotCancelled(options.isCancelled);
     visitTemplateTree(
       templateRoot,
       '.',
@@ -418,7 +433,10 @@ export function generateProjectFromTemplate(
 
         mkdirSync(destinationPath, { recursive: false });
       },
+      options.isCancelled,
     );
+
+    assertNotCancelled(options.isCancelled);
 
     // Re-validate immediately before the mutating write phase. The checks
     // above can be invalidated by a concurrent destination replacement while
@@ -452,10 +470,12 @@ export function generateProjectFromTemplate(
         );
       }
 
+      assertNotCancelled(options.isCancelled);
       rmdirSync(destination);
       removedExistingDestination = true;
     }
 
+    assertNotCancelled(options.isCancelled);
     // Provenance marker: record only the template identifier and generator
     // version — never user, host, path, or environment information. Kept
     // byte-stable across runs except for the version value itself. Written

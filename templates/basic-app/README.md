@@ -12,7 +12,32 @@ Generated with the StellarForge `basic-app` template.
 npm start
 ```
 
-The starter prints the configured Stellar Testnet Horizon and RPC endpoints. It does not require or generate wallet secret keys.
+The starter is a dependency-free, local process with a deterministic startup and health/status lifecycle. It does not require or generate wallet secret keys.
+
+On startup it:
+
+1. Writes `status: starting` to stdout.
+2. Loads and validates network configuration.
+3. Writes `status: ready` to stdout with the configured Horizon and RPC endpoints.
+4. Runs a local heartbeat resource until interrupted.
+
+While running it opens no listening socket at all and makes no external network calls.
+
+### Health/status signal
+
+Status is reported as deterministic stdout lines:
+
+- `status: starting` �?" startup in progress
+- `status: ready` �?" configuration validated and runtime ready
+- `status: stopping signal=<SIGINT|SIGTERM>` �?" graceful shutdown in progress
+
+### Graceful shutdown
+
+Send `SIGINT` (Ctrl+C) or `SIGTERM` to stop the process. Active runtime resources are stopped and the process exits cleanly without hanging.
+
+### Startup failures
+
+Invalid or missing startup configuration fails with an actionable error on stderr (`status: failed` and `error: ...`) and a non-zero exit code.
 
 ## Validate
 
@@ -23,7 +48,7 @@ npm test
 
 ## Port already in use (EADRRINAUSE)
 
-This starter opens no listening socket at all — `npm start` only prints the configured endpoints. `EADRRINAUSE` cannot occur with the starter as generated, and the documented environment variables point at remote Stellar services, not local ports.
+This starter opens no listening socket at all �?" `npm start` runs a local process without binding a port. `EADDRINUSE` cannot occur with the starter as generated, and the documented environment variables point at remote Stellar services, not local ports.
 
 If you add your own local server to this application, pick a free port entirely under your control; if it collides with another process, the operating system will report `EADRRINAUSE` just like for any other application. Resolve such collisions by changing the port you configure, or by stopping only the process you recognize as your own previous instance.
 

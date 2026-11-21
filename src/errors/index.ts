@@ -8,6 +8,7 @@ export {
   CliError,
   EXIT_CODES,
   InternalCliError,
+  ScaffoldingCancelledCliError,
   SubprocessCliError,
   ValidationCliError,
   type CliExitCode,
