@@ -17,11 +17,7 @@ const packageJson = JSON.parse(
   readFileSync(resolve(repositoryRoot, 'package.json'), 'utf8'),
 ) as { version: string };
 
-function generate(
-  root: string,
-  templateId: string,
-  generatorVersion?: string,
-) {
+function generate(root: string, templateId: string, generatorVersion?: string) {
   const destination = join(root, `demo-${templateId}`);
   const context: GenerationContext = {
     input: {

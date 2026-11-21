@@ -60,7 +60,8 @@ The file must:
 - be a regular file rather than a symbolic link, including links whose target is inside the project root;
 - be readable by the current process;
 - be no larger than 64 KiB;
-- contain valid JSON;
+- be encoded as UTF-8 (a single leading UTF-8 byte-order mark is tolerated);
+- contain valid JSON with no duplicate object keys;
 - contain no duplicate object keys at any nesting level (escaped-equivalent spellings are treated as the same key);
 - contain only supported schema fields.
 

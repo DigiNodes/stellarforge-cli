@@ -9,8 +9,7 @@ const BUNDLED_TEMPLATE_DIRECTORIES: Record<TemplateId, string> =
   >;
 
 export function resolveBundledTemplateRoot(templateId: string): string {
-  const directory =
-    BUNDLED_TEMPLATE_DIRECTORIES[templateId as TemplateId];
+  const directory = BUNDLED_TEMPLATE_DIRECTORIES[templateId as TemplateId];
 
   if (directory === undefined) {
     throw new ValidationCliError(

@@ -44,6 +44,7 @@ async function runDeploy(
   const command = createDeployCommand({
     cwd: () => '/workspace',
     output: captured.output,
+    runPreflight: () => ({ passed: true, checks: [] }),
     resolveConfig: (_cwd, overrides) => overrides,
     resolvePlan: () => [DEPLOY_SPEC],
     spawnProcess: () => child,
@@ -142,6 +143,7 @@ describe('deploy stdout/stderr secret non-reflection', () => {
     const command = createDeployCommand({
       cwd: () => '/workspace',
       output: captured.output,
+      runPreflight: () => ({ passed: true, checks: [] }),
       resolveConfig: (_cwd, overrides) => overrides,
       resolvePlan: () => [DEPLOY_SPEC],
       spawnProcess: () => child,
@@ -173,6 +175,7 @@ describe('deploy stdout/stderr secret non-reflection', () => {
     const command = createDeployCommand({
       cwd: () => '/workspace',
       output: captured.output,
+      runPreflight: () => ({ passed: true, checks: [] }),
       resolveConfig: (_cwd, overrides) => overrides,
       resolvePlan: () => [DEPLOY_SPEC],
       spawnProcess: () => {

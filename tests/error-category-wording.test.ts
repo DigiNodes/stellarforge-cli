@@ -34,6 +34,7 @@ describe('CLI error-category wording', () => {
       subprocess: 3,
       internal: 4,
       diagnostic: 5,
+      cancelled: 130,
     });
   });
 

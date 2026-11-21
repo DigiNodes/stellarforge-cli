@@ -39,10 +39,7 @@ import type { DiagnosticStatus } from './diagnostics/types.js';
 
 /** Stable categories for project validation findings. */
 export type ProjectValidationCategory =
-  | 'project'
-  | 'package-manifest'
-  | 'cargo-manifest'
-  | 'configuration';
+  'project' | 'package-manifest' | 'cargo-manifest' | 'configuration';
 
 /** Stable ids for project validation findings. */
 export const PROJECT_VALIDATION_CHECK_IDS = {
@@ -131,7 +128,9 @@ function isFile(path: string): boolean {
   }
 }
 
-function readTextFile(path: string): { ok: true; content: string } | { ok: false } {
+function readTextFile(
+  path: string,
+): { ok: true; content: string } | { ok: false } {
   try {
     return { ok: true, content: readFileSync(path, 'utf8') };
   } catch {
@@ -144,7 +143,10 @@ function checkManifestPresent(root: string): ProjectValidationFinding {
   const hasCargo = isFile(join(root, 'Cargo.toml'));
 
   if (hasNode || hasCargo) {
-    const found = [hasNode ? 'package.json' : undefined, hasCargo ? 'Cargo.toml' : undefined]
+    const found = [
+      hasNode ? 'package.json' : undefined,
+      hasCargo ? 'Cargo.toml' : undefined,
+    ]
       .filter((entry) => entry !== undefined)
       .join(' and ');
     return finding(
@@ -436,7 +438,9 @@ const CHECKS: readonly ProjectValidationCheck[] = [
   },
 ];
 
-export function runProjectValidationChecks(root: string): ProjectValidationReport {
+export function runProjectValidationChecks(
+  root: string,
+): ProjectValidationReport {
   const resolvedRoot = resolve(root);
   const results = CHECKS.map((check) => {
     try {
@@ -482,7 +486,9 @@ export function renderProjectValidationReport(
   }
 
   for (const result of report.results) {
-    output.info(`[${result.status.toUpperCase()}] ${result.label}: ${result.message}`);
+    output.info(
+      `[${result.status.toUpperCase()}] ${result.label}: ${result.message}`,
+    );
 
     if (result.remediation) {
       output.info(`  Remediation: ${result.remediation}`);
