@@ -16,6 +16,7 @@ This page covers common failures in the implemented StellarForge CLI MVP.
 | Deployment         | Network or identity is missing or rejected, Mainnet or Futurenet is refused, or Stellar CLI fails | [Deployment network is required](#deployment-network-is-required), [Deployment rejects Mainnet or Futurenet](#deployment-rejects-mainnet-or-futurenet), [Deployment identity is rejected](#deployment-identity-is-rejected), and [Stellar CLI deployment fails](#stellar-cli-deployment-fails) |
 | Unexpected failure | A generic error message with exit code `1` or `4`                                                 | [Unexpected or internal failure](#unexpected-or-internal-failure)                                                                                                                                                                                                                              |
 | Sensitive data     | A secret appeared in output or in a report                                                        | [Sensitive information appeared in a failure](#sensitive-information-appeared-in-a-failure)                                                                                                                                                                                                    |
+| Cancellation       | A command was interrupted and exited with code `130`                                             | [Cancelled operation](#cancelled-operation)                                                                                                                                                                                                                                                      |
 
 ### Look up by exit code
 
@@ -25,6 +26,7 @@ This page covers common failures in the implemented StellarForge CLI MVP.
 |        `3` | A subprocess failed: [`dev`](#stellarforge-dev-says-no-supported-script-exists), [`test`](#stellarforge-test-cannot-find-a-workflow), or [Stellar CLI deployment](#stellar-cli-deployment-fails)                                                                                                                                                                                                                                                                     |
 |        `5` | [`stellarforge doctor` reports failures](#stellarforge-doctor-reports-failures)                                                                                                                                                                                                                                                                                                                                                                                      |
 | `1` or `4` | [Unexpected or internal failure](#unexpected-or-internal-failure)                                                                                                                                                                                                                                                                                                                                                                                                    |
+|     `130` | [Cancelled operation](#cancelled-operation)                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 Exit code meanings are defined in [Exit Codes](exit-codes.md). Related references: [Installation](../guides/installation.md), [Quick Start](../guides/quick-start.md), [Command Reference](commands.md), [Configuration](configuration.md), and [Platform Support](platform-support.md).
 
@@ -137,7 +139,9 @@ stellarforge.config.json
 
 and live at the project root.
 
-It must be a regular non-symlink file, no larger than 64 KiB, encoded as UTF-8 (a single leading UTF-8 byte-order mark is tolerated), and contain valid JSON with schema version `1`, and it must not contain duplicate object keys at any nesting level (escaped-equivalent spellings are treated as the same key).
+It must be a regular non-symlink file, no larger than 64 KiB, encoded as UTF-8 (a single leading UTF-8 byte-order mark is tolerated), and contain valid JSON with schema version `1`, and it must not contain duplicate object keys at any nesting level (escaped-equivalent spellings are treated as the same key). Symbolic links are never followed, including links that point back inside the project.
+
+If the file cannot be read, the CLI reports `Unable to inspect stellarforge.config.json.` without echoing the path or the system error. Fix access outside StellarForge: the CLI never changes permissions or ownership. Permissive POSIX modes are accepted because this file contains no secrets, and Windows does not expose meaningful POSIX permission semantics.
 
 Supported fields are only:
 
@@ -246,6 +250,10 @@ If it persists, collect the non-sensitive details listed in [Still blocked?](#st
 StellarForge errors are designed not to render raw secrets. Do not paste private keys, seed phrases, wallet seed material, access tokens, full environment dumps, or complete credential-bearing environment values into public issues.
 
 If you believe a secret disclosure is caused by a vulnerability, follow [SECURITY.md](../../SECURITY.md) instead of opening a public issue.
+
+## Cancelled operation
+
+A command that receives an interrupt (SIGINT, or SIGBREAK where supported) stops gracefully and exits with code `130`. Cleanup runs first: `dev` stops its watcher and child processes, `test` and `deploy` wait for the in-flight subprocess, and `new` rolls back partially generated files. A second interrupt during cleanup exits immediately with the same code. Cancellation messages go to stderr and never report success. See [Exit Codes](exit-codes.md#cancellation-sigint-behavior).
 
 ## Still blocked?
 

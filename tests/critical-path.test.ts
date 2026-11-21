@@ -321,6 +321,7 @@ describe('critical path: deployment security', () => {
     const command = createDeployCommand({
       cwd: () => '/workspace',
       output: createCapturedTerminalOutput().output,
+      runPreflight: () => ({ passed: true, checks: [] }),
       resolveConfig: () => ({ network: 'testnet', identity: 'ci-deployer' }),
       resolvePlan: () => [
         {
@@ -504,8 +505,9 @@ describe('critical path: generated-project smoke coverage (SW-202)', () => {
     expect(ciWorkflow).toContain('cargo metadata --no-deps');
     expect(ciWorkflow).toContain('Smoke / smart-contract / generate');
     expect(ciWorkflow).toContain('Smoke / smart-contract / cargo metadata');
-    // No smart-contract build or test (which would resolve crates from the network).
-    expect(ciWorkflow).not.toContain('cargo test');
+    // The generated contract's tests and metadata run in CI; a full build
+    // (which would resolve crates from the network) is intentionally avoided.
+    expect(ciWorkflow).toContain('Smoke / smart-contract / cargo test');
     expect(ciWorkflow).not.toContain('cargo build');
   });
 

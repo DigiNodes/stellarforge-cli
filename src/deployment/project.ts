@@ -42,7 +42,7 @@ export function runDeploymentPreflight(
       ? {}
       : {
           remediation:
-            'Pass `--network testnet`; the MVP deploys only to Stellar Testnet.',
+            'StellarForge deploy supports only the explicit `--network testnet` target in the MVP.',
         }),
   });
 
@@ -71,7 +71,7 @@ export function runDeploymentPreflight(
       ? {}
       : {
           remediation:
-            'Run deploy from a generated Stellar smart-contract project root containing Cargo.toml.',
+            'No Cargo.toml workspace was found. MVP deployment currently supports generated Stellar smart-contract projects only.',
         }),
   });
 

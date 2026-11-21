@@ -11,7 +11,10 @@ import {
   renderProjectValidationReport,
   runProjectValidationChecks,
 } from '../src/validate.js';
-import { createCapturedTerminalOutput, withTempDirectory } from './helpers/index.js';
+import {
+  createCapturedTerminalOutput,
+  withTempDirectory,
+} from './helpers/index.js';
 
 describe('project input validation', () => {
   it.each([
@@ -253,7 +256,10 @@ describe('local project validation contract (SW-201)', () => {
 
   it('fails when package.json has no scripts object', () =>
     withTempDirectory((root) => {
-      writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'demo' }));
+      writeFileSync(
+        join(root, 'package.json'),
+        JSON.stringify({ name: 'demo' }),
+      );
       const report = runProjectValidationChecks(root);
 
       const parseable = report.results.find(
@@ -316,7 +322,10 @@ describe('local project validation contract (SW-201)', () => {
 
   it('fails when stellarforge.config.json has an invalid network value', () =>
     withTempDirectory((root) => {
-      writeFileSync(join(root, 'package.json'), JSON.stringify({ scripts: {} }));
+      writeFileSync(
+        join(root, 'package.json'),
+        JSON.stringify({ scripts: {} }),
+      );
       writeFileSync(
         join(root, 'stellarforge.config.json'),
         JSON.stringify({ version: 1, network: 'pubnet' }),

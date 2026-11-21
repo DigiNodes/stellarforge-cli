@@ -17,7 +17,90 @@ export const FORCED_EXIT_MESSAGE =
 
 // Documented non-zero exit code reported for a clean user-interrupt
 // cancellation. 130 is the conventional 128+SIGINT shell code.
-export const CANCElLATION_EXIT_CODE: CliExitCode = 130;
+export const CANCELLATION_EXIT_CODE: CliExitCode = EXIT_CODES.cancelled;
+
+/** Error raised when a command is interrupted by the user. */
+export class CancellationCliError extends CliError {
+  readonly command: string;
+  readonly code = 'CANCELLED';
+
+  constructor(command = 'cli') {
+    super('CancellationCliError', CANCELLATION_MESSAGE, CANCELLATION_EXIT_CODE);
+    this.command = command;
+  }
+}
+
+export interface CancellationSignal {
+  readonly aborted: boolean;
+  readonly reason: unknown;
+}
+
+export interface CancellationController {
+  begin(): CancellationSignal;
+  end(): void;
+}
+
+/** Tracks interrupts for a synchronous command that can be cancelled. */
+export function createCancellationController(): CancellationController {
+  let onSignal: (() => void) | undefined;
+
+  return {
+    begin() {
+      const controller = new AbortController();
+      onSignal = () => {
+        controller.abort(new CancellationCliError());
+      };
+      process.on('SIGINT', onSignal);
+      process.on('SIGTERM', onSignal);
+
+      return {
+        get aborted() {
+          return controller.signal.aborted;
+        },
+        get reason() {
+          return controller.signal.reason as unknown;
+        },
+      };
+    },
+    end() {
+      if (onSignal !== undefined) {
+        process.off('SIGINT', onSignal);
+        process.off('SIGTERM', onSignal);
+        onSignal = undefined;
+      }
+    },
+  };
+}
+
+export interface CancellationHandler {
+  isCancelled(): boolean;
+  reportCancellation(): void;
+  dispose(): void;
+}
+
+/** Tracks interrupts for an async command that owns child-process cleanup. */
+export function createCancellationHandler(options: {
+  readonly command: string;
+  readonly output: TerminalOutput;
+}): CancellationHandler {
+  let cancelled = false;
+  const onSignal = () => {
+    cancelled = true;
+  };
+  process.on('SIGINT', onSignal);
+  process.on('SIGTERM', onSignal);
+
+  return {
+    isCancelled: () => cancelled,
+    reportCancellation: () => {
+      options.output.error(CANCELLATION_MESSAGE);
+    },
+    dispose: () => {
+      process.off('SIGINT', onSignal);
+      process.off('SIGTERM', onSignal);
+    },
+  };
+}
 
 export interface CliErrorBoundaryOptions {
   // Opt-in diagnostic detail for maintainers: normal user-facing errors stay

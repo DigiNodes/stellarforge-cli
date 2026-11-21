@@ -6,13 +6,13 @@ StellarForge CLI uses predictable process exit codes so humans, scripts, and CI 
 
 | Exit code | Category | Meaning |
 |---:|---------|---------|
-| `0` x Success | The requested CLI operation completed successfully. |
-| `1` x Unexpected failure | An unclassified exception reached the top-level CLI boundary. |
-| `2` x Validation / usage failure | User input, command syntax, options, arguments, or other validated input was invalid. |
-| `3` x Subprocess failure | A required external process or tool failed. |
-| `4` x Internal failure | StellarForge detected a known internal failure condition that should not expose implementation details to the user. |
-| `5` x Diagnostic failure | A diagnostic command completed normally but one or more required checks failed; used by `doctor` (environment health) and `stellarforge validate` (local project requirements). |
-| `130` x Cancellation | The operation was interrupted by the user (SIGINT or equivalent) and stopped before completion. |
+| `0` | Success | The requested CLI operation completed successfully. |
+| `1` | Unexpected failure | An unclassified exception reached the top-level CLI boundary. |
+| `2` | Validation / usage failure | User input, command syntax, options, arguments, or other validated input was invalid. |
+| `3` | Subprocess failure | A required external process or tool failed. |
+| `4` | Internal failure | StellarForge detected a known internal failure condition that should not expose implementation details to the user. |
+| `5` | Diagnostic failure | A diagnostic command completed normally but one or more required checks failed; used by `doctor` (environment health) and `stellarforge validate` (local project requirements). |
+| `130` | Cancellation | The operation was interrupted by the user (SIGINT or equivalent) and stopped before completion. |
 
 
 These values are part of the CLI contract and should not be changed casually. New stable categories require deliberate review and documentation.

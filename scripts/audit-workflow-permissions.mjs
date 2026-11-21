@@ -13,14 +13,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-/** Explicit per-job exceptions for workflows that must write. */
-const ARTIFACT_RETENTION_DAYS = {
-  test: 7,
-  coverage: 7,
-  security: 30,
-  release: 90,
-};
-
 /** Artifact path patterns that must never be uploaded. */
 const FORBIDDEN_ARTIFACT_PATTERNS = [
   /\.env(\b|$)/i,
@@ -36,6 +28,9 @@ const FORBIDDEN_ARTIFACT_PATTERNS = [
   /(^|\/)\.local(\/|$)/i,
   /(^|\/)\.DS_Store$/i,
 ];
+
+/** Artifact paths that would upload the entire workspace. */
+const BROAD_ARTIFACT_PATHS = /^(?:\.|\.\/|\*\*|\/)$/;
 
 /** Workflows that may publish release artifacts. */
 const RELEASE_PUBLISHING_WORKFLOWS = new Set(['release.yml']);
@@ -192,6 +187,13 @@ function auditArtifacts(filePath) {
           });
           break;
         }
+      }
+      if (BROAD_ARTIFACT_PATHS.test(p)) {
+        violations.push({
+          file: base,
+          line: upload.line,
+          message: `artifact path "${p}" sweeps the entire workspace`,
+        });
       }
     }
 

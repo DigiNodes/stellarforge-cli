@@ -1,6 +1,6 @@
 const DEFAULT_HORIZON_URL = 'https://horizon-testnet.stellar.org';
 const DEFAULT_RPC_URL = 'https://soroban-testnet.stellar.org';
-const DEFAULT_NETWORK_PASSTHRASE = 'Test SDF Network ; September 2015';
+const DEFAULT_NETWORK_PASSPHRASE = 'Test SDF Network ; September 2015';
 
 export const SUPPORTED_NETWORKS = Object.freeze({
   testnet: Object.freeze({
@@ -11,7 +11,7 @@ export const SUPPORTED_NETWORKS = Object.freeze({
   local: Object.freeze({
     horizonUrl: 'http://127.0.0.1:8000',
     rpcUrl: 'http://127.0.0.1:8001',
-    networkPassphrase: DEFAULT_NETWORK_PASSTHRASE,
+    networkPassphrase: DEFAULT_NETWORK_PASSPHRASE,
   }),
 });
 
@@ -45,7 +45,7 @@ function resolveNetworkIdentifier(env) {
   }
   if (!Object.prototype.hasOwnProperty.call(SUPPORTED_NETWORKS, identifier)) {
     throw new TypeError(
-      `Unsupported STELLAR_NETWORK "${identifier}". Supported values: ${Object.keys(SUPPORTED_NETWORKS).join(', ')}.`,
+      `Unsupported network "${identifier}". Supported STELLAR_NETWORK values: ${Object.keys(SUPPORTED_NETWORKS).join(', ')}.`,
     );
   }
   return identifier;
@@ -62,10 +62,13 @@ function validateEndpoint(label, value) {
 
   let parsed;
   try {
-    parsed = new URL(trimmed);
+    parsed = new globalThis.URL(trimmed);
   } catch {
     // Do not echo the input: URLs may contain credentials.
-    throw new TypeError(`${label} is not a valid URL.`);
+    if (/^[a-z][a-z0-9+.-]*:\/\/$/i.test(trimmed)) {
+      throw new TypeError(`${label} must include a hostname.`);
+    }
+    throw new TypeError(`Invalid ${label} URL.`);
   }
 
   if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:' ) {
@@ -88,7 +91,7 @@ function validateEndpoint(label, value) {
     throw new TypeError(`${label} must not include a query string or fragment.`);
   }
 
-  return parsed.toString();
+  return parsed.toString().replace(/\/$/, '');
 }
 
 function resolveEndpoint(label, override, defaultValue) {
@@ -103,7 +106,7 @@ function resolvePassphrase(override, defaultValue) {
     return defaultValue;
   }
   if (typeof override !== 'string') {
-    throw new TypeError('STELLAR_NETWORK_PASSTHRASE must be a string.');
+    throw new TypeError('STELLAR_NETWORK_PASSPHRASE must be a string.');
   }
   const trimmed = override.trim();
   if (trimmed === '') {
@@ -112,25 +115,25 @@ function resolvePassphrase(override, defaultValue) {
   return trimmed;
 }
 
-export function getNetworkConfig(env = globalThis.process.env) {
-  const source = readEnv(env);
-  const network = resolveNetworkIdentifier(source);
+export function getNetworkConfig(source = globalThis.process.env) {
+  const env = readEnv(source);
+  const network = resolveNetworkIdentifier(env);
   const defaults = SUPPORTED_NETWORKS[network];
 
   return {
     network,
     horizonUrl: resolveEndpoint(
       'STELLAR_HORIZON_URL',
-      source.STELLAR_HORIZON_URL,
+      env.STELLAR_HORIZON_URL,
       defaults.horizonUrl,
     ),
     rpcUrl: resolveEndpoint(
       'STELLAR_RPC_URL',
-      source.STELLAR_RPC_URL,
+      env.STELLAR_RPC_URL,
       defaults.rpcUrl,
     ),
     networkPassphrase: resolvePassphrase(
-      source.STELLAR_NETWORK_PASSPHRASE,
+      env.STELLAR_NETWORK_PASSPHRASE,
       defaults.networkPassphrase,
     ),
   };

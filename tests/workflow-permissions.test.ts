@@ -89,7 +89,7 @@ describe('GKA artifact retention and permissions conformance audit (SW-178)', ()
     expect(
       all.some(
         (v) =>
-          v.file === 'artifact-bad-workspace-yaml'.toLowerCase() &&
+          v.file === 'artifact-bad-workspace.yml' &&
           /artifact path/.test(v.message),
       ),
     ).toBe(true);

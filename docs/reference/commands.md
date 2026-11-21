@@ -307,7 +307,7 @@ Before the Stellar CLI deployment subprocess starts, `stellarforge deploy` runs 
 - the effective source is a valid named Stellar CLI identity alias;
 - the configuration file, if present, is well formed.
 
-Preflight is validation and reporting only. It does not invoke a deployment transaction, does not spawn subprocesses, and does not contact any network endpoint.
+Preflight is validation and reporting only. It does not invoke a deployment transaction, does not spawn subprocesses, and does not contact any network endpoint. Pass `--preflight` to stop after reporting the checks instead of starting the deployment.
 
 Preflight output never prints private keys, seed phrases, tokens, account StrKeys, identity alias values, or other sensitive configuration values. Failed checks include remediation steps, for example:
 

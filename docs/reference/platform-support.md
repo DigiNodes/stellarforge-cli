@@ -37,7 +37,8 @@ StellarForge code should expose platform differences deliberately instead of hid
 - Cargo subprocesses use `cargo.exe`;
 - Stellar deployment subprocesses use `stellar.exe`;
 - path tests must use Node path APIs rather than assuming POSIX separators;
-- commands must not rely on Bash being the default shell.
+- commands must not rely on Bash being the default shell;
+- POSIX permission and ownership bits reported for files are synthetic, so config loading ignores them on every platform instead of applying platform-dependent rules or changing file permissions.
 
 ### macOS and Linux
 

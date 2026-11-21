@@ -52,8 +52,7 @@ function isTerminalControlCharacter(code: number): boolean {
 
 function isBidiControlCharacter(code: number): boolean {
   return (
-    (code >= 0x202a && code <= 0x202e) ||
-    (code >= 0x2066 && code <= 0x2069)
+    (code >= 0x202a && code <= 0x202e) || (code >= 0x2066 && code <= 0x2069)
   );
 }
 

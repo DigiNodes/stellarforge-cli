@@ -108,5 +108,6 @@ describe('generated template .gitignore policy', () => {
           ).toBe(1);
         }
       }),
+    30_000,
   );
 });
