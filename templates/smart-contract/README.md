@@ -57,3 +57,7 @@ stellar contract invoke \
 Do not commit private keys, secret seeds, signing credentials, or production deployment material. Use locally managed Stellar identities or your approved secret-management workflow.
 
 This starter targets Stellar Testnet only; it does not configure or claim Mainnet or hosted deployment support.
+
+## Offline smoke coverage
+
+The `rustup`, `cargo`, and `stellar` commands in this README require locally installed external tooling and are exercised with safe command mocks; no contract is built or deployed by the offline smoke test. Testnet deployment and invocation require a configured Stellar identity and live Testnet access, so those commands are not executed against a network by the smoke test. No credentials are used or stored.

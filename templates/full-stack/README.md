@@ -97,3 +97,7 @@ Never commit wallet seeds, secret keys, signing credentials, production tokens, 
 ## Contracts
 
 `contracts/` is intentionally a boundary rather than a fake production contract. Add reviewed Soroban code when the application domain is defined, or generate a dedicated StellarForge `smart-contract` starter for contract-focused work.
+
+## Offline smoke coverage
+
+`npm run check`, `npm test`, and `npm run start:backend` are executed in a freshly generated temporary project. The backend start command is probed on a local loopback port and then stopped by the smoke test; it never contacts a Stellar service. No Stellar CLI, signing identity, credential, or external network access is required.

@@ -40,13 +40,8 @@ supported network identifiers:
 - `testnet` (default) — Horizon `https://horizon-testnet.stellar.org`, RPC `https://soroban-testnet.stellar.org`, passphrase `Test SDF Network ; September 2015`
 - `local` — Horizon `http://127.0.0.1:8000`, RPC `http://127.0.0.1:8001`, passphrase `Test SDF Network ; September 2015`
 
-Override the selected network endpoints with `STELLAR_HORIZON_URL`, `STELLAR_RPC_URL`, or `STELLAR_NETWORK_PASSPHRASE` when needed; `.env.example` documents the defaults and contains only public Testnet values.
+Do not commit private keys, seed phrases, signing secrets, or production credentials to the project.
 
-Endpoint overrides are validated before any request is made:
+## Offline smoke coverage
 
-- URLs must parse as absolute URLs with an `https:` or `http:` protocol and a hostname.
-- URLs must not embed credentials (username/password), query strings, or fragments.
-- Empty values and non-string values are rejected.
-- Error messages identify the offending variable but do not echo the supplied URL, because it may contain credentials.
-
-Do not commit private keys, seed phrases, signing secrets, or production credentals to the project.
+Every command in this README is exercised by StellarForge's offline documentation smoke test in a freshly generated temporary project. `npm start` exits after printing public Testnet endpoints; no Stellar CLI, signing identity, credential, or external network access is required.
