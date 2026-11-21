@@ -1,4 +1,4 @@
-/**
+/*
  * `stellarforge test` platform and exit-code semantics (SW-068, SW-070).
  *
  * Two gaps in the test workflow's coverage:
@@ -21,7 +21,11 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { afterEach, describe, expect, it } from 'vitest';
-import { resolveTestProcessPlan } from '../src/testing/project.js';
+import {
+  resolveTestProcessPlan,
+  DEFAULT_TEST_TIMEOUT_MS,
+  TEST_TIMEOUT_EXIT_CODE,
+} from '../src/testing/project.js';
 import { superviseDevProcesses } from '../src/dev/orchestrator.js';
 import type {
   DevSignalSource,
@@ -141,30 +145,27 @@ describe('Cargo test exit-code propagation (#168)', () => {
     { code: 1, reason: 'test assertion failed' },
     { code: 101, reason: 'cargo test harness panic' },
     { code: 127, reason: 'cargo not executable' },
-  ])(
-    'maps a non-zero Cargo exit ($code) to a subprocess failure',
-    async ({ code }) => {
-      const child = new FakeChild();
+  ])('maps a non-zero Cargo exit ($code) to a subprocess failure', async ({ code }) => {
+    const child = new FakeChild();
 
-      const running = superviseDevProcesses([cargoSpec()], {
-        spawnProcess: () => child,
-        signalSource: new FakeSignalSource(),
-      });
+    const running = superviseDevProcesses([cargoSpec()], {
+      spawnProcess: () => child,
+      signalSource: new FakeSignalSource(),
+    });
 
-      child.emitExit(code, null);
+    child.emitExit(code, null);
 
-      const error = await running.then(
-        () => undefined,
-        (reason: unknown) => reason,
-      );
+    const error = await running.then(
+      () => undefined,
+      (reason: unknown) => reason,
+    );
 
-      expect(error).toBeInstanceOf(SubprocessCliError);
-      expect((error as SubprocessCliError).userMessage).toContain(
-        `with code ${code}`,
-      );
-      expect((error as SubprocessCliError).userMessage).toContain('cargo:test');
-    },
-  );
+    expect(error).toBeInstanceOf(SubprocessCliError);
+    expect((error as SubprocessCliError).userMessage).toContain(
+      `with code ${code}`,
+    );
+    expect((error as SubprocessCliError).userMessage).toContain('cargo:test');
+  });
 
   it('invokes Cargo with an argument array, never a joined shell string', () => {
     const spec = cargoSpec();
@@ -172,6 +173,18 @@ describe('Cargo test exit-code propagation (#168)', () => {
     expect(Array.isArray(spec.args)).toBe(true);
     expect(spec.args).toEqual(['test']);
     expect(spec.command).not.toContain(' ');
+  });
+});
+
+describe('test workflow timeout policy (SW-158)', () => {
+  it('documents a bounded default timeout', () => {
+    expect(DEFAULT_TEST_TIMEOUT_MS).toBeGreaterThan(0);
+    expect(Number.isFinite(DEFAULT_TEST_TIMEOUT_MS)).toBe(true);
+  });
+
+  it('uses a dedicated exit code that is distinct from test failure', () => {
+    expect(TEST_TIMEOUT_EXIT_CODE).not.toBe(0);
+    expect(TEST_TIMEOUT_EXIT_CODE).not.toBe(1);
   });
 });
 

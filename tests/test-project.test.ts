@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ValidationCliError } from '../src/errors/errors.js';
 import { createNpmInvocation } from '../src/process/npm.js';
 import { createTestCommand } from '../src/commands/test.js';
-import { resolveTestProcessPlan } from '../src/testing/project.js';
+const { resolveTestProcessPlan } = await import('../src/testing/project.js') as typeof import('../src/testing/project.js');
 import {
   createCapturedTerminalOutput,
   withTempDirectory,
