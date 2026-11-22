@@ -50,3 +50,7 @@ Endpoint overrides are validated before any request is made:
 - Error messages identify the offending variable but do not echo the supplied URL, because it may contain credentials.
 
 Do not commit private keys, seed phrases, signing secrets, or production credentals to the project.
+
+## Offline smoke coverage
+
+`npm start`, `npm run check`, and `npm test` are executed in a freshly generated temporary project. The `npm --env-file=.env start` smoke variant uses a temporary `.env` file and does not require network access. No Stellar CLI, signing identity, credential, or external service is required.

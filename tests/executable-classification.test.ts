@@ -1,6 +1,9 @@
 import { describe, expect, it, afterEach } from 'vitest';
-import { resolve } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { execSync } from 'node:child_process';
+import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { basename, join, resolve } from 'node:path';
 import {
   classifyCommandResult,
   isExecutableNotFound,
@@ -214,7 +217,13 @@ describe('timeout and process termination', () => {
   }, 12_000);
 
   it('ensures no child process remains after timeout', async () => {
-    // Get processes before
+    // Use a uniquely named fixture copy so concurrently running test files
+    // cannot make this assertion observe each other's helper processes.
+    const sandbox = mkdtempSync(join(tmpdir(), 'sf-timeout-'));
+    const helperPath = join(sandbox, `timeout-helper-${randomUUID()}.js`);
+    copyFileSync(timeoutHelperPath, helperPath);
+    const marker = basename(helperPath);
+
     const getNodeProcesses = (): number[] => {
       if (process.platform === 'win32') {
         try {
@@ -224,40 +233,41 @@ describe('timeout and process termination', () => {
           );
           return output
             .split(/\r?\n/)
-            .filter((line) => /timeout-helper/i.test(line))
+            .filter((line) => line.includes(marker))
             .map((line) => parseInt(line.trim().split(',').at(-1) ?? '', 10))
             .filter((pid) => !isNaN(pid) && pid !== process.pid);
         } catch {
           return [];
         }
-      } else {
-        try {
-          const output = execSync('pgrep -f "node.*timeout-helper"', {
-            encoding: 'utf8',
-          });
-          return output
-            .split('\n')
-            .map((line) => parseInt(line.trim(), 10))
-            .filter((pid) => !isNaN(pid));
-        } catch {
-          return [];
-        }
+      }
+
+      try {
+        const output = execSync(`pgrep -f "node.*${marker}"`, {
+          encoding: 'utf8',
+        });
+        return output
+          .split('\n')
+          .map((line) => parseInt(line.trim(), 10))
+          .filter((pid) => !isNaN(pid));
+      } catch {
+        return [];
       }
     };
 
-    const beforePids = getNodeProcesses();
+    try {
+      const beforePids = getNodeProcesses();
 
-    // Run a timeout scenario
-    runCommand('node', [timeoutHelperPath, 'slow']);
+      runCommand('node', [helperPath, 'slow']);
 
-    // Wait a moment for OS cleanup
-    await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const afterPids = getNodeProcesses();
-    const newPids = afterPids.filter((pid) => !beforePids.includes(pid));
+      const afterPids = getNodeProcesses();
+      const newPids = afterPids.filter((pid) => !beforePids.includes(pid));
 
-    // No new node processes should remain
-    expect(newPids).toHaveLength(0);
+      expect(newPids).toHaveLength(0);
+    } finally {
+      rmSync(sandbox, { recursive: true, force: true });
+    }
   }, 12_000);
 
   it('reports stable timeout outcome for doctor command', () => {

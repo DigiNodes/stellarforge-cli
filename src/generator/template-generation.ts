@@ -12,7 +12,10 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
-import { ValidationCliError } from '../errors/errors.js';
+import {
+  ScaffoldingCancelledCliError,
+  ValidationCliError,
+} from '../errors/errors.js';
 import { resolveCliVersion } from '../version.js';
 import type {
   GenerationContext,
@@ -22,6 +25,15 @@ import type {
 } from './types.js';
 
 const SUBSTITUTION_TOKEN = /\{\{([A-Za-z][A-Za-z0-9]*)\}\}/g;
+
+// npm-packlist always excludes .gitignore files from published packages,
+// regardless of the package.json files field. Template gitignore files are
+// therefore stored without the leading dot so they survive npm pack. This
+// map restores the intended filename when the file is written to the
+// generated project.
+const DOTFILE_REMAP: Readonly<Record<string, string>> = {
+  gitignore: '.gitignore',
+};
 
 /** Maximum number of files a template may contain (25× the largest bundled template). */
 export const MAX_TEMPLATE_FILE_COUNT = 256;
@@ -38,6 +50,7 @@ export interface TemplateGenerationOptions {
    */
   readonly generatorVersion?: string | undefined;
   readonly dryRun?: boolean;
+  readonly isCancelled?: () => boolean;
 }
 
 interface TemplateBudget {
@@ -97,6 +110,12 @@ function renderText(
 
 function isBinary(content: Buffer): boolean {
   return content.includes(0);
+}
+
+function assertNotCancelled(isCancelled?: () => boolean): void {
+  if (isCancelled?.()) {
+    throw new ScaffoldingCancelledCliError();
+  }
 }
 
 /**
@@ -199,7 +218,9 @@ function visitTemplateTree(
     substitutions: readonly string[],
   ) => void,
   visitDirectory: (relativePath: string) => void,
+  isCancelled?: () => boolean,
 ): void {
+  assertNotCancelled(isCancelled);
   const sourceDirectory = resolve(templateRoot, relativeDirectory);
   const entries = readdirSync(sourceDirectory, { withFileTypes: true }).sort(
     (a, b) => {
@@ -210,9 +231,12 @@ function visitTemplateTree(
   );
 
   for (const entry of entries) {
+    assertNotCancelled(isCancelled);
     assertSafeEntryName(entry.name);
 
+    const destinationName = DOTFILE_REMAP[entry.name] ?? entry.name;
     const relativePath = join(relativeDirectory, entry.name);
+    const destinationRelativePath = join(relativeDirectory, destinationName);
     const sourcePath = resolve(templateRoot, relativePath);
 
     if (!isWithin(templateRoot, sourcePath)) {
@@ -237,6 +261,7 @@ function visitTemplateTree(
         variables,
         visitFile,
         visitDirectory,
+        isCancelled,
       );
       continue;
     }
@@ -250,12 +275,16 @@ function visitTemplateTree(
     const content = readFileSync(sourcePath);
 
     if (isBinary(content)) {
-      visitFile(relativePath, content, []);
+      visitFile(destinationRelativePath, content, []);
       continue;
     }
 
     const rendered = renderText(content.toString('utf8'), variables);
-    visitFile(relativePath, rendered.content, rendered.substitutions);
+    visitFile(
+      destinationRelativePath,
+      rendered.content,
+      rendered.substitutions,
+    );
   }
 }
 
@@ -376,6 +405,7 @@ export function generateProjectFromTemplate(
         });
       },
       () => undefined,
+      options.isCancelled,
     );
 
     return {
@@ -393,6 +423,7 @@ export function generateProjectFromTemplate(
   let removedExistingDestination = false;
 
   try {
+    assertNotCancelled(options.isCancelled);
     visitTemplateTree(
       templateRoot,
       '.',
@@ -418,7 +449,10 @@ export function generateProjectFromTemplate(
 
         mkdirSync(destinationPath, { recursive: false });
       },
+      options.isCancelled,
     );
+
+    assertNotCancelled(options.isCancelled);
 
     // Re-validate immediately before the mutating write phase. The checks
     // above can be invalidated by a concurrent destination replacement while
@@ -452,10 +486,12 @@ export function generateProjectFromTemplate(
         );
       }
 
+      assertNotCancelled(options.isCancelled);
       rmdirSync(destination);
       removedExistingDestination = true;
     }
 
+    assertNotCancelled(options.isCancelled);
     // Provenance marker: record only the template identifier and generator
     // version — never user, host, path, or environment information. Kept
     // byte-stable across runs except for the version value itself. Written
@@ -472,6 +508,7 @@ export function generateProjectFromTemplate(
       'utf8',
     );
 
+    assertNotCancelled(options.isCancelled);
     renameSync(stagingRoot, destination);
   } catch (error) {
     rmSync(stagingRoot, { recursive: true, force: true });

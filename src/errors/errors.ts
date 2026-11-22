@@ -49,3 +49,13 @@ export class InternalCliError extends CliError {
     );
   }
 }
+
+export class ScaffoldingCancelledCliError extends CliError {
+  constructor() {
+    super(
+      'ScaffoldingCancelledCliError',
+      'Project scaffolding cancelled.',
+      EXIT_CODES.cancelled,
+    );
+  }
+}

@@ -12,7 +12,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import process from 'node:process';
-import { delimiter, join } from 'node:path';
+import { delimiter, dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const repositoryRoot = process.cwd();
@@ -102,6 +102,18 @@ try {
   const contractRoot = join(root, 'smoke-contract');
   assert.equal(existsSync(join(contractRoot, 'Cargo.toml')), true);
 
+  // Deployment preflight requires a built Wasm artifact; the mocked stellar
+  // executable never builds one, so provide a minimal valid fixture.
+  const wasmArtifact = join(
+    contractRoot,
+    'target',
+    'wasm32v1-none',
+    'release',
+    'stellarforge-starter-contract.wasm',
+  );
+  mkdirSync(dirname(wasmArtifact), { recursive: true });
+  writeFileSync(wasmArtifact, Buffer.from([0, 0x61, 0x73, 0x6d, 1, 0, 0, 0]));
+
   writeFileSync(
     join(contractRoot, 'stellarforge.config.json'),
     JSON.stringify({
@@ -119,7 +131,7 @@ try {
     [
       '#!/usr/bin/env sh',
       'set -eu',
-      'expected="contract deploy --source-account ci-deployer --network testnet"',
+      'expected="contract deploy --wasm target/wasm32v1-none/release/stellarforge-starter-contract.wasm --source-account ci-deployer --network testnet"',
       'actual="$*"',
       'if [ "$actual" != "$expected" ]; then',
       '  echo "unexpected stellar args" >&2',
@@ -135,7 +147,7 @@ try {
     writeFileSync(
       join(contractRoot, 'contract'),
       [
-        'const expected = "deploy --source-account ci-deployer --network testnet";',
+        'const expected = "deploy --wasm target/wasm32v1-none/release/stellarforge-starter-contract.wasm --source-account ci-deployer --network testnet";',
         'const actual = process.argv.slice(2).join(" ");',
         'if (actual !== expected) {',
         '  process.stderr.write("unexpected stellar args\\n");',

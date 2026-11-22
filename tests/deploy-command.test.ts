@@ -64,8 +64,11 @@ describe('deploy command', () => {
     const command = createDeployCommand({
       cwd: () => '/workspace',
       output: captured.output,
+      runPreflight: () => ({
+        passed: true,
+        checks: [{ label: 'Preflight', passed: true }],
+      }),
       resolvePlan: () => [],
-      runPreflight: () => ({ passed: true, checks: [] }),
       spawnProcess,
     });
 
@@ -81,7 +84,7 @@ describe('deploy command', () => {
 
     expect(spawnProcess).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(captured.stdoutText()).toContain('preflight');
+    expect(captured.stdoutText()).toContain('Preflight');
     expect(captured.stdoutText()).not.toContain('alice');
     fetchSpy.mockRestore();
   });
@@ -99,7 +102,10 @@ describe('deploy command', () => {
     const command = createDeployCommand({
       cwd: () => '/workspace',
       output: captured.output,
-      runPreflight: () => ({ passed: true, checks: [] }),
+      runPreflight: () => ({
+        passed: true,
+        checks: [{ label: 'Preflight', passed: true }],
+      }),
       resolvePlan(input) {
         received = input;
         return [
@@ -148,7 +154,10 @@ describe('deploy command', () => {
     const child = new DeployChild();
     const command = createDeployCommand({
       cwd: () => '/workspace',
-      runPreflight: () => ({ passed: true, checks: [] }),
+      runPreflight: () => ({
+        passed: true,
+        checks: [{ label: 'Preflight', passed: true }],
+      }),
       resolvePlan: () => [
         {
           label: 'stellar:deploy',
@@ -188,7 +197,10 @@ describe('deploy command', () => {
       const processKill = vi.spyOn(process, 'kill').mockReturnValue(true);
       const command = createDeployCommand({
         cwd: () => '/workspace',
-        runPreflight: () => ({ passed: true, checks: [] }),
+        runPreflight: () => ({
+          passed: true,
+          checks: [{ label: 'Preflight', passed: true }],
+        }),
         resolvePlan: () => [
           {
             label: 'stellar:deploy',

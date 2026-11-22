@@ -83,7 +83,7 @@ export function createDeployCommand(
     )
     .option(
       '--preflight',
-      'Run local preflight checks without starting a deployment.',
+      'Validate deployment inputs and project requirements without starting the Stellar CLI.',
     )
     .action(async (flags: DeployCommandFlags) => {
       const projectRoot = cwd();
@@ -128,7 +128,8 @@ export function createDeployCommand(
         );
       }
 
-      if (flags.preflight === true) {
+      if (flags.preflight) {
+        output.info('Preflight only. No Stellar CLI process was started.');
         return;
       }
 

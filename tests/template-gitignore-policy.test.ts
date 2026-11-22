@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { TEMPLATE_IDS } from '../src/generator/template-registry.js';
@@ -60,10 +60,11 @@ describe('generated template .gitignore policy', () => {
     '%s ignores local state without hiding project files',
     (id) =>
       withTempDirectory((root) => {
-        const ignoreFile = readFileSync(
-          join(repositoryRoot, 'templates', id, '.gitignore'),
-          'utf8',
-        );
+        const dotted = join(repositoryRoot, 'templates', id, '.gitignore');
+        const sourceIgnore = existsSync(dotted)
+          ? dotted
+          : join(repositoryRoot, 'templates', id, 'gitignore');
+        const ignoreFile = readFileSync(sourceIgnore, 'utf8');
         writeFileSync(join(root, '.gitignore'), ignoreFile);
 
         const initialized = git(root, ['init', '--quiet']);

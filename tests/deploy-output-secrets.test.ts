@@ -44,8 +44,11 @@ async function runDeploy(
   const command = createDeployCommand({
     cwd: () => '/workspace',
     output: captured.output,
-    runPreflight: () => ({ passed: true, checks: [] }),
     resolveConfig: (_cwd, overrides) => overrides,
+    runPreflight: () => ({
+      passed: true,
+      checks: [{ label: 'Preflight', passed: true }],
+    }),
     resolvePlan: () => [DEPLOY_SPEC],
     spawnProcess: () => child,
   });

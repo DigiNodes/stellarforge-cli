@@ -9,6 +9,11 @@ import { EXIT_CODES } from './errors/errors.js';
 import { runCli } from './main.js';
 
 /**
+ * Documented cancellation exit code for user interrupts (SIGINT/SIGTERM).
+ * This is the conventional 130 exit code for signal-terminated processes.
+ */
+
+/**
  * Tracks whether a cancellation signal has already been observed.
  * The first signal triggers graceful cleanup and a documented non-zero exit.
  * A second signal follows the documented forced-exit behavior (immediate termination).

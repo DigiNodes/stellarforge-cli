@@ -20,4 +20,17 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'error',
     },
   },
+  {
+    files: ['templates/**/*.js'],
+    languageOptions: {
+      globals: {
+        clearInterval: 'readonly',
+        clearTimeout: 'readonly',
+        process: 'readonly',
+        setInterval: 'readonly',
+        setTimeout: 'readonly',
+        URL: 'readonly',
+      },
+    },
+  },
 );

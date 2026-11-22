@@ -253,7 +253,7 @@ If you believe a secret disclosure is caused by a vulnerability, follow [SECURIT
 
 ## Cancelled operation
 
-A command that receives an interrupt (SIGINT, or SIGBREAK where supported) stops gracefully and exits with code `130`. Cleanup runs first: `dev` stops its watcher and child processes, `test` and `deploy` wait for the in-flight subprocess, and `new` rolls back partially generated files. A second interrupt during cleanup exits immediately with the same code. Cancellation messages go to stderr and never report success. See [Exit Codes](exit-codes.md#cancellation-sigint-behavior).
+A command that receives an interrupt (SIGINT, or SIGBREAK where supported) stops gracefully and exits with code `130`. Cleanup runs first: `dev` stops its watcher and child processes, `test` and `deploy` wait for the in-flight subprocess, and `new` rolls back partially generated files. A second interrupt during cleanup exits immediately with the same code. Cancellation messages go to stderr and never report success. See [Exit Codes](exit-codes.md#stable-baseline).
 
 ## Still blocked?
 

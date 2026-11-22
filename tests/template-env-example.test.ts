@@ -165,7 +165,8 @@ function collectConsumedVariables(dir: string): Set<string> {
 }
 
 function readGitignore(dir: string): string {
-  const file = join(dir, '.gitignore');
+  const dotted = join(dir, '.gitignore');
+  const file = existsSync(dotted) ? dotted : join(dir, 'gitignore');
   return existsSync(file) ? readFileSync(file, 'utf8') : '';
 }
 
