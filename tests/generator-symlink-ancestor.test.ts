@@ -370,7 +370,7 @@ describe('bundled template source symlink policy (SW-131)', () => {
       }),
   );
 
-  it.skipIf(!symlinksSupported)(
+  it.skipIf(!fileSymlinksSupported)(
     'rejects a symlink whose resolved target escapes the template root',
     () =>
       withTempDirectory((root) => {

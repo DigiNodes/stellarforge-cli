@@ -107,7 +107,7 @@ describe('project test workflow resolution', () => {
     withTempDirectory((root) => {
       expect(() => resolveTestProcessPlan(root)).toThrow(ValidationCliError);
       expect(() => resolveTestProcessPlan(root)).toThrow(
-        'No supported StellarForge test workflow',
+        'No supported StellarForge project root was found',
       );
 
       writeFileSync(join(root, 'package.json'), '{not-json');
