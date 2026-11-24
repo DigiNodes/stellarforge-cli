@@ -133,6 +133,8 @@ The command requires a valid project `package.json` with a `scripts` object. Scr
 
 A candidate counts as present only when it is a string with a non-blank value; blank or whitespace-only entries are ignored in favour of the next candidate. If every supported candidate is blank or absent, the command fails with actionable guidance before any subprocess is spawned.
 
+The supported invocation location is the generated project root or any nested directory inside it. Root discovery walks at most eight parent directories and stops at the filesystem root, a repository boundary (`.git`), or the generated `.stellarforge.json` marker. Exactly one project root must be discovered; nested workspaces and multiple project roots are rejected with actionable guidance before any subprocess is spawned.
+
 StellarForge invokes npm as an executable with an argument array; it does not execute the package script text through a constructed shell command.
 
 Child stdout/stderr are streamed with process labels.
@@ -167,9 +169,11 @@ Supported project forms are:
 
 A string-valued but empty or whitespace-only `scripts.test` is rejected with exit `2` before any subprocess is spawned, because npm treats an empty test script as a successful no-op and would report success without running any tests.
 
+The supported invocation location is the generated project root or any nested directory inside it. Root discovery uses the same bounded policy as `stellarforge dev`: at most eight parent directories, stopping at the filesystem root, a `.git` boundary, or the generated `.stellarforge.json` marker. Multiple discovered roots are rejected instead of guessed.
+
 When both are present, the Node.js project test workflow is selected first.
 
-StellarForge does not execute package script text directly. It delegates through npm or Cargo and preserves external-process failures.
+StellarForge does not execute package script text directly. It delegates through npm or Cargo and preserves external-process failures. If npm or its supported launcher cannot be started, the failure is reported as a missing/permission-denied runtime prerequisite with the supported versions (`Node.js >=22.13.0 <25`, `npm >=10.9.0`) instead of being reported as a test-script failure. StellarForge never falls back to another package manager or installs tools automatically, and the message does not echo environment values.
 
 ### Exit behavior
 

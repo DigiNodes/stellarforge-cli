@@ -70,7 +70,10 @@ try {
   );
   writeLine(process.stdout, `horizonUrl: ${horizonUrl}`);
   writeLine(process.stdout, `rpcUrl: ${rpcUrl}`);
-  globalThis.console.log(`{{projectName}} is configured for the ${network.network} Stellar network.`);
+
+  globalThis.console.log(
+    `{{projectName}} is configured for the ${network.network} Stellar network.`,
+  );
   globalThis.console.log(`Horizon: ${network.horizonUrl}`);
   globalThis.console.log(`RPC: ${network.rpcUrl}`);
 } catch (error) {

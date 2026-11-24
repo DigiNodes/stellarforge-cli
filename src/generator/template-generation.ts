@@ -12,6 +12,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { TextDecoder } from 'node:util';
 import {
   ScaffoldingCancelledCliError,
   ValidationCliError,
@@ -23,6 +24,7 @@ import type {
   ProjectGenerationPreviewFile,
   ProjectGenerationResult,
 } from './types.js';
+import { collectTemplateSourceTree } from './template-sources.js';
 
 const SUBSTITUTION_TOKEN = /\{\{([A-Za-z][A-Za-z0-9]*)\}\}/g;
 
@@ -109,7 +111,22 @@ function renderText(
 }
 
 function isBinary(content: Buffer): boolean {
-  return content.includes(0);
+  for (const byte of content) {
+    if (byte === 0) {
+      return true;
+    }
+    if (byte < 0x20 && byte !== 0x09 && byte !== 0x0a && byte !== 0x0d) {
+      return true;
+    }
+  }
+
+  try {
+    new TextDecoder('utf-8', { fatal: true }).decode(content);
+  } catch {
+    return true;
+  }
+
+  return false;
 }
 
 function assertNotCancelled(isCancelled?: () => boolean): void {
@@ -351,16 +368,9 @@ export function generateProjectFromTemplate(
   const destinationParent = dirname(destination);
   const root = resolve(context.input.cwd);
 
-  if (!existsSync(templateRoot) || !lstatSync(templateRoot).isDirectory()) {
-    throw new ValidationCliError('Selected template source is unavailable.');
-  }
-
-  if (lstatSync(templateRoot).isSymbolicLink()) {
-    throw new ValidationCliError(
-      'Template source must not be a symbolic link.',
-    );
-  }
-
+  // Reject unsafe source entries (symlinks, escaping real paths, and
+  // portable-path collisions) before any file is staged or written.
+  collectTemplateSourceTree(templateRoot);
   assertTemplateBudget(templateRoot);
 
   assertDestinationContainment(root, destination);

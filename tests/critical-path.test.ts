@@ -218,7 +218,7 @@ describe('critical path: test orchestration', () => {
         ValidationCliError,
       );
       await expect(command.parseAsync(['node', 'test'])).rejects.toThrow(
-        'No supported StellarForge test workflow',
+        'No supported StellarForge project root was found for `stellarforge test`',
       );
     }));
 });

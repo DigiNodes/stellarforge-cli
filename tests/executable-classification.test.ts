@@ -233,16 +233,28 @@ describe('timeout and process termination', () => {
           );
           return output
             .split(/\r?\n/)
-            .filter((line) => line.includes(marker))
+            .filter(
+              (line) =>
+                line.includes(marker) &&
+                !line.includes('wmic') &&
+                !line.includes('cmd.exe'),
+            )
             .map((line) => parseInt(line.trim().split(',').at(-1) ?? '', 10))
-            .filter((pid) => !isNaN(pid) && pid !== process.pid);
+            .filter(
+              (pid) =>
+                !isNaN(pid) && pid !== process.pid && pid !== process.ppid,
+            );
         } catch {
           return [];
         }
       }
 
       try {
-        const output = execSync(`pgrep -f "node.*${marker}"`, {
+        // The bracket trick keeps pgrep from matching its own shell command,
+        // which also contains the marker text.
+        const escapedMarker = marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = `node.*[${escapedMarker[0]}]${escapedMarker.slice(1)}`;
+        const output = execSync(`pgrep -f "${pattern}"`, {
           encoding: 'utf8',
         });
         return output
