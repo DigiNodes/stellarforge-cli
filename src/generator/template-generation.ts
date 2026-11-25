@@ -457,7 +457,7 @@ export function generateProjectFromTemplate(
           );
         }
 
-        mkdirSync(destinationPath, { recursive: false });
+        mkdirSync(destinationPath, { recursive: true });
       },
       options.isCancelled,
     );

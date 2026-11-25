@@ -1,13 +1,12 @@
 import { TextDecoder } from 'node:util';
 import {
   closeSync,
-  constants as fsConstants,
+  constants,
   existsSync,
   fstatSync,
   lstatSync,
   openSync,
-  readFileSync,
-  type Stats,
+  readSync,
 } from 'node:fs';
 import { resolve } from 'node:path';
 import { ValidationCliError } from '../errors/errors.js';
@@ -21,109 +20,58 @@ export const PROJECT_CONFIG_FILENAME = 'stellarforge.config.json';
 const MAX_CONFIG_BYTES = 64 * 1024;
 
 /**
- * Portable project-config filesystem policy:
- *
- * - the only accepted path is `<project root>/stellarforge.config.json`;
- * - the path must be a regular file; symlinks are rejected rather than
- *   followed, so a link can never redirect the loader outside the root;
- * - the opened descriptor is checked before reading, so a path swap between
- *   inspection and read cannot turn the read into a symlink escape;
- * - POSIX mode bits and ownership are deliberately not used as trust signals.
- *   The file is non-secret by design (version, network, identity alias), so
- *   permissive modes are valid and must not be rejected. Windows also reports
- *   synthetic POSIX bits, which cannot carry security meaning there;
- * - unreadable files fail with a content-free validation error;
- * - the CLI never changes permissions or ownership and never attempts to
- *   escalate privileges.
- *
- * `O_NOFOLLOW` is used where the platform exposes it. Where it does not
- * (notably Windows), the post-open path check keeps the same explicit symlink
- * boundary for the read path.
+ * The file identity fields Node exposes for both directory entries and open
+ * descriptors. `dev` + `ino` are the canonical "same file" check; neither is
+ * derived from the path, so a replacement entry always reports a different
+ * identity even when it has the same name or contents.
  */
-const NOFOLLOW_FLAG: number =
-  (fsConstants as { O_NOFOLLOW?: number }).O_NOFOLLOW ?? 0;
-const CONFIG_OPEN_FLAGS = fsConstants.O_RDONLY | NOFOLLOW_FLAG;
-
-function assertRegularConfigFile(metadata: Stats): void {
-  if (metadata.isSymbolicLink()) {
-    throw new ValidationCliError(
-      'stellarforge.config.json must be a regular project file, not a symbolic link.',
-    );
-  }
-
-  if (!metadata.isFile()) {
-    throw new ValidationCliError(
-      'stellarforge.config.json must be a regular project file.',
-    );
-  }
+export interface ConfigFileMetadata {
+  readonly dev: number;
+  readonly ino: number;
+  readonly size: number;
+  isSymbolicLink(): boolean;
+  isFile(): boolean;
 }
 
-function assertConfigSize(size: number): void {
-  if (size > MAX_CONFIG_BYTES) {
-    throw new ValidationCliError(
-      'stellarforge.config.json is larger than the 64 KiB MVP limit.',
-    );
-  }
+/**
+ * Minimal synchronous filesystem surface used by the config loader.
+ * Production uses the `node:fs`-backed default below; tests inject a
+ * deterministic boundary to simulate the path being swapped between
+ * inspection and reading without relying on timing loops.
+ */
+export interface ConfigFsBoundary {
+  /** Like `lstatSync`: never follows the final symlink. */
+  lstat(path: string): ConfigFileMetadata;
+  /** Like `fs.openSync(path, flags)`. */
+  open(path: string, flags: number): number;
+  /** Like `fstatSync`: describes the already-open descriptor. */
+  fstat(fd: number): ConfigFileMetadata;
+  /** Like `fs.readSync(fd, buffer, offset, length, null)`. */
+  read(fd: number, buffer: Buffer, offset: number, length: number): number;
+  /** Like `closeSync`. */
+  close(fd: number): void;
 }
 
-function isSymlinkOpenFailure(error: unknown): boolean {
-  return (
-    error instanceof Error && (error as NodeJS.ErrnoException).code === 'ELOOP'
-  );
-}
+/**
+ * `O_NOFOLLOW` is not available on every supported platform (notably
+ * Windows). Where it is missing we fall back to a read-only open and rely on
+ * the descriptor identity check below instead of silently following a link.
+ * That fallback still fails closed: a path replaced by a symlink to a
+ * different file yields a different `dev`/`ino` pair and is rejected before
+ * any bytes are decoded or parsed.
+ */
+const O_NOFOLLOW: number =
+  typeof constants.O_NOFOLLOW === 'number' ? constants.O_NOFOLLOW : 0;
+const CONFIG_OPEN_FLAGS = constants.O_RDONLY | O_NOFOLLOW;
 
-function readConfigFile(configPath: string): { bytes: Buffer; text: string } {
-  let descriptor: number | undefined;
-
-  try {
-    try {
-      descriptor = openSync(configPath, CONFIG_OPEN_FLAGS);
-    } catch (error) {
-      // A link swapped in after the initial lstat() is reported with ELOOP on
-      // platforms that support O_NOFOLLOW. Keep the symlink diagnostic stable.
-      if (isSymlinkOpenFailure(error)) {
-        throw new ValidationCliError(
-          'stellarforge.config.json must be a regular project file, not a symbolic link.',
-        );
-      }
-      throw error;
-    }
-
-    const opened = fstatSync(descriptor);
-    assertRegularConfigFile(opened);
-    assertConfigSize(opened.size);
-
-    // The path is checked again after opening. On platforms without
-    // O_NOFOLLOW this catches a link substituted before open(); the open
-    // descriptor still pins the original file for the bytes read below.
-    assertRegularConfigFile(lstatSync(configPath));
-
-    const configBytes = readFileSync(descriptor);
-    assertConfigSize(configBytes.length);
-
-    return { bytes: configBytes, text: decodeUtf8(configBytes) };
-  } catch (error) {
-    if (error instanceof ValidationCliError) {
-      throw error;
-    }
-
-    // Never include the OS error text, path, or file contents in the message.
-    throw new ValidationCliError(
-      'Unable to inspect stellarforge.config.json.',
-      {
-        cause: error,
-      },
-    );
-  } finally {
-    if (descriptor !== undefined) {
-      try {
-        closeSync(descriptor);
-      } catch {
-        // A close failure must not replace an already-produced result.
-      }
-    }
-  }
-}
+const defaultConfigFsBoundary: ConfigFsBoundary = {
+  lstat: (path) => lstatSync(path),
+  open: (path, flags) => openSync(path, flags),
+  fstat: (fd) => fstatSync(fd),
+  read: (fd, buffer, offset, length) =>
+    readSync(fd, buffer, offset, length, null),
+  close: (fd) => closeSync(fd),
+};
 
 /**
  * Best-effort JSON scanner that rejects duplicate object keys, including
@@ -423,7 +371,49 @@ export interface ResolvedProjectConfig {
   readonly identity?: string;
 }
 
-export function loadProjectConfig(cwd: string): StellarForgeConfig | undefined {
+function configTooLargeMessage(): string {
+  return 'stellarforge.config.json is larger than the 64 KiB MVP limit.';
+}
+
+/**
+ * Shared regular-file policy, applied both to the inspected entry and to the
+ * descriptor that is actually read. Messages intentionally name only the
+ * config filename: they never echo paths, link targets, or file contents.
+ */
+function assertRegularConfigFile(metadata: ConfigFileMetadata): void {
+  if (metadata.isSymbolicLink()) {
+    throw new ValidationCliError(
+      'stellarforge.config.json must be a regular project file, not a symbolic link.',
+    );
+  }
+
+  if (!metadata.isFile()) {
+    throw new ValidationCliError(
+      'stellarforge.config.json must be a regular project file.',
+    );
+  }
+}
+
+/**
+ * The descriptor must describe the very entry that passed validation. Without
+ * this check, a path swapped for a symlink on a platform without `O_NOFOLLOW`
+ * could redirect the read to a different file that never passed inspection.
+ */
+function assertSameConfigFile(
+  inspected: ConfigFileMetadata,
+  opened: ConfigFileMetadata,
+): void {
+  if (inspected.dev !== opened.dev || inspected.ino !== opened.ino) {
+    throw new ValidationCliError(
+      'stellarforge.config.json changed while it was being read.',
+    );
+  }
+}
+
+export function loadProjectConfig(
+  cwd: string,
+  boundary: ConfigFsBoundary = defaultConfigFsBoundary,
+): StellarForgeConfig | undefined {
   const projectRoot = resolve(cwd);
   const configPath = resolve(projectRoot, PROJECT_CONFIG_FILENAME);
 
@@ -431,9 +421,9 @@ export function loadProjectConfig(cwd: string): StellarForgeConfig | undefined {
     return undefined;
   }
 
-  let metadata: Stats;
+  let metadata: ConfigFileMetadata;
   try {
-    metadata = lstatSync(configPath);
+    metadata = boundary.lstat(configPath);
   } catch (error) {
     throw new ValidationCliError(
       'Unable to inspect stellarforge.config.json.',
@@ -442,10 +432,64 @@ export function loadProjectConfig(cwd: string): StellarForgeConfig | undefined {
   }
 
   assertRegularConfigFile(metadata);
-  assertConfigSize(metadata.size);
 
-  const { bytes: configBytes, text: decodedText } = readConfigFile(configPath);
-  let text = decodedText;
+  if (metadata.size > MAX_CONFIG_BYTES) {
+    throw new ValidationCliError(configTooLargeMessage());
+  }
+
+  // Read from the verified descriptor, never from the path again: replacing
+  // the path after `open` cannot redirect these reads. At most one byte past
+  // the limit is buffered, so a file that grows after inspection is rejected
+  // without allocating its full contents.
+  const configBuffer = Buffer.alloc(MAX_CONFIG_BYTES + 1);
+  let descriptor: number | undefined;
+  let bytesRead = 0;
+
+  try {
+    descriptor = boundary.open(configPath, CONFIG_OPEN_FLAGS);
+    const opened = boundary.fstat(descriptor);
+    assertRegularConfigFile(opened);
+    assertSameConfigFile(metadata, opened);
+
+    while (bytesRead < configBuffer.length) {
+      const chunk = boundary.read(
+        descriptor,
+        configBuffer,
+        bytesRead,
+        configBuffer.length - bytesRead,
+      );
+
+      if (chunk === 0) {
+        break;
+      }
+
+      bytesRead += chunk;
+    }
+  } catch (error) {
+    if (error instanceof ValidationCliError) {
+      throw error;
+    }
+
+    throw new ValidationCliError(
+      'Unable to inspect stellarforge.config.json.',
+      { cause: error },
+    );
+  } finally {
+    if (descriptor !== undefined) {
+      try {
+        boundary.close(descriptor);
+      } catch {
+        // Descriptor cleanup is best-effort; it must not mask a policy error.
+      }
+    }
+  }
+
+  if (bytesRead > MAX_CONFIG_BYTES) {
+    throw new ValidationCliError(configTooLargeMessage());
+  }
+
+  const configBytes = configBuffer.subarray(0, bytesRead);
+  let text = decodeUtf8(configBytes);
 
   // Tolerate exactly one leading UTF-8 BOM (Windows editor convention). Count
   // the BOM sequences in the raw bytes because `TextDecoder` collapses

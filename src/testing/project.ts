@@ -1,5 +1,7 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import {
+  isPackageJsonMissing,
+  readPackageJsonManifest,
   resolveProjectPath,
   selectProjectRoot,
   type DevProcessSpec,
@@ -26,20 +28,11 @@ interface ProjectPackage {
 function resolveNodeTestPlan(projectRoot: string): DevProcessSpec | undefined {
   const packagePath = resolveProjectPath(projectRoot, 'package.json');
 
-  if (!existsSync(packagePath)) {
+  if (isPackageJsonMissing(packagePath)) {
     return undefined;
   }
 
-  let projectPackage: ProjectPackage;
-  try {
-    projectPackage = JSON.parse(
-      readFileSync(packagePath, 'utf8'),
-    ) as ProjectPackage;
-  } catch (error) {
-    throw new ValidationCliError('package.json is not valid JSON.', {
-      cause: error,
-    });
-  }
+  const projectPackage = readPackageJsonManifest(packagePath) as ProjectPackage;
 
   if (
     projectPackage.scripts === null ||

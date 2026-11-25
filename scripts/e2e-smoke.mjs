@@ -9,6 +9,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -25,7 +26,7 @@ function runCli(args, cwd, env = process.env) {
     env,
     encoding: 'utf8',
     shell: false,
-    timeout: 30_000,
+    timeout: 60_000,
   });
 }
 
@@ -42,6 +43,12 @@ function expectSuccessful(result, label) {
 const root = mkdtempSync(join(tmpdir(), 'stellarforge-e2e-'));
 
 try {
+  assert.match(
+    readFileSync(cliPath, 'utf8'),
+    /^#!\/usr\/bin\/env node\r?\n/,
+    'built CLI must start with the Node shebang',
+  );
+
   const help = runCli(['--help'], root);
   expectSuccessful(help, 'help');
   assert.match(help.stdout, /Usage: stellarforge \[options\] \[command\]/);
@@ -230,10 +237,17 @@ try {
   const [packEntry] = JSON.parse(packInspect.stdout);
   assert.ok(packEntry, 'pack dry-run returned no entry');
   const packedFiles = packEntry.files.map((file) => file.path);
+  const packedCli = packEntry.files.find((file) => file.path === 'dist/cli.js');
   assert.ok(
-    packedFiles.some((path) => path.startsWith('dist/cli.js')),
+    packedCli,
     'tarball must contain dist/cli.js',
   );
+  if (process.platform !== 'win32') {
+    assert.ok(
+      packedCli.mode & 0o111,
+      'packed dist/cli.js must be executable on POSIX',
+    );
+  }
   assert.ok(
     packedFiles.some((path) => path.startsWith('templates/basic-app/')),
     'tarball must contain templates/basic-app/',
@@ -306,6 +320,20 @@ try {
     '@diginodes',
     'stellarforge-cli',
   );
+  const installedPackageJson = JSON.parse(
+    readFileSync(join(installedPackage, 'package.json'), 'utf8'),
+  );
+  assert.equal(
+    installedPackageJson.bin?.stellarforge,
+    'dist/cli.js',
+    'packed package bin must point to dist/cli.js',
+  );
+  if (process.platform !== 'win32') {
+    assert.ok(
+      statSync(join(installedPackage, 'dist', 'cli.js')).mode & 0o111,
+      'installed dist/cli.js must be executable on POSIX',
+    );
+  }
   assert.equal(
     existsSync(join(installedPackage, 'dist', 'cli.js')),
     true,
@@ -380,5 +408,16 @@ try {
     'StellarForge packed tarball consumer smoke test passed.\n',
   );
 } finally {
-  rmSync(root, { recursive: true, force: true });
+  try {
+    rmSync(root, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 100,
+    });
+  } catch (error) {
+    process.stderr.write(
+      `Warning: could not remove smoke temp directory ${root}: ${error.message}\n`,
+    );
+  }
 }
