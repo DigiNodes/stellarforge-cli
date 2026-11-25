@@ -1,4 +1,5 @@
 import {
+  chmodSync,
   existsSync,
   lstatSync,
   mkdirSync,
@@ -24,7 +25,10 @@ import type {
   ProjectGenerationPreviewFile,
   ProjectGenerationResult,
 } from './types.js';
-import { collectTemplateSourceTree } from './template-sources.js';
+import {
+  collectTemplateSourceTree,
+  resolveGeneratedFileMode,
+} from './template-sources.js';
 
 const SUBSTITUTION_TOKEN = /\{\{([A-Za-z][A-Za-z0-9]*)\}\}/g;
 
@@ -233,6 +237,7 @@ function visitTemplateTree(
     relativePath: string,
     content: Buffer | string,
     substitutions: readonly string[],
+    mode: number,
   ) => void,
   visitDirectory: (relativePath: string) => void,
   isCancelled?: () => boolean,
@@ -292,7 +297,7 @@ function visitTemplateTree(
     const content = readFileSync(sourcePath);
 
     if (isBinary(content)) {
-      visitFile(destinationRelativePath, content, []);
+      visitFile(destinationRelativePath, content, [], sourceStat.mode);
       continue;
     }
 
@@ -301,6 +306,7 @@ function visitTemplateTree(
       destinationRelativePath,
       rendered.content,
       rendered.substitutions,
+      sourceStat.mode,
     );
   }
 }
@@ -427,8 +433,10 @@ export function generateProjectFromTemplate(
     };
   }
 
-  const stagingRoot = mkdtempSync(
-    join(destinationParent, `.stellarforge-${context.input.projectName}-`),
+  const stagingRoot = realpathSync(
+    mkdtempSync(
+      join(destinationParent, `.stellarforge-${context.input.projectName}-`),
+    ),
   );
   let removedExistingDestination = false;
 
@@ -438,7 +446,7 @@ export function generateProjectFromTemplate(
       templateRoot,
       '.',
       variables,
-      (relativePath, content) => {
+      (relativePath, content, _substitutions, mode) => {
         const destinationPath = resolve(stagingRoot, relativePath);
         if (!isWithin(stagingRoot, destinationPath)) {
           throw new ValidationCliError(
@@ -447,7 +455,9 @@ export function generateProjectFromTemplate(
         }
 
         mkdirSync(dirname(destinationPath), { recursive: true });
-        writeFileSync(destinationPath, content);
+        const fileMode = resolveGeneratedFileMode(mode);
+        writeFileSync(destinationPath, content, { mode: fileMode });
+        chmodSync(destinationPath, fileMode);
       },
       (relativePath) => {
         const destinationPath = resolve(stagingRoot, relativePath);

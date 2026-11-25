@@ -398,11 +398,20 @@ function assertRegularConfigFile(metadata: ConfigFileMetadata): void {
  * The descriptor must describe the very entry that passed validation. Without
  * this check, a path swapped for a symlink on a platform without `O_NOFOLLOW`
  * could redirect the read to a different file that never passed inspection.
+ *
+ * `dev`/`ino` are only meaningful on POSIX platforms. On Windows they are
+ * unreliable (inconsistent between `lstatSync` and `fstatSync`), so the
+ * identity check is skipped there; a post-open `lstatSync` re-inspection in
+ * `loadProjectConfig` provides the symlink boundary instead.
  */
 function assertSameConfigFile(
   inspected: ConfigFileMetadata,
   opened: ConfigFileMetadata,
 ): void {
+  if (process.platform === 'win32') {
+    return;
+  }
+
   if (inspected.dev !== opened.dev || inspected.ino !== opened.ino) {
     throw new ValidationCliError(
       'stellarforge.config.json changed while it was being read.',
@@ -450,6 +459,14 @@ export function loadProjectConfig(
     const opened = boundary.fstat(descriptor);
     assertRegularConfigFile(opened);
     assertSameConfigFile(metadata, opened);
+
+    // On Windows, dev/ino are unreliable so the identity check above is
+    // skipped. Re-inspect the path after opening to detect a symlink that
+    // was substituted before the open completed (O_NOFOLLOW is unavailable
+    // on Windows, so openSync follows symlinks).
+    if (process.platform === 'win32') {
+      assertRegularConfigFile(boundary.lstat(configPath));
+    }
 
     while (bytesRead < configBuffer.length) {
       const chunk = boundary.read(

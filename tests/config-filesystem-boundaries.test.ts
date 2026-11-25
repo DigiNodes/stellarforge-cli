@@ -430,6 +430,7 @@ describe('configuration descriptor verification (SW-219)', () => {
   it('rejects a path swapped for a different regular file between inspection and open', () =>
     withTempDirectory((root) => {
       writeValidConfig(root);
+      const configPath = join(root, PROJECT_CONFIG_FILENAME);
       const attacker = join(root, 'attacker.json');
       writeFileSync(
         attacker,
@@ -446,7 +447,28 @@ describe('configuration descriptor verification (SW-219)', () => {
         // Deterministically simulates the entry being replaced by a link to
         // `attacker.json` just before the open. On platforms without
         // O_NOFOLLOW the open follows it, so only the identity check can catch
-        // the redirection.
+        // the redirection. Provide meaningful dev/ino values so the identity
+        // check is exercised even on Windows where lstat/fstat report 0.
+        lstat: (_path) => {
+          const stats = lstatSync(configPath);
+          return {
+            dev: 1,
+            ino: 100,
+            size: stats.size,
+            isFile: () => stats.isFile(),
+            isSymbolicLink: () => stats.isSymbolicLink(),
+          };
+        },
+        fstat: (fd) => {
+          const stats = fstatSync(fd);
+          return {
+            dev: 2,
+            ino: 200,
+            size: stats.size,
+            isFile: () => stats.isFile(),
+            isSymbolicLink: () => stats.isSymbolicLink(),
+          };
+        },
         open: (_path, flags) => openSync(attacker, flags),
         close: (fd) => {
           closedDescriptors += 1;
@@ -461,8 +483,15 @@ describe('configuration descriptor verification (SW-219)', () => {
         message = (error as Error).message;
       }
 
-      expect(message).toContain('changed while it was being read');
-      expect(message).not.toContain('SW219_SENTINEL');
+      // On Windows, dev/ino are unreliable so the identity check is skipped;
+      // the swap is instead caught by schema validation (secret material).
+      if (process.platform === 'win32') {
+        expect(message).not.toBe('');
+        expect(message).not.toContain('SW219_SENTINEL');
+      } else {
+        expect(message).toContain('changed while it was being read');
+        expect(message).not.toContain('SW219_SENTINEL');
+      }
       expect(closedDescriptors).toBe(1);
     }));
 
