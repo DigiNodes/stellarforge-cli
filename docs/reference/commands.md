@@ -36,6 +36,16 @@ stellarforge --version
 
 The version comes from the installed package's `package.json`. The root command name (from the single `bin` entry) and description match the same file; no registry request or subprocess is used, and no duplicate CLI-side constant is kept.
 
+### Local debug summary
+
+```bash
+stellarforge --debug-summary <command>
+```
+
+`--debug-summary` is opt-in and disabled by default. When enabled, StellarForge prints a single local-only summary line to `stderr` after command execution containing only the static execution category and bounded whole-millisecond duration measured with a monotonic clock (for example, `[debug] category=diagnostics duration=12ms`).
+
+No telemetry or diagnostic data is sent over the network or persisted to disk. Command arguments, environment values, filesystem paths, and user identifiers are never captured or printed.
+
 Unknown commands, unknown options, and missing required positional arguments are usage failures and exit with code `2`.
 
 ## `stellarforge new <project-name>`

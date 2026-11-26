@@ -41,6 +41,50 @@ export interface WrapOptions {
   readonly preserveUnbreakable?: boolean;
 }
 
+export type CommandExecutionCategory =
+  | 'diagnostics'
+  | 'scaffolding'
+  | 'development'
+  | 'testing'
+  | 'deployment'
+  | 'validation'
+  | 'root';
+
+export interface DebugSummary {
+  readonly category: CommandExecutionCategory;
+  readonly durationMs: number;
+}
+
+/**
+ * Computes elapsed duration in whole milliseconds from two monotonic
+ * nanosecond timestamps (e.g. `process.hrtime.bigint()`).
+ * Precision is bounded to 1 ms and negative deltas are clamped to 0.
+ */
+export function elapsedMonotonicMs(
+  startNs: bigint,
+  endNs: bigint = process.hrtime.bigint(),
+): number {
+  if (endNs <= startNs) {
+    return 0;
+  }
+
+  const elapsedNs = endNs - startNs;
+  return Number((elapsedNs + 500_000n) / 1_000_000n);
+}
+
+/**
+ * Formats a local-only debug summary line containing only the execution
+ * category and bounded duration. Never includes command arguments,
+ * environment values, paths, or user identifiers.
+ */
+export function formatDebugSummary(summary: DebugSummary): string {
+  const boundedMs =
+    Number.isFinite(summary.durationMs) && summary.durationMs > 0
+      ? Math.round(summary.durationMs)
+      : 0;
+  return `[debug] category=${summary.category} duration=${boundedMs}ms`;
+}
+
 const ESCAPE = 0x1b;
 const CONTROL_SEQUENCE_INTRODUCER = 0x9b;
 const LEFT_SQUARE_BRACKET = 0x5b;
