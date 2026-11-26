@@ -67,11 +67,14 @@ describe('sanitizeTerminalText', () => {
       sanitizeTerminalText(
         `safe${TERMINAL_FIXTURES.escapeSequences.ansiColors}${TERMINAL_FIXTURES.escapeSequences.oscTitle}\u0000end`,
       ),
-    ).toBe('safe[PASS] Git: git version 2.45.0 detected.Command execution in progressend');
+    ).toBe(
+      'safe[PASS] Git: git version 2.45.0 detected.Command execution in progressend',
+    );
   });
 
   it('blocks OSC hyperlinks, title changes, cursor movement, screen clearing, and cursor visibility controls', () => {
-    const hyperlink = 'start\u001b]8;;https://evil.example\u0007click\u001b]8;;\u0007end';
+    const hyperlink =
+      'start\u001b]8;;https://evil.example\u0007click\u001b]8;;\u0007end';
     const screenClear = 'top\u001b[2J\u001b[Hbottom';
     const mixed = [
       TERMINAL_FIXTURES.escapeSequences.oscTitleEsc,
@@ -163,7 +166,9 @@ describe('sanitizeTerminalText', () => {
     output.info(sanitizeTerminalText(line));
 
     expect(stdout).toHaveLength(1);
-    expect(stdout[0]).toContain(`Authorization: Bearer ${REDACTED_PLACEHOLDER}`);
+    expect(stdout[0]).toContain(
+      `Authorization: Bearer ${REDACTED_PLACEHOLDER}`,
+    );
     expect(stdout[0]).not.toContain(TOKEN_FIXTURE);
     expect(stdout[0]).not.toContain('\u001b');
     expect(stdout[0]).not.toContain('\r');
@@ -174,8 +179,14 @@ describe('shouldUseColor', () => {
   const originalEnv = { ...process.env };
 
   afterEach(() => {
-    process.env.NO_COLOR = originalEnv.NO_COLOR;
-    process.env.FORCE_COLOR = originalEnv.FORCE_COLOR;
+    for (const key of ['NO_COLOR', 'FORCE_COLOR'] as const) {
+      const original = originalEnv[key];
+      if (original === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = original;
+      }
+    }
   });
 
   it('disables color when NO_COLOR is set', () => {
@@ -256,8 +267,14 @@ describe('TerminalOutput color selection', () => {
   const originalEnv = { ...process.env };
 
   afterEach(() => {
-    process.env.NO_COLOR = originalEnv.NO_COLOR;
-    process.env.FORCE_COLOR = originalEnv.FORCE_COLOR;
+    for (const key of ['NO_COLOR', 'FORCE_COLOR'] as const) {
+      const original = originalEnv[key];
+      if (original === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = original;
+      }
+    }
   });
 
   it('enables color for TTY streams', () => {

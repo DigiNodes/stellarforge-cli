@@ -70,7 +70,6 @@ describe('npm pack content snapshot', () => {
       ).toBe(true);
       expect(path).not.toBe('.npmrc');
     }
-
   });
 
   // SW-145: regression guard for the Smart Contract template publish artifact.
@@ -105,47 +104,39 @@ describe('npm pack content snapshot', () => {
 // pure debugging overhead for end users), and compiled output must not leak
 // developer-local absolute filesystem paths.
 describe('source-map and stack-trace publish policy (SW-197)', () => {
-  it(
-    'builds source maps locally but excludes every .map file from the published package',
-    () => {
-      buildCli();
-      expect(existsSync(join(root, 'dist', 'cli.js.map'))).toBe(true);
-      expect(existsSync(join(root, 'dist', 'cli.d.ts.map'))).toBe(true);
+  it('builds source maps locally but excludes every .map file from the published package', () => {
+    buildCli();
+    expect(existsSync(join(root, 'dist', 'cli.js.map'))).toBe(true);
+    expect(existsSync(join(root, 'dist', 'cli.d.ts.map'))).toBe(true);
 
-      const entry = runPackDryRun();
-      const paths = entry.files.map((file) => file.path);
+    const entry = runPackDryRun();
+    const paths = entry.files.map((file) => file.path);
 
-      expect(paths.length).toBeGreaterThan(0);
-      expect(paths.some((path) => path.endsWith('.js'))).toBe(true);
-      expect(paths.some((path) => path.endsWith('.d.ts'))).toBe(true);
-      for (const path of paths) {
-        expect(path.endsWith('.map')).toBe(false);
+    expect(paths.length).toBeGreaterThan(0);
+    expect(paths.some((path) => path.endsWith('.js'))).toBe(true);
+    expect(paths.some((path) => path.endsWith('.d.ts'))).toBe(true);
+    for (const path of paths) {
+      expect(path.endsWith('.map')).toBe(false);
+    }
+  }, 30_000);
+
+  it('does not embed developer-local absolute paths in compiled output', () => {
+    buildCli();
+
+    const entry = runPackDryRun();
+    const localPathMarkers = [root.split(/[/\\]/).join('/'), 'node_modules'];
+
+    for (const file of entry.files) {
+      if (!file.path.endsWith('.js') && !file.path.endsWith('.d.ts')) {
+        continue;
       }
-    },
-    30_000,
-  );
 
-  it(
-    'does not embed developer-local absolute paths in compiled output',
-    () => {
-      buildCli();
-
-      const entry = runPackDryRun();
-      const localPathMarkers = [root.split(/[/\\]/).join('/'), 'node_modules'];
-
-      for (const file of entry.files) {
-        if (!file.path.endsWith('.js') && !file.path.endsWith('.d.ts')) {
-          continue;
-        }
-
-        const content = readFileSync(join(root, file.path), 'utf8');
-        for (const marker of localPathMarkers) {
-          expect(content).not.toContain(marker);
-        }
+      const content = readFileSync(join(root, file.path), 'utf8');
+      for (const marker of localPathMarkers) {
+        expect(content).not.toContain(marker);
       }
-    },
-    30_000,
-  );
+    }
+  }, 30_000);
 });
 
 // SW-111: asserts package identity/version on the dry-run artifact itself,

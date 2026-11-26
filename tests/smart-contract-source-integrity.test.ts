@@ -158,8 +158,7 @@ describe('Smart Contract template Cargo manifest dependency policy (SW-145)', ()
   it('[workspace.dependencies] declares soroban-sdk exactly once', () => {
     const rootCargo = readTemplateFile(...rootCargoSegments);
     const section = extractTomlSection(rootCargo, 'workspace.dependencies');
-    const count =
-      (section ?? '').match(/^\s*soroban-sdk\s*=/gm)?.length ?? 0;
+    const count = (section ?? '').match(/^\s*soroban-sdk\s*=/gm)?.length ?? 0;
 
     expect(
       count,

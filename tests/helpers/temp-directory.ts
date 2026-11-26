@@ -27,7 +27,21 @@ export function createTempDirectoryFixture(
         return;
       }
 
-      rmSync(path, { recursive: true, force: true });
+      // Windows can briefly hold generated project files after an npm script
+      // exits. Retry briefly instead of leaking the fixture on EBUSY.
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          rmSync(path, { recursive: true, force: true });
+          break;
+        } catch (error) {
+          const code = (error as { code?: string }).code;
+          if (code !== 'EBUSY' || attempt >= 49) {
+            throw error;
+          }
+          const waiter = new Int32Array(new SharedArrayBuffer(4));
+          Atomics.wait(waiter, 0, 0, 100);
+        }
+      }
       cleaned = true;
     },
   };

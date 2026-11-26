@@ -39,8 +39,7 @@ export interface DeployCommandOptions extends DevOrchestratorOptions {
     input: TestnetDeploymentInput,
   ) => DeploymentPreflightResult;
   readonly validateDeployment?:
-    | boolean
-    | ((output: DeploymentOutput) => DeployedContractData);
+    boolean | ((output: DeploymentOutput) => DeployedContractData);
 }
 
 interface DeployCommandFlags {
@@ -58,7 +57,7 @@ function isCancellationError(error: unknown): boolean {
   }
   const code = (error as { code?: unknown }).code;
   return code === 'SIGINT' || code === 'CANCELLED';
- }
+}
 
 export function createDeployCommand(
   options: DeployCommandOptions = {},

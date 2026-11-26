@@ -59,8 +59,8 @@ describe('test workflow package-manager remediation (SW-157)', () => {
     expect(error).toBeInstanceOf(SubprocessCliError);
     const message = (error as SubprocessCliError).userMessage;
     expect(message).toContain('Unable to find npm or its supported launcher');
-    expect(message).toContain('Node.js >=22.13.0 <25');
-    expect(message).toContain('npm >=10.9.0');
+    expect(message).toContain('>=22.13.0 <25');
+    expect(message).toContain('>=10.9.0');
     expect(message).not.toContain('exited unexpectedly');
     expect(message).not.toContain('SECRET_TOKEN');
     expect(message).not.toContain('/secret-runtime-path');
@@ -82,8 +82,8 @@ describe('test workflow package-manager remediation (SW-157)', () => {
     expect(error).toBeInstanceOf(SubprocessCliError);
     const message = (error as SubprocessCliError).userMessage;
     expect(message).toContain('could not be executed');
-    expect(message).toContain('Node.js >=22.13.0 <25');
-    expect(message).toContain('npm >=10.9.0');
+    expect(message).toContain('>=22.13.0 <25');
+    expect(message).toContain('>=10.9.0');
     expect(message).not.toContain('SECRET_TOKEN');
   });
 

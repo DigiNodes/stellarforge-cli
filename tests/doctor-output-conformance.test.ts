@@ -264,7 +264,12 @@ describe('SW-001: Doctor output snapshot conformance tests', () => {
 describe('SW-002: Doctor JSON output schema and determinism tests', () => {
   it('outputs valid JSON with stable schema version', () => {
     const checks: readonly DiagnosticCheck[] = [
-      mockCheck('node', 'Node.js', 'pass', 'Supported version 22.13.0 detected.'),
+      mockCheck(
+        'node',
+        'Node.js',
+        'pass',
+        'Supported version 22.13.0 detected.',
+      ),
       mockCheck('npm', 'npm', 'pass', 'Supported version 10.9.2 detected.'),
     ];
 
@@ -315,7 +320,12 @@ describe('SW-002: Doctor JSON output schema and determinism tests', () => {
 
   it('JSON output excludes remediation field when not present', () => {
     const checks: readonly DiagnosticCheck[] = [
-      mockCheck('node', 'Node.js', 'pass', 'Supported version 22.13.0 detected.'),
+      mockCheck(
+        'node',
+        'Node.js',
+        'pass',
+        'Supported version 22.13.0 detected.',
+      ),
     ];
 
     const result = runDoctorJsonWithChecks(checks);
@@ -327,7 +337,12 @@ describe('SW-002: Doctor JSON output schema and determinism tests', () => {
 
   it('JSON output includes accurate summary counts', () => {
     const checks: readonly DiagnosticCheck[] = [
-      mockCheck('node', 'Node.js', 'pass', 'Supported version 22.13.0 detected.'),
+      mockCheck(
+        'node',
+        'Node.js',
+        'pass',
+        'Supported version 22.13.0 detected.',
+      ),
       mockCheck('npm', 'npm', 'pass', 'Supported version 10.9.2 detected.'),
       mockCheck('docker', 'Docker', 'warn', 'Docker daemon is unavailable.'),
       mockCheck('stellar', 'Stellar CLI', 'fail', 'Stellar CLI not found.'),
@@ -345,9 +360,20 @@ describe('SW-002: Doctor JSON output schema and determinism tests', () => {
 
   it('JSON output is deterministic across multiple runs', () => {
     const checks: readonly DiagnosticCheck[] = [
-      mockCheck('node', 'Node.js', 'pass', 'Supported version 22.13.0 detected.'),
+      mockCheck(
+        'node',
+        'Node.js',
+        'pass',
+        'Supported version 22.13.0 detected.',
+      ),
       mockCheck('npm', 'npm', 'pass', 'Supported version 10.9.2 detected.'),
-      mockCheck('docker', 'Docker', 'warn', 'Docker daemon is unavailable.', 'Start Docker.'),
+      mockCheck(
+        'docker',
+        'Docker',
+        'warn',
+        'Docker daemon is unavailable.',
+        'Start Docker.',
+      ),
     ];
 
     const result1 = runDoctorJsonWithChecks(checks);
@@ -371,7 +397,12 @@ describe('SW-002: Doctor JSON output schema and determinism tests', () => {
 
   it('JSON exit code semantics match human output: fail returns diagnostic exit code', () => {
     const checks: readonly DiagnosticCheck[] = [
-      mockCheck('node', 'Node.js', 'pass', 'Supported version 22.13.0 detected.'),
+      mockCheck(
+        'node',
+        'Node.js',
+        'pass',
+        'Supported version 22.13.0 detected.',
+      ),
       mockCheck('stellar', 'Stellar CLI', 'fail', 'Stellar CLI not found.'),
     ];
 
@@ -382,7 +413,12 @@ describe('SW-002: Doctor JSON output schema and determinism tests', () => {
 
   it('JSON exit code semantics match human output: warning+pass returns success', () => {
     const checks: readonly DiagnosticCheck[] = [
-      mockCheck('node', 'Node.js', 'pass', 'Supported version 22.13.0 detected.'),
+      mockCheck(
+        'node',
+        'Node.js',
+        'pass',
+        'Supported version 22.13.0 detected.',
+      ),
       mockCheck('docker', 'Docker', 'warn', 'Docker daemon is unavailable.'),
     ];
 
@@ -393,7 +429,12 @@ describe('SW-002: Doctor JSON output schema and determinism tests', () => {
 
   it('JSON output is clean on stdout (no progress/banner noise)', () => {
     const checks: readonly DiagnosticCheck[] = [
-      mockCheck('node', 'Node.js', 'pass', 'Supported version 22.13.0 detected.'),
+      mockCheck(
+        'node',
+        'Node.js',
+        'pass',
+        'Supported version 22.13.0 detected.',
+      ),
     ];
 
     const result = runDoctorJsonWithChecks(checks);
@@ -417,7 +458,7 @@ describe('SW-002: Doctor JSON output schema and determinism tests', () => {
 
     const result = runDoctorJsonWithChecks(checks);
 
-    expect(result.json?.checks[0].message).toContain('[REDACTED]');
-    expect(result.json?.checks[0].remediation).toContain('[REDACTED]');
+    expect(result.json?.checks[0]?.message).toContain('[REDACTED]');
+    expect(result.json?.checks[0]?.remediation).toContain('[REDACTED]');
   });
 });

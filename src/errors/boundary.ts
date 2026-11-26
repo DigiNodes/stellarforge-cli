@@ -32,8 +32,7 @@ interface CancellationEventSource {
   removeListener(event: string, listener: () => void): unknown;
 }
 
-const cancellationEvents =
-  process as unknown as CancellationEventSource;
+const cancellationEvents = process as unknown as CancellationEventSource;
 
 export interface CancellationController {
   begin(): AbortSignal;
@@ -56,10 +55,7 @@ export function createCancellationController(): CancellationController {
 
     end(): void {
       if (listener) {
-                cancellationEvents.removeListener(
-          'cancellationRequested',
-          listener,
-        );
+        cancellationEvents.removeListener('cancellationRequested', listener);
       }
       listener = undefined;
       controller = undefined;
@@ -73,10 +69,12 @@ export interface CancellationHandler {
   dispose(): void;
 }
 
-export function createCancellationHandler(_options: {
+export function createCancellationHandler(options: {
   command: string;
   output: TerminalOutput;
 }): CancellationHandler {
+  void options;
+
   let cancelled = false;
 
   const listener = (): void => {

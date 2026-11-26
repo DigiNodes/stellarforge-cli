@@ -132,14 +132,16 @@ function isTerminalControlCharacter(code: number): boolean {
 
 function isBidiControlCharacter(code: number): boolean {
   return (
-    (code >= 0x202a && code <= 0x202e) ||
-    (code >= 0x2066 && code <= 0x2069)
+    (code >= 0x202a && code <= 0x202e) || (code >= 0x2066 && code <= 0x2069)
   );
 }
 
 function consumeCsiSequence(message: string, startIndex: number): number {
   let index = startIndex;
-  const limit = Math.min(message.length, startIndex + MAX_CONTROL_SEQUENCE_LENGTH);
+  const limit = Math.min(
+    message.length,
+    startIndex + MAX_CONTROL_SEQUENCE_LENGTH,
+  );
 
   while (index < limit) {
     const code = message.charCodeAt(index);
@@ -156,7 +158,10 @@ function consumeCsiSequence(message: string, startIndex: number): number {
 
 function consumeStringSequence(message: string, startIndex: number): number {
   let index = startIndex;
-  const limit = Math.min(message.length, startIndex + MAX_CONTROL_SEQUENCE_LENGTH);
+  const limit = Math.min(
+    message.length,
+    startIndex + MAX_CONTROL_SEQUENCE_LENGTH,
+  );
 
   while (index < limit) {
     const code = message.charCodeAt(index);

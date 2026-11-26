@@ -29,6 +29,9 @@ const FORBIDDEN_ARTIFACT_PATTERNS = [
   /(^|\/)\.DS_Store$/i,
 ];
 
+/** Artifact paths that would upload the entire workspace. */
+const BROAD_ARTIFACT_PATHS = /^(?:\.|\.\/|\*\*|\/)$/;
+
 /** Workflows that may publish release artifacts. */
 const RELEASE_PUBLISHING_WORKFLOWS = new Set(['release.yml']);
 
@@ -184,6 +187,13 @@ function auditArtifacts(filePath) {
           });
           break;
         }
+      }
+      if (BROAD_ARTIFACT_PATHS.test(p)) {
+        violations.push({
+          file: base,
+          line: upload.line,
+          message: `artifact path "${p}" sweeps the entire workspace`,
+        });
       }
     }
 

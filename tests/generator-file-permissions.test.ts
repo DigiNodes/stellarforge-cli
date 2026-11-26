@@ -67,9 +67,9 @@ describe('generated-file permission policy (SW-130)', () => {
 
         generateProjectFromTemplate(context(root), { templateRoot });
 
-        expect(
-          statSync(join(root, 'demo-app', 'run.sh')).mode & 0o7777,
-        ).toBe(0o755);
+        expect(statSync(join(root, 'demo-app', 'run.sh')).mode & 0o7777).toBe(
+          0o755,
+        );
       }),
   );
 

@@ -104,7 +104,9 @@ export function runDeploymentPreflight(
     ...(identityOk
       ? {}
       : {
-          remediation: identityRemediation,
+          remediation:
+            identityRemediation ??
+            'Pass `--source <identity>` with a valid named Stellar CLI identity alias.',
         }),
   });
 

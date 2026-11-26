@@ -80,8 +80,9 @@ describe('nested project root discovery', () => {
       writePackage(root);
       const deep = join(
         root,
-        ...Array.from({ length: MAX_DEPTH + 2 }, (_, index) =>
-          `level-${index}`,
+        ...Array.from(
+          { length: MAX_DEPTH + 2 },
+          (_, index) => `level-${index}`,
         ),
       );
       mkdirSync(deep, { recursive: true });

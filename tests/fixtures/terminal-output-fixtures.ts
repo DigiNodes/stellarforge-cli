@@ -68,7 +68,8 @@ export const TERMINAL_FIXTURES = {
   bidiControls: {
     deceptiveFilename: 'report.\u202etxt.exe',
     sanitizedFilename: 'report.txt.exe',
-    mixedDirectionCommand: 'Command \u202etarget\u202c executed for العربية and עברית',
+    mixedDirectionCommand:
+      'Command \u202etarget\u202c executed for العربية and עברית',
     controlCharacters: '\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069',
     safeRtlText: 'StellarForge: مرحبا שלום (سلام)',
     directionalMarks: 'a\u200eb\u200fc\u061cd',

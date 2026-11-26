@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
-import { EventEmitter, once } from 'node:events';
+import { once } from 'node:events';
 import http from 'node:http';
 import test from 'node:test';
 import { startBackend } from '../src/start.js';

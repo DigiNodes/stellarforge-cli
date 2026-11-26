@@ -343,10 +343,7 @@ export async function superviseDevProcesses(
     clearTimeout(timeoutSettlementTimer);
   };
 
-  const signalChildren = (
-    signal: NodeJS.Signals,
-    activeOnly = false,
-  ): void => {
+  const signalChildren = (signal: NodeJS.Signals, activeOnly = false): void => {
     for (const child of children) {
       if (activeOnly && exitedChildren.has(child)) {
         continue;

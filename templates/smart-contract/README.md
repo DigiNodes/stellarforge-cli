@@ -10,7 +10,7 @@ This workspace is validated against the following toolchain contract:
 
 - Rust 1.84.0 (minimum supported toolchain; recorded as `rust-version` in `Cargo.toml`);
 - Rust edition 2021;
-- `soroban-sdk` 26.x from `[workspace.dependencies]`;
+- soroban-sdk 26.x from `[workspace.dependencies]`;
 - Wasm target `wasm32v1-none`;
 - Stellar CLI >=27.1.0, the baseline checked by `stellarforge doctor`.
 

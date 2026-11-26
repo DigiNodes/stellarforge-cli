@@ -229,7 +229,8 @@ describe('npm diagnostic', () => {
   });
 
   it('rejects unsafe npm integer components deterministically without rounding', () => {
-    const execute: RunCommand = () => commandResult(0, '9007199254740992.0.0\n');
+    const execute: RunCommand = () =>
+      commandResult(0, '9007199254740992.0.0\n');
 
     expect(createNpmDiagnostic(execute).run()).toMatchObject({
       status: 'fail',

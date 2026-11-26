@@ -45,4 +45,17 @@ export default tseslint.config(
       },
     },
   },
+  {
+    files: ['templates/**/*.js'],
+    languageOptions: {
+      globals: {
+        clearInterval: 'readonly',
+        clearTimeout: 'readonly',
+        process: 'readonly',
+        setInterval: 'readonly',
+        setTimeout: 'readonly',
+        URL: 'readonly',
+      },
+    },
+  },
 );

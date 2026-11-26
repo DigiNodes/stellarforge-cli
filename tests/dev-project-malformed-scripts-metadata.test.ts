@@ -53,15 +53,13 @@ describe('dev resolver — malformed scripts object shapes (SW-220)', () => {
     { label: 'string "start"', value: 'start' },
     { label: 'array []', value: [] },
     { label: 'array of script names', value: ['dev', 'start'] },
-  ])(
-    'rejects scripts: $label before process-plan creation',
-    ({ value }) =>
-      withTempDirectory((root) => {
-        writePackage(root, { name: 'demo', scripts: value });
+  ])('rejects scripts: $label before process-plan creation', ({ value }) =>
+    withTempDirectory((root) => {
+      writePackage(root, { name: 'demo', scripts: value });
 
-        expect(() => resolveDevProcessPlan(root)).toThrow(ValidationCliError);
-        expect(() => resolveDevProcessPlan(root)).toThrow(/scripts object/);
-      }),
+      expect(() => resolveDevProcessPlan(root)).toThrow(ValidationCliError);
+      expect(() => resolveDevProcessPlan(root)).toThrow(/scripts object/);
+    }),
   );
 
   it('rejects a scripts value of null with an actionable message', () =>

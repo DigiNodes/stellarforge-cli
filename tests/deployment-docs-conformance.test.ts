@@ -336,10 +336,9 @@ describe('SW-103: Testnet deployment documentation conformance', () => {
           content,
           `${name} must document the resolver artifact path`,
         ).toContain(GENERATED_WASM_ARTIFACT_PATH);
-        expect(
-          content,
-          `${name} must document target remediation`,
-        ).toContain('rustup target add wasm32v1-none');
+        expect(content, `${name} must document target remediation`).toContain(
+          'rustup target add wasm32v1-none',
+        );
         expect(
           content,
           `${name} must document missing artifact recovery`,

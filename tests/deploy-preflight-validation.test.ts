@@ -99,7 +99,7 @@ describe('SW-161: deploy validation before subprocess side effects', () => {
         'secret-bearing field',
         { version: 1, secretKey: SECRET_STRKEY_FIXTURE },
       ],
-      ['unsupported network', { version: 1, network: 'mainnet' }],
+      ['unsupported network', { version: 1, network: 'local' }],
       ['raw identity', { version: 1, identity: SECRET_STRKEY_FIXTURE }],
     ])('rejects %s before invoking the executor', async (_name, config) => {
       await withTempDirectory(async (root) => {

@@ -132,7 +132,8 @@ describe('dependency update smoke policy (SW-180)', () => {
   });
 
   it('runs the quality/typecheck/lint gate and the Node 22/24 platform matrix in ci.yml', () => {
-    expect(ciWorkflow).toContain("node-version: '22.13.0'");
+    expect(ciWorkflow).toContain('node-version: ${{ env.NODE_VERSION }}');
+    expect(ciWorkflow).toMatch(/node-version:\s*\$\{\{\s*matrix\.node\s*\}\}/);
     expect(ciWorkflow).toMatch(/node:\s*'22\.13\.0'/);
     expect(ciWorkflow).toMatch(/node:\s*'24'/);
     expect(ciWorkflow).toContain('npm test');

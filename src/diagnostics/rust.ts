@@ -13,7 +13,7 @@ function parseToolVersion(
   tool: 'rustc' | 'cargo',
 ): string | null {
   const match = new RegExp(
-    `^${tool} (\\d+)\\.(\\d+)\\.(\\d+)(?=$|[\\s(+-])`,
+    `^${tool} (\\d+)\\.(\\d+)\\.(\\d+)(?=$|\\r?\\n|-| \\()`,
     'i',
   ).exec(output.trim());
 

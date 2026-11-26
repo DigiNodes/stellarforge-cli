@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { formatDiagnosticCommand, redactDiagnosticCommandArgs } from '../src/diagnostics/process.js';
+import {
+  formatDiagnosticCommand,
+  redactDiagnosticCommandArgs,
+} from '../src/diagnostics/process.js';
 import {
   REDACTED_PLACEHOLDER,
   redactSecretLikeText,

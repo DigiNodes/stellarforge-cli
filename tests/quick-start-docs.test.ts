@@ -293,7 +293,7 @@ describe('public documentation link integrity (SW-203)', () => {
 });
 
 describe('generated template README command smoke', () => {
-  const EXTERNAL_TOOLS = ['rustup', 'cargo', 'stellar', 'cp'] as const;
+  const EXTERNAL_TOOLS = ['rustc', 'rustup', 'cargo', 'stellar', 'cp'] as const;
   const SMOKE_MARKER = 'Offline smoke coverage';
   const COMMAND_LOG_ENV = 'SF_SMOKE_COMMAND_LOG';
   const MOCK_WASM = 'target/wasm32v1-none/release/smoke.wasm';
@@ -667,9 +667,11 @@ describe('generated template README command smoke', () => {
           templateId === 'api-service' ? 'API_PORT' : 'BACKEND_PORT';
         const criteria: StartCriteria = {
           ...(port === undefined ? {} : { port }),
-          ...(templateId === 'api-service'
-            ? { readyOutput: 'listening on http://127.0.0.1:' }
-            : {}),
+          ...(templateId === 'basic-app'
+            ? { readyOutput: 'status: ready' }
+            : templateId === 'api-service'
+              ? { readyOutput: 'listening on http://127.0.0.1:' }
+              : {}),
           ...(port === undefined
             ? {}
             : { env: { ...process.env, [envName]: String(port) } }),

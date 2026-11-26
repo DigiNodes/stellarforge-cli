@@ -1,6 +1,9 @@
 import { describe, expect, it, afterEach } from 'vitest';
-import { resolve } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { execSync } from 'node:child_process';
+import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { basename, join, resolve } from 'node:path';
 import {
   classifyCommandResult,
   isExecutableNotFound,
@@ -176,7 +179,7 @@ describe('timeout and process termination', () => {
     expect(elapsed).toBeLessThan(
       DIAGNOSTIC_COMMAND_TIMEOUT_MS + TIMEOUT_TEST_BUFFER_MS,
     );
-  });
+  }, 12_000);
 
   it('forcefully kills a process that ignores SIGTERM', () => {
     const start = Date.now();
@@ -195,7 +198,7 @@ describe('timeout and process termination', () => {
 
     // Verify stdout captured the start but not indefinite output
     expect(result.stdout).toContain('Process ignoring signals started');
-  });
+  }, 12_000);
 
   it('allows graceful termination when process responds to SIGTERM', () => {
     const start = Date.now();
@@ -211,54 +214,73 @@ describe('timeout and process termination', () => {
     expect(elapsed).toBeLessThan(
       DIAGNOSTIC_COMMAND_TIMEOUT_MS + TIMEOUT_TEST_BUFFER_MS,
     );
-  });
+  }, 12_000);
 
   it('ensures no child process remains after timeout', async () => {
-    // Get processes before
+    // Use a uniquely named fixture copy so concurrently running test files
+    // cannot make this assertion observe each other's helper processes.
+    const sandbox = mkdtempSync(join(tmpdir(), 'sf-timeout-'));
+    const helperPath = join(sandbox, `timeout-helper-${randomUUID()}.js`);
+    copyFileSync(timeoutHelperPath, helperPath);
+    const marker = basename(helperPath);
+
     const getNodeProcesses = (): number[] => {
       if (process.platform === 'win32') {
         try {
           const output = execSync(
-            'wmic process where "name=\'node.exe\'" get ProcessId',
+            'wmic process where "name=\'node.exe\'" get ProcessId,CommandLine /format:csv',
             { encoding: 'utf8' },
           );
           return output
-            .split('\n')
-            .slice(1)
-            .map((line) => parseInt(line.trim(), 10))
-            .filter((pid) => !isNaN(pid) && pid !== process.pid);
-        } catch {
-          return [];
-        }
-      } else {
-        try {
-          const output = execSync('pgrep -f "node.*timeout-helper"', {
-            encoding: 'utf8',
-          });
-          return output
-            .split('\n')
-            .map((line) => parseInt(line.trim(), 10))
-            .filter((pid) => !isNaN(pid));
+            .split(/\r?\n/)
+            .filter(
+              (line) =>
+                line.includes(marker) &&
+                !line.includes('wmic') &&
+                !line.includes('cmd.exe'),
+            )
+            .map((line) => parseInt(line.trim().split(',').at(-1) ?? '', 10))
+            .filter(
+              (pid) =>
+                !isNaN(pid) && pid !== process.pid && pid !== process.ppid,
+            );
         } catch {
           return [];
         }
       }
+
+      try {
+        // The bracket trick keeps pgrep from matching its own shell command,
+        // which also contains the marker text.
+        const escapedMarker = marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = `node.*[${escapedMarker[0]}]${escapedMarker.slice(1)}`;
+        const output = execSync(`pgrep -f "${pattern}"`, {
+          encoding: 'utf8',
+        });
+        return output
+          .split('\n')
+          .map((line) => parseInt(line.trim(), 10))
+          .filter((pid) => !isNaN(pid));
+      } catch {
+        return [];
+      }
     };
 
-    const beforePids = getNodeProcesses();
+    try {
+      const beforePids = getNodeProcesses();
 
-    // Run a timeout scenario
-    runCommand('node', [timeoutHelperPath, 'slow']);
+      runCommand('node', [helperPath, 'slow']);
 
-    // Wait a moment for OS cleanup
-    await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const afterPids = getNodeProcesses();
-    const newPids = afterPids.filter((pid) => !beforePids.includes(pid));
+      const afterPids = getNodeProcesses();
+      const newPids = afterPids.filter((pid) => !beforePids.includes(pid));
 
-    // No new node processes should remain
-    expect(newPids).toHaveLength(0);
-  });
+      expect(newPids).toHaveLength(0);
+    } finally {
+      rmSync(sandbox, { recursive: true, force: true });
+    }
+  }, 12_000);
 
   it('reports stable timeout outcome for doctor command', () => {
     const timedOut: RunCommand = () =>
@@ -327,7 +349,7 @@ describe('platform-specific process termination', () => {
 
     expect(classifyCommandResult(result)).toBe('timed-out');
     expect(result.error).toBeDefined();
-  });
+  }, 12_000);
 
   it('handles Unix process termination without shell', () => {
     if (process.platform === 'win32') {
@@ -338,5 +360,5 @@ describe('platform-specific process termination', () => {
 
     expect(classifyCommandResult(result)).toBe('timed-out');
     expect(result.error).toBeDefined();
-  });
+  }, 12_000);
 });

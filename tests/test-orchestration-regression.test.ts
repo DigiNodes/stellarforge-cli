@@ -98,7 +98,7 @@ describe('unified test orchestration regression coverage', () => {
   it('rejects unsupported and malformed projects with actionable guidance', () =>
     withTempDirectory((root) => {
       expect(() => resolveTestProcessPlan(root)).toThrow(
-        'No supported StellarForge test workflow',
+        'No supported StellarForge project root was found',
       );
 
       writeFileSync(join(root, 'package.json'), '{not-json');

@@ -12,32 +12,7 @@ Generated with the StellarForge `basic-app` template.
 npm start
 ```
 
-The starter is a dependency-free, local process with a deterministic startup and health/status lifecycle. It does not require or generate wallet secret keys.
-
-On startup it:
-
-1. Writes `status: starting` to stdout.
-2. Loads and validates network configuration.
-3. Writes `status: ready` to stdout with the configured Horizon and RPC endpoints.
-4. Runs a local heartbeat resource until interrupted.
-
-While running it opens no listening socket at all and makes no external network calls.
-
-### Health/status signal
-
-Status is reported as deterministic stdout lines:
-
-- `status: starting` �?" startup in progress
-- `status: ready` �?" configuration validated and runtime ready
-- `status: stopping signal=<SIGINT|SIGTERM>` �?" graceful shutdown in progress
-
-### Graceful shutdown
-
-Send `SIGINT` (Ctrl+C) or `SIGTERM` to stop the process. Active runtime resources are stopped and the process exits cleanly without hanging.
-
-### Startup failures
-
-Invalid or missing startup configuration fails with an actionable error on stderr (`status: failed` and `error: ...`) and a non-zero exit code.
+The starter prints the configured Stellar Testnet Horizon and RPC endpoints. It does not require or generate wallet secret keys.
 
 ## Validate
 
@@ -46,11 +21,11 @@ npm run check
 npm test
 ```
 
-## Port already in use (EADRRINAUSE)
+## Port already in use (EADDRINUSE)
 
-This starter opens no listening socket at all �?" `npm start` runs a local process without binding a port. `EADDRINUSE` cannot occur with the starter as generated, and the documented environment variables point at remote Stellar services, not local ports.
+This starter opens no listening socket at all — `npm start` only prints the configured endpoints. `EADDRINUSE` cannot occur with the starter as generated, and the documented environment variables point at remote Stellar services, not local ports.
 
-If you add your own local server to this application, pick a free port entirely under your control; if it collides with another process, the operating system will report `EADRRINAUSE` just like for any other application. Resolve such collisions by changing the port you configure, or by stopping only the process you recognize as your own previous instance.
+If you add your own local server to this application, pick a free port entirely under your control; if it collides with another process, the operating system will report `EADDRINUSE` just like for any other application. Resolve such collisions by changing the port you configure, or by stopping only the process you recognize as your own previous instance.
 
 ## Notes
 
@@ -65,8 +40,17 @@ supported network identifiers:
 - `testnet` (default) — Horizon `https://horizon-testnet.stellar.org`, RPC `https://soroban-testnet.stellar.org`, passphrase `Test SDF Network ; September 2015`
 - `local` — Horizon `http://127.0.0.1:8000`, RPC `http://127.0.0.1:8001`, passphrase `Test SDF Network ; September 2015`
 
-Do not commit private keys, seed phrases, signing secrets, or production credentials to the project.
+Override the selected network endpoints with `STELLAR_HORIZON_URL`, `STELLAR_RPC_URL`, or `STELLAR_NETWORK_PASSPHRASE` when needed; `.env.example` documents the defaults and contains only public Testnet values.
+
+Endpoint overrides are validated before any request is made:
+
+- URLs must parse as absolute URLs with an `https:` or `http:` protocol and a hostname.
+- URLs must not embed credentials (username/password), query strings, or fragments.
+- Empty values and non-string values are rejected.
+- Error messages identify the offending variable but do not echo the supplied URL, because it may contain credentials.
+
+Do not commit private keys, seed phrases, signing secrets, or production credentals to the project.
 
 ## Offline smoke coverage
 
-Every command in this README is exercised by StellarForge's offline documentation smoke test in a freshly generated temporary project. `npm start` exits after printing public Testnet endpoints; no Stellar CLI, signing identity, credential, or external network access is required.
+`npm start`, `npm run check`, and `npm test` are executed in a freshly generated temporary project. The `npm --env-file=.env start` smoke variant uses a temporary `.env` file and does not require network access. No Stellar CLI, signing identity, credential, or external service is required.

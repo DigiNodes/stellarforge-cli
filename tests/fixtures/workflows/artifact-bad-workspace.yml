@@ -1,0 +1,12 @@
+name: Artifact BAD workspace sweep
+on: push
+permissions: {}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: .
+          retention-days: 7

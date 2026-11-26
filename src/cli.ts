@@ -13,7 +13,6 @@ import { runCli } from './main.js';
  * This is the conventional 130 exit code for signal-terminated processes.
  */
 
-
 /**
  * Tracks whether a cancellation signal has already been observed.
  * The first signal triggers graceful cleanup and a documented non-zero exit.
@@ -42,9 +41,9 @@ function handleSignal(signal: NodeJS.Signals): void {
   process.exitCode = CANCELLATION_EXIT_CODE;
   if (typeof process.emit === 'function') {
     // Notify any listeners (e.g. cleanup coordinators) without swallowing the signal.
-    (process as unknown as {
-  emit(event: string): boolean;
-}).emit('cancellationRequested');
+    (process.emit as unknown as (event: string) => boolean)(
+      'cancellationRequested',
+    );
   }
 }
 

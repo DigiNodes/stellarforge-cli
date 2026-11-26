@@ -79,7 +79,12 @@ function renderJSONReport(report: DiagnosticReport): DiagnosticReportJSON {
       message: sanitizeText(result.message, MAX_MESSAGE_LENGTH),
       ...(result.remediation === undefined
         ? {}
-        : { remediation: sanitizeText(result.remediation, MAX_REMEDIATION_LENGTH) }),
+        : {
+            remediation: sanitizeText(
+              result.remediation,
+              MAX_REMEDIATION_LENGTH,
+            ),
+          }),
     })),
     summary: {
       pass: report.summary.pass,
@@ -165,7 +170,7 @@ export function createDoctorCommand(
 
       if (jsonMode) {
         const jsonReport = renderJSONReport(report);
-        console.log(JSON.stringify(jsonReport, null, 2));
+        output.info(JSON.stringify(jsonReport, null, 2));
       } else {
         renderDiagnosticReport(report, output);
       }

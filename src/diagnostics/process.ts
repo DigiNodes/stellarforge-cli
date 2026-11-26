@@ -199,9 +199,10 @@ export function formatDiagnosticCommand(
   executable: string,
   args: readonly string[],
 ): string {
-  return [redactSecretLikeText(executable), ...redactDiagnosticCommandArgs(args)].join(
-    ' ',
-  );
+  return [
+    redactSecretLikeText(executable),
+    ...redactDiagnosticCommandArgs(args),
+  ].join(' ');
 }
 
 /**

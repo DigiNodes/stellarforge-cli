@@ -1,4 +1,3 @@
-
 /**
  * Bounds constants and utilities for diagnostic text rendering.
  *
@@ -27,10 +26,7 @@ const ELLIPSIS = '...';
  * @returns The original text or its truncated representation.
  * @throws RangeError when maxLength is negative or not a finite integer.
  */
-export function boundDiagnosticText(
-  text: string,
-  maxLength: number,
-): string {
+export function boundDiagnosticText(text: string, maxLength: number): string {
   if (!Number.isSafeInteger(maxLength) || maxLength < 0) {
     throw new RangeError('maxLength must be a non-negative safe integer');
   }

@@ -167,7 +167,9 @@ function collectEntries(
   }
 }
 
-export function collectTemplateSourceTree(templateRoot: string): TemplateSourceTree {
+export function collectTemplateSourceTree(
+  templateRoot: string,
+): TemplateSourceTree {
   const root = resolve(templateRoot);
   const rootStat = lstatSync(root, { throwIfNoEntry: false });
 

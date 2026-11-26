@@ -1,4 +1,5 @@
 import {
+  chmodSync,
   existsSync,
   lstatSync,
   mkdirSync,
@@ -12,6 +13,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { TextDecoder } from 'node:util';
 import {
   ScaffoldingCancelledCliError,
   ValidationCliError,
@@ -23,6 +25,10 @@ import type {
   ProjectGenerationPreviewFile,
   ProjectGenerationResult,
 } from './types.js';
+import {
+  collectTemplateSourceTree,
+  resolveGeneratedFileMode,
+} from './template-sources.js';
 
 const SUBSTITUTION_TOKEN = /\{\{([A-Za-z][A-Za-z0-9]*)\}\}/g;
 
@@ -109,7 +115,22 @@ function renderText(
 }
 
 function isBinary(content: Buffer): boolean {
-  return content.includes(0);
+  for (const byte of content) {
+    if (byte === 0) {
+      return true;
+    }
+    if (byte < 0x20 && byte !== 0x09 && byte !== 0x0a && byte !== 0x0d) {
+      return true;
+    }
+  }
+
+  try {
+    new TextDecoder('utf-8', { fatal: true }).decode(content);
+  } catch {
+    return true;
+  }
+
+  return false;
 }
 
 function assertNotCancelled(isCancelled?: () => boolean): void {
@@ -216,6 +237,7 @@ function visitTemplateTree(
     relativePath: string,
     content: Buffer | string,
     substitutions: readonly string[],
+    mode: number,
   ) => void,
   visitDirectory: (relativePath: string) => void,
   isCancelled?: () => boolean,
@@ -275,7 +297,7 @@ function visitTemplateTree(
     const content = readFileSync(sourcePath);
 
     if (isBinary(content)) {
-      visitFile(destinationRelativePath, content, []);
+      visitFile(destinationRelativePath, content, [], sourceStat.mode);
       continue;
     }
 
@@ -284,6 +306,7 @@ function visitTemplateTree(
       destinationRelativePath,
       rendered.content,
       rendered.substitutions,
+      sourceStat.mode,
     );
   }
 }
@@ -351,16 +374,9 @@ export function generateProjectFromTemplate(
   const destinationParent = dirname(destination);
   const root = resolve(context.input.cwd);
 
-  if (!existsSync(templateRoot) || !lstatSync(templateRoot).isDirectory()) {
-    throw new ValidationCliError('Selected template source is unavailable.');
-  }
-
-  if (lstatSync(templateRoot).isSymbolicLink()) {
-    throw new ValidationCliError(
-      'Template source must not be a symbolic link.',
-    );
-  }
-
+  // Reject unsafe source entries (symlinks, escaping real paths, and
+  // portable-path collisions) before any file is staged or written.
+  collectTemplateSourceTree(templateRoot);
   assertTemplateBudget(templateRoot);
 
   assertDestinationContainment(root, destination);
@@ -391,6 +407,7 @@ export function generateProjectFromTemplate(
     projectName: context.input.projectName,
     templateId: context.template.templateId,
   };
+
   if (options.dryRun) {
     const files: ProjectGenerationPreviewFile[] = [];
     visitTemplateTree(
@@ -416,8 +433,10 @@ export function generateProjectFromTemplate(
     };
   }
 
-  const stagingRoot = mkdtempSync(
-    join(destinationParent, `.stellarforge-${context.input.projectName}-`),
+  const stagingRoot = realpathSync(
+    mkdtempSync(
+      join(destinationParent, `.stellarforge-${context.input.projectName}-`),
+    ),
   );
   let removedExistingDestination = false;
 
@@ -427,7 +446,7 @@ export function generateProjectFromTemplate(
       templateRoot,
       '.',
       variables,
-      (relativePath, content) => {
+      (relativePath, content, _substitutions, mode) => {
         const destinationPath = resolve(stagingRoot, relativePath);
         if (!isWithin(stagingRoot, destinationPath)) {
           throw new ValidationCliError(
@@ -436,10 +455,19 @@ export function generateProjectFromTemplate(
         }
 
         mkdirSync(dirname(destinationPath), { recursive: true });
-        writeFileSync(destinationPath, content);
+        const fileMode = resolveGeneratedFileMode(mode);
+        writeFileSync(destinationPath, content, { mode: fileMode });
+        chmodSync(destinationPath, fileMode);
       },
       (relativePath) => {
-        mkdirSync(resolve(stagingRoot, relativePath), { recursive: true });
+        const destinationPath = resolve(stagingRoot, relativePath);
+        if (!isWithin(stagingRoot, destinationPath)) {
+          throw new ValidationCliError(
+            'Template file path escapes the trusted project root.',
+          );
+        }
+
+        mkdirSync(destinationPath, { recursive: true });
       },
       options.isCancelled,
     );
@@ -448,7 +476,7 @@ export function generateProjectFromTemplate(
 
     // Re-validate immediately before the mutating write phase. The checks
     // above can be invalidated by a concurrent destination replacement while
-    // staging was still running (it only writes into the unrelated
+    // copyTemplateTree was still running (it only writes into the unrelated
     // staging directory, never into `destination`), so this closes the
     // time-of-check/time-of-use gap rather than relying on the earlier check.
     assertDestinationContainment(root, destination);

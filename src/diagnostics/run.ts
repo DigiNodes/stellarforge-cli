@@ -1,4 +1,3 @@
-
 import {
   boundDiagnosticText,
   MAX_DIAGNOSTIC_MESSAGE_LENGTH,
@@ -35,15 +34,10 @@ function failedCheckResult(check: DiagnosticCheck): DiagnosticResult {
  * @param results - Diagnostic results to summarize.
  * @returns Counts of passed, warned, and failed checks.
  */
-function summarize(
-  results: readonly DiagnosticResult[],
-): DiagnosticSummary {
-  const summary: DiagnosticSummary = {
-    pass: 0,
-    warn: 0,
-    fail: 0,
-    total: results.length,
-  };
+function summarize(results: readonly DiagnosticResult[]): DiagnosticSummary {
+  let pass = 0;
+  let warn = 0;
+  let fail = 0;
 
   for (const result of results) {
     if (result.status === 'pass') {
@@ -55,12 +49,7 @@ function summarize(
     }
   }
 
-  return {
-    pass,
-    warn,
-    fail,
-    total: pass + warn + fail,
-  };
+  return { pass, warn, fail, total: pass + warn + fail };
 }
 
 /**
@@ -75,10 +64,7 @@ function summarize(
 function boundResult(result: DiagnosticResult): DiagnosticResult {
   return {
     ...result,
-    message: boundDiagnosticText(
-      result.message,
-      MAX_DIAGNOSTIC_MESSAGE_LENGTH,
-    ),
+    message: boundDiagnosticText(result.message, MAX_DIAGNOSTIC_MESSAGE_LENGTH),
     ...(result.remediation === undefined
       ? {}
       : {

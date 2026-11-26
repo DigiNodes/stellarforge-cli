@@ -383,7 +383,11 @@ describe('Stellar Testnet deployment end-to-end fixtures', () => {
             '[workspace]\nmembers = []\n',
           );
           writeGeneratedWasmArtifact(outside.path);
-          symlinkSync(outside.path, join(root, 'target'), 'junction');
+          symlinkSync(
+            join(outside.path, 'target'),
+            join(root, 'target'),
+            'junction',
+          );
 
           let spawned = false;
           const command = createDeployCommand({
